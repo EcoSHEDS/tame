@@ -2865,7 +2865,7 @@ d3-zoom@1:
     d3-selection "1"
     d3-transition "1"
 
-d3@5:
+d3@5, d3@^5.8.0:
   version "5.9.7"
   resolved "https://registry.yarnpkg.com/d3/-/d3-5.9.7.tgz#f3835648a172b438e89ed57eb6c525bdabdcd7dc"
   integrity sha512-jENytrmdXtGPw7HuSK2S4gxRM1eUGjKvWQkQ6ct4yK+DB8SG3VcnVrwesfnsv8rIcxMUg18TafT4Q8mOZUMP4Q==
@@ -2913,6 +2913,14 @@ date-now@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/date-now/-/date-now-0.1.4.tgz#eaf439fd4d4848ad74e5cc7dbef200672b9e345b"
   integrity sha1-6vQ5/U1ISK105cx9vvIAZyueNFs=
+
+dc@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/dc/-/dc-3.1.0.tgz#525bbf6332800609e2a54a58315ce2f530043b51"
+  integrity sha512-YzGobBllps3gitU6e+4liFAeHtySyYtJhVzZU4jIIuCcw3psu5kmqhsygcBX7aOzoR3vUCImC8V/LGYl17maOw==
+  dependencies:
+    crossfilter2 "^1.4.7"
+    d3 "^5.8.0"
 
 de-indent@^1.0.2:
   version "1.0.2"

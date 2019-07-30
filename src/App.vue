@@ -54,6 +54,7 @@
                   item-value="id"
                   item-text="description"
                   return-object
+                  clearable
                   :items="size.options">
                 </v-autocomplete>
                 <v-autocomplete
@@ -62,8 +63,22 @@
                   item-value="id"
                   item-text="description"
                   return-object
+                  clearable
                   :items="outline.options">
                 </v-autocomplete>
+              </v-card-text>
+            </v-card>
+            <v-card class="mb-3">
+              <v-toolbar dense dark color="primary">
+                <strong>Time Filter</strong>
+                <v-spacer></v-spacer>
+                <v-btn height="24" width="24" icon @click="timeFilter.collapse = !timeFilter.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!timeFilter.collapse">mdi-menu-up</v-icon>
+                  <v-icon v-else>mdi-menu-down</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-card-text v-if="!timeFilter.collapse">
+                <tame-time-filter v-if="timeFilter.ready"></tame-time-filter>
               </v-card-text>
             </v-card>
             <v-card v-if="debug.visible">
@@ -99,12 +114,14 @@ import { xf } from '@/crossfilter'
 
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
+import TameTimeFilter from '@/components/TameTimeFilter'
 
 export default {
   name: 'App',
   components: {
     TameMap,
-    TameMapLayer
+    TameMapLayer,
+    TameTimeFilter
   },
   data: () => ({
     dataset: [],
@@ -135,8 +152,12 @@ export default {
     toolbox: {
       collapse: false
     },
+    timeFilter: {
+      collapse: false,
+      ready: false
+    },
     debug: {
-      visible: true,
+      visible: process.env.NODE_ENV === 'development',
       collapse: false
     },
     crossfilter: {
@@ -230,13 +251,14 @@ export default {
     }
   },
   mounted () {
-    this.color.selected = this.color.options[0]
+    this.color.selected = this.color.options[2]
     this.outline.selected = this.outline.options[0]
     this.size.selected = this.size.options[0]
 
     evt.$on('filter', this.onFilter)
-    d3.csv('http://localhost:8083/ukl-suckers.csv')
-      .then((data) => {
+    this.$http.get('ukl-suckers.csv')
+      .then((response) => {
+        const data = d3.csvParse(response.data)
         const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
         data.forEach((row, index) => {
           row.$index = index
@@ -247,7 +269,12 @@ export default {
         })
         this.dataset = data
         xf.add(data)
+        this.timeFilter.ready = true
         evt.$emit('filter')
+      })
+      .catch((err) => {
+        console.log(err)
+        alert('Failed to load dataset. See console.')
       })
   },
   methods: {
@@ -264,8 +291,8 @@ export default {
       return this.outlineScale(d[this.outline.selected.id])
     },
     getSize (d) {
-      if (!d || d[this.size.selected.id] === null) {
-        return 1
+      if (!d || !this.size.selected || d[this.size.selected.id] === null) {
+        return 0.5
       }
       return this.sizeScale(d[this.size.selected.id])
     },

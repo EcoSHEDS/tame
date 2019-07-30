@@ -6,6 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
+    "deploy": "yarn build && scp -r -C dist/* jeff@ecosheds.org:/conte/www/dev/tame",
     "data": "http-server -p 8083 --cors ./data"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "crossfilter2": "^1.4.7",
     "d3": "5",
     "d3-tip": "^0.9.1",
+    "dc": "^3.1.0",
     "leaflet": "^1.5.1",
     "moment": "^2.24.0",
     "vue": "^2.6.10",

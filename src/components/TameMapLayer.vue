@@ -4,6 +4,7 @@ import d3Tip from 'd3-tip'
 import * as L from 'leaflet'
 
 import evt from '@/events'
+import { xf } from '@/crossfilter'
 
 export default {
   name: 'TameMapLayer',
@@ -82,6 +83,7 @@ export default {
   mounted () {
     evt.$on('map:zoom', this.resize)
     evt.$on('map:render', this.render)
+    evt.$on('map:render:filter', this.renderFilter)
 
     this.tip.html(d => `
       <strong>Tag ID: ${d.uid}</strong><br>
@@ -101,7 +103,6 @@ export default {
     if (this.data) {
       this.resize()
       this.fitBounds()
-      // this.render()
     }
   },
   beforeDestroy () {
@@ -115,20 +116,7 @@ export default {
     data () {
       this.resize()
       this.fitBounds()
-    },
-    // nestedData () {
-    //   this.render()
-    // },
-    // getColor () {
-    //   console.log('tame-map-layer:watch(getColor)')
-    //   this.render()
-    // },
-    // getOutline () {
-    //   this.render()
-    // },
-    // getSize () {
-    //   this.render()
-    // }
+    }
   },
   methods: {
     resize () {
@@ -188,7 +176,6 @@ export default {
       groups.append('path')
         .datum(d => d.values, d => d.key)
         .attr('d', line)
-        // .style('stroke', 'gray')
 
       groups.selectAll('circle')
         .data(d => d.values, d => d.$index)
@@ -219,6 +206,14 @@ export default {
             .attr('cx', d => point[0])
             .attr('cy', d => point[1])
         })
+    },
+    renderFilter () {
+      console.log('tame-map-layer:renderFilter')
+      this.container
+        .selectAll('g')
+        .selectAll('circle')
+        .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
+        // .style('fill', d => xf.isElementFiltered(d.$index) ? this.getColor(d) : 'none')
     }
   },
   render: function (h) {
@@ -229,7 +224,7 @@ export default {
 
 <style>
 g.group {
-  opacity: 0.8;
+  opacity: 0.7;
 }
 g.group path {
   stroke-width: 1.5px;
