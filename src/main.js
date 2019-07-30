@@ -5,6 +5,7 @@ import store from './store'
 import vuetify from './plugins/vuetify'
 
 import './plugins/axios'
+import './plugins/moment'
 import './plugins/leaflet'
 
 import '@/assets/styles.css'

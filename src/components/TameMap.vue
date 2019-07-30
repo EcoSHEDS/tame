@@ -74,12 +74,12 @@ export default {
       moveTimeout = setTimeout(() => {
         this.disableClick = false
       }, 100)
-      this.emitMove()
+      evt.$emit('map:move', this.map.getCenter())
     })
     this.map.on('zoomend', () => {
       // console.log('zoom:', this.map.getZoom())
       this.zoomLevel = this.map.getZoom()
-      this.emitMove()
+      evt.$emit('map:zoom', this.map.getZoom())
     })
 
     this.svg = d3.select(this.map.getPanes().overlayPane).append('svg')
@@ -90,27 +90,23 @@ export default {
     this.ready = true
   },
   methods: {
-    emitMove () {
-      evt.$emit('map:move', {
-        zoom: this.map.getZoom(),
-        center: this.map.getCenter()
-      })
-    },
     resize (bounds) {
       if (bounds) this.bounds = bounds
-
       const padding = 100
 
       const topLeft = this.bounds[0]
       const bottomRight = this.bounds[1]
 
-      this.svg.attr('width', bottomRight[0] - topLeft[0] + padding)
-        .attr('height', bottomRight[1] - topLeft[1] + padding)
+      const width = bottomRight[0] - topLeft[0]
+      const height = topLeft[1] - bottomRight[1]
+
+      this.svg.attr('width', width + padding)
+        .attr('height', height + padding)
         .style('left', `${topLeft[0] - (padding / 2)}px`)
-        .style('top', `${topLeft[1] - (padding / 2)}px`)
+        .style('top', `${bottomRight[1] - (padding / 2)}px`)
 
       this.svg.select('g')
-        .attr('transform', `translate(${-(topLeft[0] - (padding / 2))},${-(topLeft[1] - (padding / 2))})`)
+        .attr('transform', `translate(${-(topLeft[0] - (padding / 2))},${-(bottomRight[1] - (padding / 2))})`)
     }
   }
 }
