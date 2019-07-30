@@ -16,17 +16,22 @@ export default {
       type: Array,
       required: false,
       default: () => []
+    },
+    getColor: {
+      type: Function,
+      required: false,
+      default: (d) => 'gray'
+    },
+    getOutline: {
+      type: Function,
+      required: false,
+      default: (d) => 'white'
+    },
+    getSize: {
+      type: Function,
+      required: false,
+      default: (d) => 'gray'
     }
-    // setBounds: {
-    //   type: Boolean,
-    //   required: false,
-    //   default: false
-    // },
-    // getFill: {
-    //   type: Function,
-    //   required: false,
-    //   default: () => 'red'
-    // },
     // getValue: {
     //   type: Function,
     //   required: false,
@@ -59,9 +64,6 @@ export default {
     zoomLevel () {
       return this.$parent.zoomLevel
     },
-    pointRadius () {
-      return this.zoomLevel - 4
-    },
     boundingBox () {
       // console.log('tame-map-layer:boundingBox')
       if (this.data.length === 0) return null
@@ -79,16 +81,17 @@ export default {
   },
   mounted () {
     evt.$on('map:zoom', this.resize)
-    evt.$on('map:render', this.renderFill)
+    evt.$on('map:render', this.render)
 
     this.tip.html(d => `
       <strong>Tag ID: ${d.uid}</strong><br>
-      Capture Date/Time: ${this.$moment.utc(d.datetime).format('MMM DD, YYYY hh:mm a')}<br>
       Latitude: ${d.lat.toFixed(4)}<br>
       Longitude: ${d.lon.toFixed(4)}<br>
+      Date/Time: ${this.$moment.utc(d.datetime).format('MMM DD, YYYY hh:mm a')}<br>
+      Season: ${d.season}<br>
       Length: ${d.length}<br>
       Cohort: ${d.cohort}<br>
-      Active: ${d.active === 1 ? 'Yes' : 'No'}<br>
+      Active: ${d.active}<br>
     `)
 
     this.container = this.overlay.append('g')
@@ -98,12 +101,12 @@ export default {
     if (this.data) {
       this.resize()
       this.fitBounds()
-      this.render()
+      // this.render()
     }
   },
   beforeDestroy () {
     evt.$off('map:zoom', this.resize)
-    evt.$off('map:render', this.renderFill)
+    evt.$off('map:render', this.render)
     this.tip.destroy()
     this.container.selectAll('*').remove()
     this.container.remove()
@@ -113,9 +116,19 @@ export default {
       this.resize()
       this.fitBounds()
     },
-    nestedData () {
-      this.render()
-    }
+    // nestedData () {
+    //   this.render()
+    // },
+    // getColor () {
+    //   console.log('tame-map-layer:watch(getColor)')
+    //   this.render()
+    // },
+    // getOutline () {
+    //   this.render()
+    // },
+    // getSize () {
+    //   this.render()
+    // }
   },
   methods: {
     resize () {
@@ -187,81 +200,26 @@ export default {
           // this.parentNode.appendChild(this) // move to front
         })
         .on('mouseenter', function (d) {
-        //   if (!vm.selected) {
-        //     // move to front if nothing selected
-        //     this.parentNode.appendChild(this)
-        //   } else {
-        //     // move to 2nd from front, behind selected
-        //     const lastChild = this.parentNode.lastChild
-        //     this.parentNode.insertBefore(this, lastChild)
-        //   }
           this.parentNode.parentNode.appendChild(this.parentNode)
-
           d3.select(this.parentNode)
             .classed('highlight', true)
-            // .style('opacity', 1)
-
-          // parent.selectAll('circle')
-          //   .style('fill', 'orangered')
-          // parent.selectAll('path')
-          //   .style('stroke', 'orangered')
-
-          // d3.select(this)
-          //   .attr('r', vm.pointRadius * 2)
-
           tip.show(d, this)
         })
         .on('mouseout', function (d) {
-          // d3.select(this)
-          //   .attr('r', vm.pointRadius)
-
-          // vm.container
-          //   .selectAll('circle')
-          //   .style('fill', 'gray')
-          //   .style('opacity', 0.75)
-
           d3.select(this.parentNode)
             .classed('highlight', false)
-
-          // d3.select(this.parentNode)
-          //   .style('opacity', 0.5)
-          //   .selectAll('circle')
-          //   .style('fill', 'gray')
-
-          // d3.select(this)
-          //   .attr('r', vm.pointRadius)
-
           tip.hide(d, this)
         })
-        .attr('r', this.pointRadius)
-        // .style('fill', 'gray')
-        // .style('opacity', 0.75)
-        .each(function (d) {
+        .attr('r', d => this.zoomLevel * this.getSize(d))
+        .style('fill', this.getColor)
+        .style('stroke', this.getOutline)
+        .each(function (d, i) {
           const point = vm.projectPoint(d)
           d3.select(this)
             .attr('cx', d => point[0])
             .attr('cy', d => point[1])
         })
-
-      this.renderFill()
-    },
-    renderFill () {
-      // console.log(`map-layer(${this.name}):renderFill`)
-      // this.container
-      //   .selectAll('g')
-      //   .selectAll('circle')
-      // .style('fill', 'gray')
-      // .style('display', d => this.getValue(d).count > 0 ? 'inline' : 'none')
     }
-    // renderSelected () {
-    //   // console.log(`map-layer(${this.name}):renderSelected`)
-    //   this.container
-    //     .selectAll('circle')
-    //     .classed('selected', this.isSelected)
-    // },
-    // isSelected (feature) {
-    //   return !!this.selected && this.selected.id === feature.id
-    // }
   },
   render: function (h) {
     return null
@@ -271,25 +229,19 @@ export default {
 
 <style>
 g.group {
-  opacity: 0.5;
-}
-g.group circle {
-  fill: gray;
-  stroke: white;
+  opacity: 0.8;
 }
 g.group path {
-  stroke: gray;
   stroke-width: 1.5px;
   fill: none;
+  stroke: grey;
+  opacity: 0.5;
 }
 g.group.highlight {
   opacity: 1;
 }
-g.group.highlight circle {
-  fill: orangered;
-}
 g.group.highlight path {
   stroke: orangered;
-  stroke-width: 3px;
+  stroke-width: 5px;
 }
 </style>

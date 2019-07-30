@@ -39,9 +39,20 @@ df <- df_orig %>%
       month(datetime) <= 6 ~ "Spring",
       month(datetime) <= 9 ~ "Summer",
       TRUE ~ "Fall",
+    ),
+    active = case_when(
+      active == 1 ~ "Active",
+      active == 0 ~ "Inactive"
     )
   )
   
+
+# domains -----------------------------------------------------------------
+
+df$length %>% summary
+df$cohort %>% unique
+df$season %>% unique
+df$active %>% unique
 
 # plots -------------------------------------------------------------------
 

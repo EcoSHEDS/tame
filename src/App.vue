@@ -14,22 +14,57 @@
 
     <v-content>
       <tame-map :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps">
-        <tame-map-layer :data="dataset"></tame-map-layer>
+        <tame-map-layer
+          :data="dataset"
+          :getColor="getColor"
+          :getOutline="getOutline"
+          :getSize="getSize">
+        </tame-map-layer>
       </tame-map>
-      <v-container fill-height d-block ml-0 style="width:800px">
+      <v-container fill-height d-block ml-0 style="width:600px">
         <v-layout column>
           <v-flex>
             <v-card class="mb-3">
-              <v-toolbar dark dense color="primary" class="">
+              <v-toolbar dark dense color="primary">
                 <h3>
                   <v-icon size="20" left>mdi-database</v-icon>
                   <strong>Dataset</strong>: Upper Klamath Lake Suckers
                 </h3>
                 <v-spacer></v-spacer>
-                <v-btn small color="grey darken-1" rounded>
+                <v-btn small class="grey darken-1" rounded>
                   <v-icon size="20" left>mdi-information</v-icon> About
                 </v-btn>
+                <v-btn height="24" width="24" icon @click="toolbox.collapse = !toolbox.collapse" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
+                  <v-icon v-if="!toolbox.collapse">mdi-menu-up</v-icon>
+                  <v-icon v-else>mdi-menu-down</v-icon>
+                </v-btn>
               </v-toolbar>
+              <v-card-text v-if="!toolbox.collapse">
+                <v-autocomplete
+                  v-model="color.selected"
+                  label="Color By"
+                  item-value="id"
+                  item-text="description"
+                  return-object
+                  :items="color.options">
+                </v-autocomplete>
+                <v-autocomplete
+                  v-model="size.selected"
+                  label="Size By"
+                  item-value="id"
+                  item-text="description"
+                  return-object
+                  :items="size.options">
+                </v-autocomplete>
+                <v-autocomplete
+                  v-model="outline.selected"
+                  label="Outline By"
+                  item-value="id"
+                  item-text="description"
+                  return-object
+                  :items="outline.options">
+                </v-autocomplete>
+              </v-card-text>
             </v-card>
             <v-card v-if="debug.visible">
               <v-toolbar dense dark color="red darken-4">
@@ -43,6 +78,10 @@
               <v-card-text v-if="!debug.collapse" style="font-family:monospace">
                 <!-- map.center: {{ map.center }} <br> -->
                 <!-- map.zoom: {{ map.zoom }} -->
+                <!-- color.selected: {{ color.selected }} <br>
+                size.selected: {{ size.selected }} <br>
+                outline.selected: {{ outline.selected }} <br> -->
+                counts: {{ crossfilter.counts }} <br>
               </v-card-text>
             </v-card>
           </v-flex>
@@ -54,6 +93,9 @@
 
 <script>
 import * as d3 from 'd3'
+
+import evt from '@/events'
+import { xf } from '@/crossfilter'
 
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
@@ -90,12 +132,109 @@ export default {
         }
       ]
     },
+    toolbox: {
+      collapse: false
+    },
     debug: {
       visible: true,
       collapse: false
+    },
+    crossfilter: {
+      counts: {
+        filtered: 0,
+        total: 0
+      }
+    },
+    color: {
+      selected: null,
+      options: [
+        {
+          id: 'length',
+          description: 'Individual Length',
+          type: 'continuous',
+          domain: [150, 250]
+        },
+        {
+          id: 'season',
+          description: 'Season',
+          type: 'discrete',
+          domain: ['Spring', 'Summer', 'Fall']
+        },
+        {
+          id: 'cohort',
+          description: 'Cohort',
+          type: 'discrete',
+          domain: ['TNC', 'Rocky Point', 'Shoalwater Bay']
+        }
+      ]
+    },
+    size: {
+      selected: null,
+      options: [
+        {
+          id: 'length',
+          description: 'Individual Length',
+          type: 'continuous',
+          domain: [150, 250]
+        }
+      ]
+    },
+    outline: {
+      selected: null,
+      options: [
+        {
+          id: 'active',
+          description: 'Active',
+          type: 'discrete',
+          domain: ['Inactive', 'Active']
+        }
+      ]
     }
   }),
+  computed: {
+    colorScale () {
+      let valueScale, colorScale, scale
+      if (this.color.selected && this.color.selected.type === 'continuous') {
+        valueScale = d3.scaleLinear()
+          .domain(this.color.selected.domain)
+          .range([0, 1])
+          .clamp(true)
+        colorScale = d3.scaleSequential(d3.interpolateViridis)
+        scale = (x) => colorScale(valueScale(x))
+      } else {
+        scale = d3.scaleOrdinal(d3.schemeCategory10)
+          .domain(this.color.selected.domain)
+      }
+      return scale
+    },
+    outlineScale () {
+      return d3.scaleOrdinal(['orangered', 'white'])
+        .domain(this.outline.selected.domain)
+    },
+    sizeScale () {
+      return d3.scaleLinear()
+        .domain(this.size.selected.domain)
+        .range([0.1, 1])
+        .clamp(true)
+    }
+  },
+  watch: {
+    'color.selected': () => {
+      evt.$emit('map:render')
+    },
+    'outline.selected': () => {
+      evt.$emit('map:render')
+    },
+    'size.selected': () => {
+      evt.$emit('map:render')
+    }
+  },
   mounted () {
+    this.color.selected = this.color.options[0]
+    this.outline.selected = this.outline.options[0]
+    this.size.selected = this.size.options[0]
+
+    evt.$on('filter', this.onFilter)
     d3.csv('http://localhost:8083/ukl-suckers.csv')
       .then((data) => {
         const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
@@ -105,11 +244,37 @@ export default {
           row.length = +row.length
           row.lat = +row.lat
           row.lon = +row.lon
-          row.active = +row.active
         })
         this.dataset = data
-        window.data = data
+        xf.add(data)
+        evt.$emit('filter')
       })
+  },
+  methods: {
+    getColor (d) {
+      if (!d || !this.color.selected || d[this.color.selected.id] === null) {
+        return '#AAAAA'
+      }
+      return this.colorScale(d[this.color.selected.id])
+    },
+    getOutline (d) {
+      if (!d || !this.outline.selected || d[this.outline.selected.id] === null) {
+        return '#FFFFFF'
+      }
+      return this.outlineScale(d[this.outline.selected.id])
+    },
+    getSize (d) {
+      if (!d || d[this.size.selected.id] === null) {
+        return 1
+      }
+      return this.sizeScale(d[this.size.selected.id])
+    },
+    onFilter () {
+      console.log('app:onFilter')
+      this.crossfilter.counts.filtered = xf.allFiltered().length
+      this.crossfilter.counts.total = xf.size()
+      evt.$emit('map:render')
+    }
   }
 }
 </script>
