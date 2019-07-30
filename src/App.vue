@@ -34,12 +34,12 @@
                 <v-btn small class="grey darken-1" rounded>
                   <v-icon size="20" left>mdi-information</v-icon> About
                 </v-btn>
-                <v-btn height="24" width="24" icon @click="toolbox.collapse = !toolbox.collapse" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
-                  <v-icon v-if="!toolbox.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="datasetBox.collapse = !datasetBox.collapse" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
+                  <v-icon v-if="!datasetBox.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-text v-if="!toolbox.collapse">
+              <v-card-text v-show="!datasetBox.collapse">
                 <v-autocomplete
                   v-model="color.selected"
                   label="Color By"
@@ -66,31 +66,60 @@
                   clearable
                   :items="outline.options">
                 </v-autocomplete>
+                <div>
+                  Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
+                </div>
+              </v-card-text>
+            </v-card>
+            <v-card class="mb-3">
+              <v-toolbar dense dark color="primary">
+                <strong>Cross Filters</strong>
+                <v-spacer></v-spacer>
+                <v-btn height="24" width="24" icon @click="filterBox.collapse = !filterBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!filterBox.collapse">mdi-menu-up</v-icon>
+                  <v-icon v-else>mdi-menu-down</v-icon>
+                </v-btn>
+              </v-toolbar>
+              <v-card-text v-show="!filterBox.collapse">
+                <v-autocomplete
+                  :items="filters.options"
+                  v-model="filters.selected"
+                  multiple
+                  dense
+                  return-object
+                  item-value="id"
+                  item-text="description"
+                  chips
+                  deletable-chips
+                  clearable
+                  label="Select filter variable(s)...">
+                </v-autocomplete>
+                <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
               </v-card-text>
             </v-card>
             <v-card class="mb-3">
               <v-toolbar dense dark color="primary">
                 <strong>Time Filter</strong>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="timeFilter.collapse = !timeFilter.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!timeFilter.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="timeBox.collapse = !timeBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!timeBox.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-text v-if="!timeFilter.collapse">
-                <tame-time-filter v-if="timeFilter.ready"></tame-time-filter>
+              <v-card-text v-show="!timeBox.collapse">
+                <tame-time-filter v-if="timeBox.ready"></tame-time-filter>
               </v-card-text>
             </v-card>
-            <v-card v-if="debug.visible">
+            <v-card v-if="debugBox.visible">
               <v-toolbar dense dark color="red darken-4">
                 <strong>Debug</strong>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="debug.collapse = !debug.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!debug.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="debugBox.collapse = !debugBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!debugBox.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-text v-if="!debug.collapse" style="font-family:monospace">
+              <v-card-text v-if="!debugBox.collapse" style="font-family:monospace">
                 <!-- map.center: {{ map.center }} <br> -->
                 <!-- map.zoom: {{ map.zoom }} -->
                 <!-- color.selected: {{ color.selected }} <br>
@@ -114,6 +143,7 @@ import { xf } from '@/crossfilter'
 
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
+import TameFilter from '@/components/TameFilter'
 import TameTimeFilter from '@/components/TameTimeFilter'
 
 export default {
@@ -121,6 +151,7 @@ export default {
   components: {
     TameMap,
     TameMapLayer,
+    TameFilter,
     TameTimeFilter
   },
   data: () => ({
@@ -149,15 +180,18 @@ export default {
         }
       ]
     },
-    toolbox: {
+    datasetBox: {
       collapse: false
     },
-    timeFilter: {
+    timeBox: {
       collapse: false,
       ready: false
     },
-    debug: {
+    debugBox: {
       visible: process.env.NODE_ENV === 'development',
+      collapse: false
+    },
+    filterBox: {
       collapse: false
     },
     crossfilter: {
@@ -203,6 +237,35 @@ export default {
     outline: {
       selected: null,
       options: [
+        {
+          id: 'active',
+          description: 'Active',
+          type: 'discrete',
+          domain: ['Inactive', 'Active']
+        }
+      ]
+    },
+    filters: {
+      selected: [],
+      options: [
+        {
+          id: 'length',
+          description: 'Individual Length',
+          type: 'continuous',
+          domain: [150, 250]
+        },
+        {
+          id: 'season',
+          description: 'Season',
+          type: 'discrete',
+          domain: ['Spring', 'Summer', 'Fall']
+        },
+        {
+          id: 'cohort',
+          description: 'Cohort',
+          type: 'discrete',
+          domain: ['TNC', 'Rocky Point', 'Shoalwater Bay']
+        },
         {
           id: 'active',
           description: 'Active',
@@ -269,7 +332,7 @@ export default {
         })
         this.dataset = data
         xf.add(data)
-        this.timeFilter.ready = true
+        this.timeBox.ready = true
         evt.$emit('filter')
       })
       .catch((err) => {
@@ -300,7 +363,10 @@ export default {
       console.log('app:onFilter')
       this.crossfilter.counts.filtered = xf.allFiltered().length
       this.crossfilter.counts.total = xf.size()
-      evt.$emit('map:render')
+      // evt.$emit('map:render')
+    },
+    removeFilter (variable) {
+      this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
     }
   }
 }

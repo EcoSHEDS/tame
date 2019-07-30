@@ -152,7 +152,7 @@ export default {
       return [point.x, point.y]
     },
     render () {
-      console.log('tame-map-layer:render')
+      // console.log('tame-map-layer:render')
       if (!this.data) return
 
       const vm = this
@@ -208,7 +208,7 @@ export default {
         })
     },
     renderFilter () {
-      console.log('tame-map-layer:renderFilter')
+      // console.log('tame-map-layer:renderFilter')
       this.container
         .selectAll('g')
         .selectAll('circle')

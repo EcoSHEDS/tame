@@ -1,12 +1,12 @@
 <template>
   <div>
-    <div>
+    <!-- <div>
       Range Selected:
       <span v-if="!filterRange">None</span>
       <span v-else>
         {{ filterRange[0] | moment('MM/DD/YYYY') }} to {{ filterRange[1] | moment('MM/DD/YYYY') }}
       </span>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -25,7 +25,7 @@ export default {
     }
   },
   mounted () {
-    evt.$on('filter', this.render)
+    // evt.$on('filter', this.render)
 
     const dim = xf.dimension(d => d3.utcDay(d.datetime))
     const group = dim.group().reduceCount()
@@ -34,23 +34,22 @@ export default {
 
     this.chart = dc.barChart(this.$el)
       .width(550)
-      .height(200)
-      .margins({ top: 10, right: 50, bottom: 30, left: 40 })
+      .height(150)
+      .margins({ top: 0, right: 20, bottom: 30, left: 30 })
       .dimension(dim)
       .group(group)
       .elasticY(true)
       .x(d3.scaleTime().domain(timeExtent))
       .xUnits(d3.utcDays)
       .on('filtered', () => {
-        console.log(this.chart.dimension().currentFilter())
         const filter = this.chart.dimension().currentFilter()
         if (filter) {
           this.filterRange = [filter[0], filter[1]]
         } else {
           this.filterRange = this.chart.x().domain()
         }
-        // evt.$emit('filter')
         evt.$emit('map:render:filter')
+        evt.$emit('filter')
       })
 
     // this.chart.xUnits(() => 100)
