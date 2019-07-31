@@ -34,13 +34,9 @@
                 <v-btn small class="grey darken-1" rounded>
                   <v-icon size="20" left>mdi-information</v-icon> About
                 </v-btn>
-                <v-btn height="24" width="24" icon @click="datasetBox.collapse = !datasetBox.collapse" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
-                  <v-icon v-if="!datasetBox.collapse">mdi-menu-up</v-icon>
-                  <v-icon v-else>mdi-menu-down</v-icon>
-                </v-btn>
               </v-toolbar>
               <v-card-text v-show="!datasetBox.collapse">
-                <v-autocomplete
+                <!-- <v-autocomplete
                   v-model="color.selected"
                   label="Color By"
                   item-value="id"
@@ -68,38 +64,83 @@
                 </v-autocomplete>
                 <div>
                   Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
-                </div>
+                </div> -->
               </v-card-text>
             </v-card>
             <v-card class="mb-3">
-              <v-toolbar dense dark color="primary">
-                <strong>Cross Filters</strong>
+              <v-tabs
+                v-model="tabs.active"
+                background-color="primary"
+                dark
+                slider-color="white">
+                <v-tab ripple>
+                  <v-icon small class="mr-1">mdi-table</v-icon> Map Variables
+                </v-tab>
+                <v-tab ripple>
+                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Crossfilters
+                </v-tab>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="filterBox.collapse = !filterBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!filterBox.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey darken-1 elevation-2 mt-3 mr-4" dark>
+                  <v-icon v-if="!tabs.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
-              </v-toolbar>
-              <v-card-text v-show="!filterBox.collapse">
-                <v-autocomplete
-                  :items="filters.options"
-                  v-model="filters.selected"
-                  multiple
-                  dense
-                  return-object
-                  item-value="id"
-                  item-text="description"
-                  chips
-                  deletable-chips
-                  clearable
-                  label="Select filter variable(s)...">
-                </v-autocomplete>
-                <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
-              </v-card-text>
+                <v-tab-item :transition="false" :reverse-transition="false">
+                  <v-card v-show="!tabs.collapse">
+                    <v-card-text>
+                      <v-autocomplete
+                        v-model="color.selected"
+                        label="Color By"
+                        item-value="id"
+                        item-text="description"
+                        return-object
+                        :items="color.options">
+                      </v-autocomplete>
+                      <v-autocomplete
+                        v-model="size.selected"
+                        label="Size By"
+                        item-value="id"
+                        item-text="description"
+                        return-object
+                        clearable
+                        :items="size.options">
+                      </v-autocomplete>
+                      <v-autocomplete
+                        v-model="outline.selected"
+                        label="Outline By"
+                        item-value="id"
+                        item-text="description"
+                        return-object
+                        clearable
+                        :items="outline.options">
+                      </v-autocomplete>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+                <v-tab-item :transition="false" :reverse-transition="false">
+                  <v-card :max-height="$vuetify.breakpoint.height - 450" style="overflow-y: auto" v-show="!tabs.collapse">
+                    <v-card-text>
+                      <v-autocomplete
+                        :items="filters.options"
+                        v-model="filters.selected"
+                        multiple
+                        dense
+                        return-object
+                        item-value="id"
+                        item-text="description"
+                        chips
+                        deletable-chips
+                        clearable
+                        label="Select filter variable(s)...">
+                      </v-autocomplete>
+                      <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+              </v-tabs>
             </v-card>
             <v-card class="mb-3">
               <v-toolbar dense dark color="primary">
-                <strong>Time Filter</strong>
+                <strong>Legend</strong>
                 <v-spacer></v-spacer>
                 <v-btn height="24" width="24" icon @click="timeBox.collapse = !timeBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
                   <v-icon v-if="!timeBox.collapse">mdi-menu-up</v-icon>
@@ -107,7 +148,9 @@
                 </v-btn>
               </v-toolbar>
               <v-card-text v-show="!timeBox.collapse">
-                <tame-time-filter v-if="timeBox.ready"></tame-time-filter>
+                <div>
+                  Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
+                </div>
               </v-card-text>
             </v-card>
             <v-card v-if="debugBox.visible">
@@ -125,7 +168,8 @@
                 <!-- color.selected: {{ color.selected }} <br>
                 size.selected: {{ size.selected }} <br>
                 outline.selected: {{ outline.selected }} <br> -->
-                counts: {{ crossfilter.counts }} <br>
+                <!-- counts: {{ crossfilter.counts }} <br> -->
+                tabs.collapse: {{ tabs.collapse }}
               </v-card-text>
             </v-card>
           </v-flex>
@@ -144,18 +188,20 @@ import { xf } from '@/crossfilter'
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
 import TameFilter from '@/components/TameFilter'
-import TameTimeFilter from '@/components/TameTimeFilter'
 
 export default {
   name: 'App',
   components: {
     TameMap,
     TameMapLayer,
-    TameFilter,
-    TameTimeFilter
+    TameFilter
   },
   data: () => ({
     dataset: [],
+    tabs: {
+      active: 0,
+      collapse: false
+    },
     map: {
       center: [35, -92.8],
       zoom: 5,
@@ -249,6 +295,11 @@ export default {
       selected: [],
       options: [
         {
+          id: 'datetime',
+          description: 'Date',
+          type: 'datetime'
+        },
+        {
           id: 'length',
           description: 'Individual Length',
           type: 'continuous',
@@ -340,6 +391,10 @@ export default {
         alert('Failed to load dataset. See console.')
       })
   },
+  beforeDestroy () {
+    xf.remove(() => true)
+    evt.$off('filter', this.onFilter)
+  },
   methods: {
     getColor (d) {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
@@ -363,7 +418,6 @@ export default {
       console.log('app:onFilter')
       this.crossfilter.counts.filtered = xf.allFiltered().length
       this.crossfilter.counts.total = xf.size()
-      // evt.$emit('map:render')
     },
     removeFilter (variable) {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)

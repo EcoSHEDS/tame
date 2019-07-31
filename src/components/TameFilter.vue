@@ -1,8 +1,19 @@
 <template>
   <v-card elevation-1 class="my-2">
     <v-toolbar dense color="grey lighten-3" flat height="32">
-      <strong>{{ variable.description }} <span v-if="variable.units">({{variable.units}})</span></strong>
+      <strong>
+        {{ variable.description }}
+        <span v-if="filterRange && variable.type === 'continuous'">
+          ({{ filterRange[0].toFixed(1) }} - {{ filterRange[1].toFixed(1) }})
+        </span>
+        <span v-else-if="filterRange && variable.type === 'datetime'">
+          ({{ filterRange[0] | moment('MM/DD/YYYY') }} - {{ filterRange[1] | moment('MM/DD/YYYY') }})
+        </span>
+      </strong>
       <v-spacer></v-spacer>
+      <v-btn icon small @click="resetFilter" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
+        <v-icon small>mdi-refresh</v-icon>
+      </v-btn>
       <v-btn icon small @click="hide = !hide" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
         <v-icon small v-if="hide">mdi-menu-up</v-icon>
         <v-icon small v-else>mdi-menu-down</v-icon>
@@ -12,9 +23,6 @@
       </v-btn>
     </v-toolbar>
     <v-card-text v-show="!hide">
-      <!-- Filter Range:
-      <span v-if="filterRange">{{ filterRange[0].toFixed(1) }} - {{ filterRange[1].toFixed(1) }}</span>
-      <span v-else>None</span> -->
       <div class="tame-filter-chart"></div>
     </v-card-text>
   </v-card>
@@ -42,51 +50,124 @@ export default {
     }
   },
   mounted () {
-    const interval = (this.variable.domain[1] - this.variable.domain[0]) / 30
-    const dim = xf.dimension(d => d[this.variable.id])
-    const group = dim.group(d => Math.floor(d / interval) * interval).reduceCount()
+    const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
+    const margins = { top: 0, right: 20, bottom: 16, left: 30 }
+    const variable = this.variable
 
-    this.chart = dc.barChart(this.$el.getElementsByClassName('tame-filter-chart').item(0))
-      .width(500)
-      .height(150)
-      .margins({ top: 0, right: 20, bottom: 30, left: 30 })
-      .dimension(dim)
-      .group(group)
-      .elasticY(true)
-      .transitionDelay(0)
-      .x(d3.scaleLinear().domain(this.variable.domain))
-      .on('filtered', () => {
-        const filter = this.chart.dimension().currentFilter()
-        if (filter) {
-          this.filterRange = [filter[0], filter[1]]
-        } else {
-          this.filterRange = undefined
-        }
-        // evt.$emit('xf:filter')
-        // evt.$emit('map:render')
-        evt.$emit('map:render:filter')
-        evt.$emit('filter')
+    if (variable.type === 'continuous') {
+      const interval = (variable.domain[1] - variable.domain[0]) / 30
+      const dim = xf.dimension(d => d[variable.id])
+      const group = dim.group(d => Math.floor(d / interval) * interval).reduceCount()
+
+      this.chart = dc.barChart(el)
+        .width(500)
+        .height(100)
+        .margins(margins)
+        .dimension(dim)
+        .group(group)
+        .elasticY(true)
+        .transitionDelay(0)
+        .x(d3.scaleLinear().domain(variable.domain))
+        .on('filtered', () => {
+          console.log(`tame-filter:on(filtered):${variable.id}`)
+          const filter = this.chart.dimension().currentFilter()
+          if (filter) {
+            this.filterRange = [filter[0], filter[1]]
+          } else {
+            this.filterRange = undefined
+          }
+          evt.$emit('map:render:filter')
+          evt.$emit('filter')
+        })
+      this.chart.xUnits(() => 30)
+      this.chart.yAxis().ticks(4)
+    } else if (variable.type === 'discrete') {
+      const dim = xf.dimension(d => d[variable.id])
+      const group = dim.group().reduceCount()
+      const count = variable.domain.length
+      const gap = 5
+      const barHeight = 20
+      const height = margins.bottom + barHeight * count + gap * (count + 1)
+
+      this.chart = dc.rowChart(el)
+        .width(500)
+        .height(height)
+        .margins(margins)
+        .dimension(dim)
+        .group(group)
+        .elasticX(true)
+        .ordinalColors(d3.range(variable.domain.length).map(d => d3.schemeCategory10[0]))
+        .transitionDelay(0)
+        .transitionDuration(0)
+        .gap(gap)
+        .fixedBarHeight(20)
+        .ordering(d => variable.domain.findIndex(v => v === d.key))
+        .label(function (d) {
+          return d.key
+        })
+      this.chart.on('renderlet', (chart) => {
+        chart.selectAll('g.row')
+          .each(function () {
+            const barWidth = +d3.select(this).select('rect').attr('width')
+            const textEl = d3.select(this).select('text')
+            const textWidth = textEl.node().getBBox().width
+            if (barWidth < (10 + textWidth)) {
+              textEl
+                .style('fill', 'black')
+                .attr('transform', `translate(${barWidth - 5},0)`)
+            } else {
+              textEl
+                .style('fill', null)
+            }
+          })
       })
+    } else if (variable.type === 'datetime') {
+      const dim = xf.dimension(d => d3.utcDay(d.datetime))
+      const group = dim.group().reduceCount()
+      const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d.datetime)))
+      this.filterRange = timeExtent
 
-    this.chart.xUnits(() => 30)
+      this.chart = dc.barChart(this.$el)
+        .width(500)
+        .height(100)
+        .margins(margins)
+        .dimension(dim)
+        .group(group)
+        .elasticY(true)
+        .x(d3.scaleTime().domain(timeExtent))
+        .xUnits(d3.utcDays)
+        .on('filtered', () => {
+          const filter = this.chart.dimension().currentFilter()
+          if (filter) {
+            this.filterRange = [filter[0], filter[1]]
+          } else {
+            this.filterRange = this.chart.x().domain()
+          }
+          evt.$emit('map:render:filter')
+          evt.$emit('filter')
+        })
 
-    // this.chart.xAxis()
-    // .tickFormat(d => this.axisFormatter(this.inverseTransform(d)))
+      this.chart.yAxis().ticks(4)
+    }
 
     this.chart.render()
   },
   beforeDestroy () {
-    this.chart.dimension().dispose()
-    dc.chartRegistry.deregister(this.chart)
-    dc.renderAll()
+    if (this.chart) {
+      this.chart.dimension().dispose()
+      dc.chartRegistry.deregister(this.chart)
+      dc.renderAll()
+    }
     evt.$emit('map:render:filter')
   },
   methods: {
     render () {
-      this.chart.render()
+      this.chart && this.chart.render()
     },
     resetFilter () {
-      this.chart.dimension().filterAll()
+      // console.log('tame-filter:resetFilter')
+      this.chart && this.chart.filterAll()
+      dc.redrawAll()
     },
     close () {
       this.$emit('close')
@@ -94,3 +175,9 @@ export default {
   }
 }
 </script>
+
+<style>
+/* .dc-chart g.row text {
+  fill: #DDD;
+} */
+</style>

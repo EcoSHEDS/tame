@@ -1,6 +1,7 @@
 import dc from 'dc'
-import { schemeSet1 } from 'd3'
+import { schemeCategory10 } from 'd3'
+import 'dc/dc.css'
 
-dc.config.defaultColors(schemeSet1)
+dc.config.defaultColors(schemeCategory10)
 dc.disableTransitions = true
 dc.constants.EVENT_DELAY = 1

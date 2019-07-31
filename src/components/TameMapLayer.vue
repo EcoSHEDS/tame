@@ -108,6 +108,7 @@ export default {
   beforeDestroy () {
     evt.$off('map:zoom', this.resize)
     evt.$off('map:render', this.render)
+    evt.$off('map:render:filter', this.renderFilter)
     this.tip.destroy()
     this.container.selectAll('*').remove()
     this.container.remove()
