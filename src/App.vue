@@ -18,7 +18,10 @@
           :data="dataset"
           :getColor="getColor"
           :getOutline="getOutline"
-          :getSize="getSize">
+          :getSize="getSize"
+          :selected-id="selected.id"
+          :showLines="map.showLines"
+          @click="selectId">
         </tame-map-layer>
       </tame-map>
       <v-container fill-height ml-0 style="max-width:900px" grid-list-lg>
@@ -113,6 +116,24 @@
                         clearable
                         :items="outline.options">
                       </v-autocomplete>
+                      <v-switch v-model="map.showLines" label="Show All Connection Lines">
+                      </v-switch>
+                      <!-- <v-switch v-model="map.showLines">
+                        <template v-slot:label>
+                          <div>
+                            Show All Connection Lines
+                            <v-tooltip right max-width="300" open-delay="300">
+                              <template v-slot:activator="{ on }">
+                                <v-icon right color="grey lighten-1" v-on="on">mdi-alert-circle-outline</v-icon>
+                              </template>
+                              <div>
+                                Show/hide all lines connecting consecutive locations for each individual. <br>
+                                Does not apply to individuals that are selected or hovered over.
+                              </div>
+                            </v-tooltip>
+                          </div>
+                        </template>
+                      </v-switch> -->
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -162,7 +183,28 @@
                 <tame-legend-outline :variable="outline.selected"></tame-legend-outline>
               </v-card-text>
             </v-card>
-            <v-card v-if="debug.visible">
+            <v-card class="mb-3" v-if="selected.id">
+              <v-toolbar dense dark color="primary">
+                <strong>Selected Individual</strong>
+                <v-spacer></v-spacer>
+                <v-btn height="24" width="24" icon @click="selected.collapse = !selected.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!selected.collapse">mdi-menu-up</v-icon>
+                  <v-icon v-else>mdi-menu-down</v-icon>
+                </v-btn>
+                <v-tooltip right open-delay="300">
+                  <template v-slot:activator="{ on }">
+                    <v-btn height="24" width="24" icon @click="selectId()" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Unselect Individual</span>
+                </v-tooltip>
+              </v-toolbar>
+              <v-card-text v-if="!selected.collapse">
+                <tame-selected :id="selected.id"></tame-selected>
+              </v-card-text>
+            </v-card>
+            <v-card class="mb-3" v-if="debug.visible">
               <v-toolbar dense dark color="red darken-4">
                 <strong>Debug</strong>
                 <v-spacer></v-spacer>
@@ -172,7 +214,7 @@
                 </v-btn>
               </v-toolbar>
               <v-card-text v-if="!debug.collapse" style="font-family:monospace">
-                tabs.collapse: {{ tabs.collapse }}
+                map.showLines: {{ map.showLines }}
               </v-card-text>
             </v-card>
           </v-flex>
@@ -194,6 +236,7 @@ import TameFilter from '@/components/TameFilter'
 import TameLegendColor from '@/components/TameLegendColor'
 import TameLegendSize from '@/components/TameLegendSize'
 import TameLegendOutline from '@/components/TameLegendOutline'
+import TameSelected from '@/components/TameSelected'
 
 export default {
   name: 'App',
@@ -203,7 +246,8 @@ export default {
     TameFilter,
     TameLegendColor,
     TameLegendSize,
-    TameLegendOutline
+    TameLegendOutline,
+    TameSelected
   },
   data: () => ({
     dataset: [],
@@ -220,6 +264,7 @@ export default {
     map: {
       center: [35, -92.8],
       zoom: 5,
+      showLines: false,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -250,6 +295,10 @@ export default {
         filtered: 0,
         total: 0
       }
+    },
+    selected: {
+      collapse: false,
+      id: null
     },
     color: {
       selected: null,
@@ -373,6 +422,7 @@ export default {
     this.color.selected = this.color.options[2]
     this.outline.selected = this.outline.options[0]
     this.size.selected = this.size.options[0]
+    this.filters.selected = [this.filters.options[0]]
 
     evt.$on('filter', this.onFilter)
     this.$http.get('ukl-suckers.csv')
@@ -425,6 +475,10 @@ export default {
     },
     removeFilter (variable) {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
+    },
+    selectId (d) {
+      console.log('app:selectId', d)
+      this.selected.id = d
     }
   }
 }
