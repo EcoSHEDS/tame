@@ -2,7 +2,7 @@ pre, code {
   white-space: normal;
 }
 
-circle {
+.tame-map circle {
   cursor: pointer !important;
   pointer-events: visible !important;
 }

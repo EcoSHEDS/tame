@@ -21,9 +21,9 @@
           :getSize="getSize">
         </tame-map-layer>
       </tame-map>
-      <v-container fill-height d-block ml-0 style="width:600px">
-        <v-layout column>
-          <v-flex>
+      <v-container fill-height ml-0 style="max-width:900px" grid-list-lg>
+        <v-layout row>
+          <v-flex xs8 grow-shrink-0>
             <v-card class="mb-3">
               <v-toolbar dark dense color="primary">
                 <h3>
@@ -59,7 +59,7 @@
                         color="primary"
                         text
                         @click="dialogs.about = false">
-                        clsoe
+                        Close
                       </v-btn>
                     </v-card-actions>
                   </v-card>
@@ -116,7 +116,7 @@
                   </v-card>
                 </v-tab-item>
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 420" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <v-autocomplete
                         :items="filters.options"
@@ -137,6 +137,8 @@
                 </v-tab-item>
               </v-tabs>
             </v-card>
+          </v-flex>
+          <v-flex xs4 grow-shrink-0>
             <v-card class="mb-3">
               <v-toolbar dense dark color="primary">
                 <strong>Legend</strong>
@@ -147,9 +149,12 @@
                 </v-btn>
               </v-toolbar>
               <v-card-text v-show="!legend.collapse">
-                <div>
-                  Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
+                <div class="grey--text text--darken-2">
+                  <h4>Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }} ({{ (crossfilter.counts.filtered / crossfilter.counts.total * 100).toFixed(0) }}%)</h4>
                 </div>
+                <v-divider class="my-2"></v-divider>
+                <tame-legend-color :variable="color.selected"></tame-legend-color>
+                <tame-legend-size :variable="size.selected"></tame-legend-size>
               </v-card-text>
             </v-card>
             <v-card v-if="debug.visible">
@@ -162,12 +167,6 @@
                 </v-btn>
               </v-toolbar>
               <v-card-text v-if="!debug.collapse" style="font-family:monospace">
-                <!-- map.center: {{ map.center }} <br> -->
-                <!-- map.zoom: {{ map.zoom }} -->
-                <!-- color.selected: {{ color.selected }} <br>
-                size.selected: {{ size.selected }} <br>
-                outline.selected: {{ outline.selected }} <br> -->
-                <!-- counts: {{ crossfilter.counts }} <br> -->
                 tabs.collapse: {{ tabs.collapse }}
               </v-card-text>
             </v-card>
@@ -187,13 +186,17 @@ import { xf } from '@/crossfilter'
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
 import TameFilter from '@/components/TameFilter'
+import TameLegendColor from '@/components/TameLegendColor'
+import TameLegendSize from '@/components/TameLegendSize'
 
 export default {
   name: 'App',
   components: {
     TameMap,
     TameMapLayer,
-    TameFilter
+    TameFilter,
+    TameLegendColor,
+    TameLegendSize
   },
   data: () => ({
     dataset: [],
@@ -409,7 +412,7 @@ export default {
       return this.sizeScale(d[this.size.selected.id])
     },
     onFilter () {
-      console.log('app:onFilter')
+      // console.log('app:onFilter')
       this.crossfilter.counts.filtered = xf.allFiltered().length
       this.crossfilter.counts.total = xf.size()
     },

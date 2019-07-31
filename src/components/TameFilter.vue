@@ -84,7 +84,7 @@ export default {
         .transitionDelay(0)
         .x(d3.scaleLinear().domain(variable.domain))
         .on('filtered', () => {
-          console.log(`tame-filter:on(filtered):${variable.id}`)
+          // console.log(`tame-filter:on(filtered):${variable.id}`)
           const filter = this.chart.dimension().currentFilter()
           if (filter) {
             this.filterRange = [filter[0], filter[1]]
@@ -120,22 +120,26 @@ export default {
         .label(function (d) {
           return d.key
         })
-      this.chart.on('renderlet', (chart) => {
-        chart.selectAll('g.row')
-          .each(function () {
-            const barWidth = +d3.select(this).select('rect').attr('width')
-            const textEl = d3.select(this).select('text')
-            const textWidth = textEl.node().getBBox().width
-            if (barWidth < (10 + textWidth)) {
-              textEl
-                .style('fill', 'black')
-                .attr('transform', `translate(${barWidth - 5},0)`)
-            } else {
-              textEl
-                .style('fill', null)
-            }
-          })
-      })
+        .on('filtered', () => {
+          evt.$emit('map:render:filter')
+          evt.$emit('filter')
+        })
+        .on('renderlet', (chart) => {
+          chart.selectAll('g.row')
+            .each(function () {
+              const barWidth = +d3.select(this).select('rect').attr('width')
+              const textEl = d3.select(this).select('text')
+              const textWidth = textEl.node().getBBox().width
+              if (barWidth < (10 + textWidth)) {
+                textEl
+                  .style('fill', 'black')
+                  .attr('transform', `translate(${barWidth - 5},0)`)
+              } else {
+                textEl
+                  .style('fill', null)
+              }
+            })
+        })
     } else if (variable.type === 'datetime') {
       const dim = xf.dimension(d => d3.utcDay(d.datetime))
       const group = dim.group().reduceCount()
