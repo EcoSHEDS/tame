@@ -22,7 +22,7 @@ export default {
       svg: null,
       barWidth: 20,
       barHeight: 200,
-      axisWidth: 300,
+      width: 250,
       margins: {
         left: 10,
         right: 20,
@@ -33,9 +33,6 @@ export default {
     }
   },
   computed: {
-    width () {
-      return this.barWidth + this.margins.left + this.axisWidth
-    },
     height () {
       return this.barHeight + this.margins.top + this.margins.bottom
     },

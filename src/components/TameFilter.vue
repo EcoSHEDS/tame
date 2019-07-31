@@ -26,7 +26,7 @@
             <v-icon small v-else>mdi-menu-down</v-icon>
           </v-btn>
         </template>
-        <span>Hide Filter</span>
+        <span>{{ hide ? 'Show' : 'Hide' }} Filter</span>
       </v-tooltip>
       <v-tooltip bottom open-delay="300">
         <template v-slot:activator="{ on }">

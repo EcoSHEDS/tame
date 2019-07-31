@@ -36,7 +36,7 @@
                   width="800">
                   <template v-slot:activator="{ on }">
                     <v-btn small class="grey darken-1" rounded v-on="on">
-                      <v-icon size="20" left>mdi-information</v-icon> About
+                      <v-icon size="20" left>mdi-alert-circle-outline</v-icon> About
                     </v-btn>
                   </template>
 
@@ -73,7 +73,7 @@
                 dark
                 slider-color="white">
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-table</v-icon> Map Variables
+                  <v-icon small class="mr-1">mdi-map</v-icon> Map Variables
                 </v-tab>
                 <v-tab ripple>
                   <v-icon small class="mr-1">mdi-chart-bar</v-icon> Crossfilters
@@ -92,6 +92,7 @@
                         item-value="id"
                         item-text="description"
                         return-object
+                        clearable
                         :items="color.options">
                       </v-autocomplete>
                       <v-autocomplete
@@ -131,6 +132,9 @@
                         clearable
                         label="Select filter variable(s)...">
                       </v-autocomplete>
+                      <p v-if="filters.selected.length > 0" class="subheading">
+                        <v-icon small>mdi-alert-circle-outline</v-icon> Click and drag on any chart to filter the dataset.
+                      </p>
                       <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
                     </v-card-text>
                   </v-card>
@@ -155,6 +159,7 @@
                 <v-divider class="my-2"></v-divider>
                 <tame-legend-color :variable="color.selected"></tame-legend-color>
                 <tame-legend-size :variable="size.selected"></tame-legend-size>
+                <tame-legend-outline :variable="outline.selected"></tame-legend-outline>
               </v-card-text>
             </v-card>
             <v-card v-if="debug.visible">
@@ -188,6 +193,7 @@ import TameMapLayer from '@/components/TameMapLayer'
 import TameFilter from '@/components/TameFilter'
 import TameLegendColor from '@/components/TameLegendColor'
 import TameLegendSize from '@/components/TameLegendSize'
+import TameLegendOutline from '@/components/TameLegendOutline'
 
 export default {
   name: 'App',
@@ -196,7 +202,8 @@ export default {
     TameMapLayer,
     TameFilter,
     TameLegendColor,
-    TameLegendSize
+    TameLegendSize,
+    TameLegendOutline
   },
   data: () => ({
     dataset: [],
@@ -393,9 +400,9 @@ export default {
     evt.$off('filter', this.onFilter)
   },
   methods: {
-    getColor (d) {
+    getColor (d, i) {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
-        return '#AAAAA'
+        return '#888888'
       }
       return this.colorScale(d[this.color.selected.id])
     },

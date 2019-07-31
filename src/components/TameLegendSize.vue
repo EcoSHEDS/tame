@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="my-2">
-      <span class="font-weight-bold grey--text text--darken-2" v-if="variable">{{ variable.description }}</span><span v-else>None</span>
+    <div class="my-2 font-weight-bold grey--text text--darken-2">
+      Size: <span v-if="variable">{{ variable.description }}</span><span v-else>None</span>
     </div>
   </div>
 </template>
@@ -25,6 +25,7 @@ export default {
       nItems: 5,
       maxRadius: 10,
       itemPadding: 5,
+      width: 250,
       margins: {
         left: 10,
         right: 20,

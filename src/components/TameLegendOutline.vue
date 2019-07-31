@@ -1,5 +1,8 @@
 <template>
   <div>
+    <div class="my-2 font-weight-bold grey--text text--darken-2">
+      Outline: <span v-if="variable">{{ variable.description }}</span><span v-else>None</span>
+    </div>
   </div>
 </template>
 
@@ -7,48 +10,37 @@
 import * as d3 from 'd3'
 
 export default {
-  name: 'TameLegendColorDiscrete',
-  components: {
-  },
+  name: 'TameLegendOutline',
   props: {
     variable: {
-      type: Object,
-      required: true
+      type: Object
     }
   },
   data () {
     return {
-      id: 'legend-color',
       svg: null,
-      width: 250,
+      container: null,
       itemRadius: 8,
       itemPadding: 10,
+      width: 250,
       margins: {
         left: 10,
         right: 20,
-        top: 0,
-        bottom: 0
-      },
-      colorScheme: 'Viridis'
+        top: 5,
+        bottom: 1
+      }
     }
   },
   computed: {
+    colorScale () {
+      return d3.scaleOrdinal(['orangered', 'white'])
+        .domain(this.domain)
+    },
     domain () {
       return this.variable ? this.variable.domain : []
     },
     height () {
       return this.domain.length * (this.itemRadius * 2 + this.itemPadding) + this.margins.top + this.margins.bottom
-    },
-    colorScale () {
-      // console.log('tame-legend-color-discrete:colorScale', this.variable)
-      let scale
-      if (this.variable && this.variable.type === 'discrete') {
-        scale = d3.scaleOrdinal(d3.schemeCategory10)
-          .domain(this.domain)
-      } else {
-        scale = (x) => '#AAAAAA'
-      }
-      return scale
     }
   },
   watch: {
@@ -64,13 +56,13 @@ export default {
   },
   methods: {
     render () {
-      // console.log('tame-legend-color-discrete:render()', this.variable)
+      // console.log('tame-legend-outline:render()', this.variable)
       this.clear()
-      this.renderColor()
+      this.renderSvg()
     },
-    renderColor () {
+    renderSvg () {
       if (!(this.variable && this.variable.type === 'discrete')) return
-      // console.log('tame-legend-color-discrete:renderColor()', this.variable)
+      // console.log('tame-legend-outline:renderSvg()', this.variable)
 
       this.svg = d3.select(this.$el)
         .append('svg')
@@ -85,38 +77,26 @@ export default {
         .data(this.domain, d => d)
         .enter()
         .append('g')
-        .attr('class', 'tame-legend-color-discrete-item')
+        .attr('class', 'tame-legend-outline-item')
 
       items.append('circle')
         .attr('cx', this.itemRadius)
-        .attr('cy', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * i)
+        .attr('cy', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * (this.domain.length - i - 1))
         .attr('r', this.itemRadius)
-        .attr('fill', (d) => {
-          return this.colorScale(d)
-        })
+        .attr('fill', 'none')
+        .attr('stroke', d => this.colorScale(d))
+        .attr('stroke-width', '2px')
 
       items.append('text')
         .attr('x', this.itemRadius * 2 + 10)
-        .attr('y', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * i)
-        .attr('dy', '0.35em')
+        .attr('y', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * (this.domain.length - i - 1))
+        .attr('dy', '0.3em')
         .text(d => d)
     },
     clear () {
-      // console.log('tame-legend-color-discrete:clear()', this.svg)
+      // console.log('tame-legend-outline:clear()', this.svg)
       this.svg && this.svg.remove()
     }
   }
 }
 </script>
-
-<style>
-/* .tame-legend-color-discrete-item text {
-  fill: rgba(0, 0, 0, 0.54);
-} */
-
-/* .tame-legend-color-continuous g.tick > text {
-  fill: black;
-  font-size: larger;
-} */
-
-</style>

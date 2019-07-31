@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="my-2">
-      <span class="font-weight-bold grey--text text--darken-2" v-if="variable">{{ variable.description }}</span><span v-else>None</span>
+    <div class="my-2 font-weight-bold grey--text text--darken-2">
+      Color: <span v-if="variable">{{ variable.description }}</span><span v-else>None</span>
     </div>
     <component :is="`tame-legend-color-${variable.type}`" :variable="variable" v-if="variable"></component>
   </div>
