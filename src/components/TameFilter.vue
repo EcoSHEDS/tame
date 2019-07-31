@@ -11,16 +11,31 @@
         </span>
       </strong>
       <v-spacer></v-spacer>
-      <v-btn icon small @click="resetFilter" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
-        <v-icon small>mdi-refresh</v-icon>
-      </v-btn>
-      <v-btn icon small @click="hide = !hide" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
-        <v-icon small v-if="hide">mdi-menu-up</v-icon>
-        <v-icon small v-else>mdi-menu-down</v-icon>
-      </v-btn>
-      <v-btn icon small @click="close" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark>
-        <v-icon small>mdi-close</v-icon>
-      </v-btn>
+      <v-tooltip bottom open-delay="300">
+        <template v-slot:activator="{ on }">
+          <v-btn icon small @click="resetFilter" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+            <v-icon small>mdi-refresh</v-icon>
+          </v-btn>
+        </template>
+        <span>Reset Filter</span>
+      </v-tooltip>
+      <v-tooltip bottom open-delay="300">
+        <template v-slot:activator="{ on }">
+          <v-btn icon small @click="hide = !hide" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+            <v-icon small v-if="hide">mdi-menu-up</v-icon>
+            <v-icon small v-else>mdi-menu-down</v-icon>
+          </v-btn>
+        </template>
+        <span>Hide Filter</span>
+      </v-tooltip>
+      <v-tooltip bottom open-delay="300">
+        <template v-slot:activator="{ on }">
+          <v-btn icon small @click="close" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+            <v-icon small>mdi-close</v-icon>
+          </v-btn>
+        </template>
+        <span>Remove Filter</span>
+      </v-tooltip>
     </v-toolbar>
     <v-card-text v-show="!hide">
       <div class="tame-filter-chart"></div>
@@ -127,7 +142,7 @@ export default {
       const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d.datetime)))
       this.filterRange = timeExtent
 
-      this.chart = dc.barChart(this.$el)
+      this.chart = dc.barChart(el)
         .width(500)
         .height(100)
         .margins(margins)
@@ -177,7 +192,10 @@ export default {
 </script>
 
 <style>
-/* .dc-chart g.row text {
-  fill: #DDD;
-} */
+.dc-chart rect.bar {
+  fill-opacity: 0.8;
+}
+.dc-chart g.axis > g.tick:not(:nth-child(2)) > line.grid-line {
+  display: none;
+}
 </style>

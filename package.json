@@ -10,6 +10,7 @@
     "data": "http-server -p 8083 --cors ./data"
   },
   "dependencies": {
+    "@mdi/font": "^3.8.95",
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
     "crossfilter2": "^1.4.7",

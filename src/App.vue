@@ -31,41 +31,40 @@
                   <strong>Dataset</strong>: Upper Klamath Lake Suckers
                 </h3>
                 <v-spacer></v-spacer>
-                <v-btn small class="grey darken-1" rounded>
-                  <v-icon size="20" left>mdi-information</v-icon> About
-                </v-btn>
+                <v-dialog
+                  v-model="dialogs.about"
+                  width="800">
+                  <template v-slot:activator="{ on }">
+                    <v-btn small class="grey darken-1" rounded v-on="on">
+                      <v-icon size="20" left>mdi-information</v-icon> About
+                    </v-btn>
+                  </template>
+
+                  <v-card>
+                    <v-card-title
+                      class="headline grey lighten-2"
+                      primary-title>
+                      About This Dataset
+                    </v-card-title>
+
+                    <v-card-text class="mt-2">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    </v-card-text>
+
+                    <v-divider></v-divider>
+
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="dialogs.about = false">
+                        clsoe
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
               </v-toolbar>
-              <v-card-text v-show="!datasetBox.collapse">
-                <!-- <v-autocomplete
-                  v-model="color.selected"
-                  label="Color By"
-                  item-value="id"
-                  item-text="description"
-                  return-object
-                  :items="color.options">
-                </v-autocomplete>
-                <v-autocomplete
-                  v-model="size.selected"
-                  label="Size By"
-                  item-value="id"
-                  item-text="description"
-                  return-object
-                  clearable
-                  :items="size.options">
-                </v-autocomplete>
-                <v-autocomplete
-                  v-model="outline.selected"
-                  label="Outline By"
-                  item-value="id"
-                  item-text="description"
-                  return-object
-                  clearable
-                  :items="outline.options">
-                </v-autocomplete>
-                <div>
-                  Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
-                </div> -->
-              </v-card-text>
             </v-card>
             <v-card class="mb-3">
               <v-tabs
@@ -117,7 +116,7 @@
                   </v-card>
                 </v-tab-item>
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 450" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="$vuetify.breakpoint.height - 420" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <v-autocomplete
                         :items="filters.options"
@@ -142,27 +141,27 @@
               <v-toolbar dense dark color="primary">
                 <strong>Legend</strong>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="timeBox.collapse = !timeBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!timeBox.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="legend.collapse = !legend.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!legend.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-text v-show="!timeBox.collapse">
+              <v-card-text v-show="!legend.collapse">
                 <div>
                   Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }}
                 </div>
               </v-card-text>
             </v-card>
-            <v-card v-if="debugBox.visible">
+            <v-card v-if="debug.visible">
               <v-toolbar dense dark color="red darken-4">
                 <strong>Debug</strong>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="debugBox.collapse = !debugBox.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!debugBox.collapse">mdi-menu-up</v-icon>
+                <v-btn height="24" width="24" icon @click="debug.collapse = !debug.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                  <v-icon v-if="!debug.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-text v-if="!debugBox.collapse" style="font-family:monospace">
+              <v-card-text v-if="!debug.collapse" style="font-family:monospace">
                 <!-- map.center: {{ map.center }} <br> -->
                 <!-- map.zoom: {{ map.zoom }} -->
                 <!-- color.selected: {{ color.selected }} <br>
@@ -198,6 +197,12 @@ export default {
   },
   data: () => ({
     dataset: [],
+    dialogs: {
+      about: false
+    },
+    legend: {
+      collapse: false
+    },
     tabs: {
       active: 0,
       collapse: false
@@ -226,18 +231,8 @@ export default {
         }
       ]
     },
-    datasetBox: {
-      collapse: false
-    },
-    timeBox: {
-      collapse: false,
-      ready: false
-    },
-    debugBox: {
+    debug: {
       visible: process.env.NODE_ENV === 'development',
-      collapse: false
-    },
-    filterBox: {
       collapse: false
     },
     crossfilter: {
@@ -383,7 +378,6 @@ export default {
         })
         this.dataset = data
         xf.add(data)
-        this.timeBox.ready = true
         evt.$emit('filter')
       })
       .catch((err) => {
