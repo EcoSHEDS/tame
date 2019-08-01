@@ -37,7 +37,7 @@
             # Observations: <span class="black--text font-weight-regular">{{ values.length }}</span>
           </h4>
           <v-divider></v-divider>
-          <v-simple-table v-if="values.length > 0" :height="$vuetify.breakpoint.height - 200" fixed-header>
+          <v-simple-table v-if="values.length > 0" :height="$vuetify.breakpoint.height - 250" fixed-header>
             <thead>
               <tr>
                 <th class="text-left">Date/Time</th>
