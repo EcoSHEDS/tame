@@ -22,7 +22,7 @@ export default {
       svg: null,
       barWidth: 20,
       barHeight: 200,
-      width: 250,
+      width: 218,
       margins: {
         left: 10,
         right: 20,

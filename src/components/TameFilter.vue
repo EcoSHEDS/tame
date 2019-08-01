@@ -75,7 +75,7 @@ export default {
       const group = dim.group(d => Math.floor(d / interval) * interval).reduceCount()
 
       this.chart = dc.barChart(el)
-        .width(500)
+        .width(486)
         .height(100)
         .margins(margins)
         .dimension(dim)
@@ -105,7 +105,7 @@ export default {
       const height = margins.bottom + barHeight * count + gap * (count + 1)
 
       this.chart = dc.rowChart(el)
-        .width(500)
+        .width(486)
         .height(height)
         .margins(margins)
         .dimension(dim)
@@ -147,7 +147,7 @@ export default {
       this.filterRange = timeExtent
 
       this.chart = dc.barChart(el)
-        .width(500)
+        .width(486)
         .height(100)
         .margins(margins)
         .dimension(dim)

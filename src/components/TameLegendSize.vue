@@ -25,7 +25,7 @@ export default {
       nItems: 5,
       maxRadius: 10,
       itemPadding: 5,
-      width: 250,
+      width: 218,
       margins: {
         left: 10,
         right: 20,

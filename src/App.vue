@@ -24,18 +24,19 @@
           @click="selectId">
         </tame-map-layer>
       </tame-map>
-      <v-container fill-height ml-0 style="max-width:900px" grid-list-lg>
+      <v-container fill-height fluid class="ml-2">
         <v-layout row>
-          <v-flex xs8 grow-shrink-0>
-            <v-card class="mb-3">
+          <v-flex grow-shrink-0>
+            <v-card width="550" class="mb-3">
               <v-toolbar dark dense color="primary">
-                <h3>
-                  <v-icon size="20" left>mdi-database</v-icon>
+                <h4>
+                  <v-icon size="18" left>mdi-database</v-icon>
                   <strong>Dataset</strong>: Upper Klamath Lake Suckers
-                </h3>
+                </h4>
                 <v-spacer></v-spacer>
                 <v-dialog
                   v-model="dialogs.about"
+                  scrollable
                   width="800">
                   <template v-slot:activator="{ on }">
                     <v-btn small class="grey darken-1" rounded v-on="on">
@@ -44,32 +45,28 @@
                   </template>
 
                   <v-card>
-                    <v-card-title
-                      class="headline grey lighten-2"
-                      primary-title>
-                      About This Dataset
-                    </v-card-title>
+                    <v-toolbar dense color="grey lighten-2">
+                      <strong>About This Dataset</strong>
+                      <v-spacer></v-spacer>
+                      <v-btn height="24" width="24" icon @click="dialogs.about = false" class="grey darken-1 elevation-2 mr-0" dark>
+                        <v-icon small>mdi-close</v-icon>
+                      </v-btn>
+                    </v-toolbar>
 
                     <v-card-text class="mt-2">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
                     </v-card-text>
-
-                    <v-divider></v-divider>
-
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        color="primary"
-                        text
-                        @click="dialogs.about = false">
-                        Close
-                      </v-btn>
-                    </v-card-actions>
                   </v-card>
                 </v-dialog>
               </v-toolbar>
             </v-card>
-            <v-card class="mb-3">
+            <v-card width="550" class="mb-3">
               <v-tabs
                 v-model="tabs.active"
                 background-color="primary"
@@ -163,8 +160,9 @@
               </v-tabs>
             </v-card>
           </v-flex>
-          <v-flex xs4 grow-shrink-0>
-            <v-card class="mb-3">
+          <v-spacer></v-spacer>
+          <v-flex grow-shrink-0 class="mr-8">
+            <v-card width="250" :max-height="$vuetify.breakpoint.height - 280" style="overflow-y: auto" class="mb-3">
               <v-toolbar dense dark color="primary">
                 <strong>Legend</strong>
                 <v-spacer></v-spacer>
@@ -183,7 +181,7 @@
                 <tame-legend-outline :variable="outline.selected"></tame-legend-outline>
               </v-card-text>
             </v-card>
-            <v-card class="mb-3" v-if="selected.id">
+            <v-card width="250" class="mb-3" v-if="selected.id">
               <v-toolbar dense dark color="primary">
                 <strong>Selected Individual</strong>
                 <v-spacer></v-spacer>
@@ -483,3 +481,10 @@ export default {
   }
 }
 </script>
+
+<style>
+.leaflet-control-container > .leaflet-top.leaflet-right {
+  right: 280px;
+  top: 2px;
+}
+</style>

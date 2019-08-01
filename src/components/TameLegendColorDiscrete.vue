@@ -20,7 +20,7 @@ export default {
     return {
       id: 'legend-color',
       svg: null,
-      width: 250,
+      width: 218,
       itemRadius: 8,
       itemPadding: 10,
       margins: {

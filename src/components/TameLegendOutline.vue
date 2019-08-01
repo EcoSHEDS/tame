@@ -22,7 +22,7 @@ export default {
       container: null,
       itemRadius: 8,
       itemPadding: 10,
-      width: 250,
+      width: 218,
       margins: {
         left: 10,
         right: 20,

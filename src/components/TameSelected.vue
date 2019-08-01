@@ -8,6 +8,7 @@
     </div>
     <v-dialog
       v-model="dialog"
+      scrollable
       max-width="800">
       <template v-slot:activator="{ on }">
         <v-btn
@@ -21,19 +22,22 @@
       </template>
 
       <v-card>
-        <v-card-title
-          class="grey lighten-2 font-weight-bold"
-          primary-title>
-          Selected Individual
+        <v-toolbar dense color="grey lighten-2">
+          <strong>Selected Individual</strong>
           <v-spacer></v-spacer>
-          <v-btn icon small @click="dialog = false"><v-icon>mdi-close</v-icon></v-btn>
-        </v-card-title>
+          <v-btn height="24" width="24" icon @click="dialog = false" class="grey darken-1 elevation-2 mr-0" dark>
+            <v-icon small>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
 
         <v-card-text>
-          <h3 class="my-4">Tag ID: <span class="black--text font-weight-regular">{{ id }}</span></h3>
-          <h3 class="my-4"># Observations: <span class="black--text font-weight-regular">{{ values.length }}</span></h3>
+          <h4 class="my-4">
+            Tag ID: <span class="black--text font-weight-regular">{{ id }}</span>
+            <span class="mx-4">|</span>
+            # Observations: <span class="black--text font-weight-regular">{{ values.length }}</span>
+          </h4>
           <v-divider></v-divider>
-          <v-simple-table v-if="values.length > 0" height="400" fixed-header>
+          <v-simple-table v-if="values.length > 0" :height="$vuetify.breakpoint.height - 200" fixed-header>
             <thead>
               <tr>
                 <th class="text-left">Date/Time</th>
@@ -58,18 +62,6 @@
             </tbody>
           </v-simple-table>
         </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            text
-            @click="dialog = false">
-            Close
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-dialog>
   </div>
