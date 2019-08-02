@@ -5,6 +5,8 @@
         <span>SHEDS</span>
         <span class="font-weight-light px-2">|</span>
         <span class="font-weight-light">Tagged Animal Movement Explorer (TAME)</span>
+        <!-- <span class="font-weight-light px-2">|</span> -->
+        <span class="text-uppercase overline ml-3">Alpha Version</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn text small href="http://ecosheds.org">
@@ -154,7 +156,11 @@
                         label="Select filter variable(s)...">
                       </v-autocomplete>
                       <p v-if="filters.selected.length > 0" class="subheading">
-                        <v-icon small>mdi-alert-circle-outline</v-icon> Click and drag on one or more charts to filter the observations. Only observations that meet ALL filter criteria are shown.
+                        <v-icon small>mdi-alert-circle-outline</v-icon>
+                        Use the dropdown above to add/remove filters.
+                        Each filter shows a histogram of the observations.
+                        Click and drag on a histogram to filter the dataset.
+                        Only observations that meet ALL filter criteria are shown on the map.
                       </p>
                       <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
                     </v-card-text>
