@@ -167,13 +167,13 @@
 
                       <div class="my-3"># Selected Individuals: <span class="black--text">{{ selected.ids.length }}</span></div>
 
-                      <div class="my-2" >
+                      <div class="my-4" >
                         <v-btn @click="unselectAll" rounded :disabled="selected.ids.length === 0">
                           <v-icon small left>mdi-delete</v-icon> Unselect All
                         </v-btn>
                       </div>
 
-                      <div class="subheading my-3">
+                      <div class="subheading my-4">
                         <v-icon small>mdi-alert-circle-outline</v-icon>
                         Click a point on the map to select an individual (unique tag ID), which will highlight all locations that individual was observed.
                         Click on a selected individual to unselect it.
@@ -186,7 +186,22 @@
 
                       <div class="my-3"># Selection Areas: <span class="black--text">{{ draw.count }}</span></div>
 
-                      <div class="my-2">
+                      <div class="my-4">
+                        <v-radio-group v-model="draw.operation" row hide-details label="Operation:" :disabled="draw.enabled">
+                          <v-radio value="intersection">
+                            <template v-slot:label>
+                              <div>Intersection (<v-icon>mdi-set-center</v-icon>)</div>
+                            </template>
+                          </v-radio>
+                          <v-radio value="union">
+                            <template v-slot:label>
+                              <div>Union (<v-icon>mdi-set-all</v-icon>)</div>
+                            </template>
+                          </v-radio>
+                        </v-radio-group>
+                      </div>
+
+                      <div class="my-4">
                         <v-btn @click="toggleDraw" rounded v-if="!draw.enabled">
                           <v-icon small left>mdi-selection-drag</v-icon> Draw New Area
                         </v-btn>
@@ -202,7 +217,8 @@
                         <v-icon small>mdi-alert-circle-outline</v-icon>
                         Select all individuals that were observed in a specific area by clicking "Draw New Area"
                         and then click-and-drag to draw the target area on the map.
-                        Add more areas to focus on only individuals that passed through multiple areas.
+                        Add more areas to select individuals that passed through multiple areas.
+                        <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals that passed through ANY of the areas.
                         These selections are not affected by the crossfilters.
                       </div>
                     </v-card-text>
@@ -330,6 +346,7 @@ export default {
     draw: {
       enabled: false,
       control: null,
+      operation: 'intersection',
       rect: null,
       count: 0
     },
@@ -449,6 +466,9 @@ export default {
     },
     'size.selected': () => {
       evt.$emit('map:render')
+    },
+    'draw.operation' () {
+      this.onDraw()
     }
   },
   mounted () {
@@ -514,13 +534,26 @@ export default {
         return
       }
       const allRows = xf.all()
+      if (this.draw.operation === 'intersection') {
+        this.selected.ids = this.selectByAreasIntersection(allRows, features)
+      } else if (this.draw.operation === 'union') {
+        this.selected.ids = this.selectByAreasUnion(allRows, features)
+      } else {
+        alert('Invalid area selection operation')
+      }
+    },
+    selectByAreasIntersection (allRows, features) {
       let rows = allRows
       let ids = [...new Set(allRows.map(d => d.uid))]
       features.features.forEach((feature, i) => {
         rows = this.pointsInArea(allRows.filter(d => ids.includes(d.uid)), feature)
         ids = [...new Set(rows.map(d => d.uid))]
       })
-      this.selected.ids = ids
+      return ids
+    },
+    selectByAreasUnion (allRows, features) {
+      let rows = this.pointsInArea(allRows, features)
+      return [...new Set(rows.map(d => d.uid))]
     },
     pointsInArea (points, feature) {
       return points.filter(d => d3.geoContains(feature, [d.lon, d.lat]))
