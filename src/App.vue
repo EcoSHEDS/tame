@@ -78,10 +78,10 @@
                   <v-icon small class="mr-1">mdi-map</v-icon> Map Variables
                 </v-tab>
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
+                  <v-icon small class="mr-1">mdi-crosshairs-gps</v-icon> Selection
                 </v-tab>
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-crosshairs-gps</v-icon> Selection
+                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
                 </v-tab>
                 <v-spacer></v-spacer>
                 <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey darken-1 elevation-2 mt-3 mr-4" dark>
@@ -136,33 +136,6 @@
                           </div>
                         </template>
                       </v-switch> -->
-                    </v-card-text>
-                  </v-card>
-                </v-tab-item>
-                <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
-                    <v-card-text>
-                      <v-autocomplete
-                        :items="filters.options"
-                        v-model="filters.selected"
-                        multiple
-                        dense
-                        return-object
-                        item-value="id"
-                        item-text="description"
-                        chips
-                        deletable-chips
-                        clearable
-                        label="Select filter variable(s)...">
-                      </v-autocomplete>
-                      <p v-if="filters.selected.length > 0" class="subheading">
-                        <v-icon small>mdi-alert-circle-outline</v-icon>
-                        Use the dropdown above to add/remove filters.
-                        Each filter shows a histogram of the observations.
-                        Click and drag on a histogram to filter the dataset.
-                        Only observations that meet ALL filter criteria are shown on the map.
-                      </p>
-                      <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -227,6 +200,33 @@
                         <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals that passed through ANY of the areas.
                         These selections are not affected by the crossfilters.
                       </div>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
+                <v-tab-item :transition="false" :reverse-transition="false">
+                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
+                    <v-card-text>
+                      <v-autocomplete
+                        :items="filters.options"
+                        v-model="filters.selected"
+                        multiple
+                        dense
+                        return-object
+                        item-value="id"
+                        item-text="description"
+                        chips
+                        deletable-chips
+                        clearable
+                        label="Select filter variable(s)...">
+                      </v-autocomplete>
+                      <p v-if="filters.selected.length > 0" class="subheading">
+                        <v-icon small>mdi-alert-circle-outline</v-icon>
+                        Use the dropdown above to add/remove filters.
+                        Each filter shows a histogram of the observations.
+                        Click and drag on a histogram to filter the dataset.
+                        Only observations that meet ALL filter criteria are shown on the map.
+                      </p>
+                      <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
