@@ -76,7 +76,7 @@
                   <v-icon small class="mr-1">mdi-map</v-icon> Map Variables
                 </v-tab>
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Crossfilters
+                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
                 </v-tab>
                 <v-tab ripple>
                   <v-icon small class="mr-1">mdi-crosshairs-gps</v-icon> Selection
@@ -154,7 +154,7 @@
                         label="Select filter variable(s)...">
                       </v-autocomplete>
                       <p v-if="filters.selected.length > 0" class="subheading">
-                        <v-icon small>mdi-alert-circle-outline</v-icon> Click and drag on any chart to filter the dataset.
+                        <v-icon small>mdi-alert-circle-outline</v-icon> Click and drag on one or more charts to filter the observations. Only observations that meet ALL filter criteria are shown.
                       </p>
                       <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
                     </v-card-text>
@@ -215,7 +215,7 @@
 
                       <div class="subheading my-3">
                         <v-icon small>mdi-alert-circle-outline</v-icon>
-                        Select all individuals that were observed in a specific area by clicking "Draw New Area"
+                        Select all individuals that were observed in a specific area by clicking <strong>Draw New Area</strong>
                         and then click-and-drag to draw the target area on the map.
                         Add more areas to select individuals that passed through multiple areas.
                         <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals that passed through ANY of the areas.
