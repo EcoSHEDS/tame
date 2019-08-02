@@ -13,13 +13,13 @@
     </v-app-bar>
 
     <v-content>
-      <tame-map :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps">
+      <tame-map :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
         <tame-map-layer
           :data="dataset"
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
-          :selected-id="selected.id"
+          :selected-ids="selected.ids"
           :showLines="map.showLines"
           @click="selectId">
         </tame-map-layer>
@@ -77,6 +77,9 @@
                 </v-tab>
                 <v-tab ripple>
                   <v-icon small class="mr-1">mdi-chart-bar</v-icon> Crossfilters
+                </v-tab>
+                <v-tab ripple>
+                  <v-icon small class="mr-1">mdi-crosshairs-gps</v-icon> Selection
                 </v-tab>
                 <v-spacer></v-spacer>
                 <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey darken-1 elevation-2 mt-3 mr-4" dark>
@@ -157,12 +160,60 @@
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
+                <v-tab-item :transition="false" :reverse-transition="false">
+                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
+                    <v-card-text>
+                      <h3>Selected Individuals</h3>
+
+                      <div class="my-3"># Selected Individuals: <span class="black--text">{{ selected.ids.length }}</span></div>
+
+                      <div class="my-2" >
+                        <v-btn @click="unselectAll" rounded :disabled="selected.ids.length === 0">
+                          <v-icon small left>mdi-delete</v-icon> Unselect All
+                        </v-btn>
+                      </div>
+
+                      <div class="subheading my-3">
+                        <v-icon small>mdi-alert-circle-outline</v-icon>
+                        Click a point on the map to select an individual (unique tag ID), which will highlight all locations that individual was observed.
+                        Click on a selected individual to unselect it.
+                        More than one individual can be selected at a time.
+                      </div>
+
+                      <v-divider class="my-3"></v-divider>
+
+                      <h3>Select By Area</h3>
+
+                      <div class="my-3"># Selection Areas: <span class="black--text">{{ draw.count }}</span></div>
+
+                      <div class="my-2">
+                        <v-btn @click="toggleDraw" rounded v-if="!draw.enabled">
+                          <v-icon small left>mdi-selection-drag</v-icon> Draw New Area
+                        </v-btn>
+                        <v-btn @click="toggleDraw" rounded v-else>
+                          <v-icon small left>mdi-close</v-icon> Cancel
+                        </v-btn>
+                        <v-btn @click="clearDraw" rounded class="ml-3" :disabled="draw.count === 0">
+                          <v-icon small left>mdi-delete</v-icon> Clear All
+                        </v-btn>
+                      </div>
+
+                      <div class="subheading my-3">
+                        <v-icon small>mdi-alert-circle-outline</v-icon>
+                        Select all individuals that were observed in a specific area by clicking "Draw New Area"
+                        and then click-and-drag to draw the target area on the map.
+                        Add more areas to focus on only individuals that passed through multiple areas.
+                        These selections are not affected by the crossfilters.
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-tab-item>
               </v-tabs>
             </v-card>
           </v-flex>
           <v-spacer></v-spacer>
           <v-flex grow-shrink-0 class="mr-8">
-            <v-card width="250" :max-height="$vuetify.breakpoint.height - 280" style="overflow-y: auto" class="mb-3">
+            <v-card width="250" :max-height="$vuetify.breakpoint.height - 100 - 120 * debug.visible" style="overflow-y: auto" class="mb-3">
               <v-toolbar dense dark color="primary">
                 <strong>Legend</strong>
                 <v-spacer></v-spacer>
@@ -181,27 +232,6 @@
                 <tame-legend-outline :variable="outline.selected"></tame-legend-outline>
               </v-card-text>
             </v-card>
-            <v-card width="250" class="mb-3" v-if="selected.id">
-              <v-toolbar dense dark color="primary">
-                <strong>Selected Individual</strong>
-                <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="selected.collapse = !selected.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!selected.collapse">mdi-menu-up</v-icon>
-                  <v-icon v-else>mdi-menu-down</v-icon>
-                </v-btn>
-                <v-tooltip right open-delay="300">
-                  <template v-slot:activator="{ on }">
-                    <v-btn height="24" width="24" icon @click="selectId()" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Unselect Individual</span>
-                </v-tooltip>
-              </v-toolbar>
-              <v-card-text v-if="!selected.collapse">
-                <tame-selected :id="selected.id"></tame-selected>
-              </v-card-text>
-            </v-card>
             <v-card class="mb-3" v-if="debug.visible">
               <v-toolbar dense dark color="red darken-4">
                 <strong>Debug</strong>
@@ -212,7 +242,7 @@
                 </v-btn>
               </v-toolbar>
               <v-card-text v-if="!debug.collapse" style="font-family:monospace">
-                map.showLines: {{ map.showLines }}
+                selected.ids: {{ selected.ids.length }}
               </v-card-text>
             </v-card>
           </v-flex>
@@ -224,6 +254,7 @@
 
 <script>
 import * as d3 from 'd3'
+import L from 'leaflet'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
@@ -234,7 +265,6 @@ import TameFilter from '@/components/TameFilter'
 import TameLegendColor from '@/components/TameLegendColor'
 import TameLegendSize from '@/components/TameLegendSize'
 import TameLegendOutline from '@/components/TameLegendOutline'
-import TameSelected from '@/components/TameSelected'
 
 export default {
   name: 'App',
@@ -244,8 +274,7 @@ export default {
     TameFilter,
     TameLegendColor,
     TameLegendSize,
-    TameLegendOutline,
-    TameSelected
+    TameLegendOutline
   },
   data: () => ({
     dataset: [],
@@ -296,7 +325,13 @@ export default {
     },
     selected: {
       collapse: false,
-      id: null
+      ids: []
+    },
+    draw: {
+      enabled: false,
+      control: null,
+      rect: null,
+      count: 0
     },
     color: {
       selected: null,
@@ -466,17 +501,74 @@ export default {
       }
       return this.sizeScale(d[this.size.selected.id])
     },
-    onFilter () {
-      // console.log('app:onFilter')
-      this.crossfilter.counts.filtered = xf.allFiltered().length
-      this.crossfilter.counts.total = xf.size()
-    },
     removeFilter (variable) {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
     },
-    selectId (d) {
-      console.log('app:selectId', d)
-      this.selected.id = d
+    onFilter () {
+      this.crossfilter.counts.filtered = xf.allFiltered().length
+      this.crossfilter.counts.total = xf.size()
+    },
+    selectByAreas (features) {
+      if (!features || features.features.length === 0) {
+        this.selected.ids = []
+        return
+      }
+      const allRows = xf.all()
+      let rows = allRows
+      let ids = [...new Set(allRows.map(d => d.uid))]
+      features.features.forEach((feature, i) => {
+        rows = this.pointsInArea(allRows.filter(d => ids.includes(d.uid)), feature)
+        ids = [...new Set(rows.map(d => d.uid))]
+      })
+      this.selected.ids = ids
+    },
+    pointsInArea (points, feature) {
+      return points.filter(d => d3.geoContains(feature, [d.lon, d.lat]))
+    },
+    selectId (id) {
+      console.log('app:selectId', id)
+      if (this.selected.ids.includes(id)) {
+        const index = this.selected.ids.findIndex(d => d === id)
+        index > -1 && this.selected.ids.splice(index, 1)
+      } else {
+        this.selected.ids.push(id)
+      }
+    },
+    unselectAll () {
+      this.selected.ids = []
+      this.clearDraw()
+    },
+    toggleDraw () {
+      if (this.draw.rect.enabled()) {
+        this.draw.rect.disable()
+      } else {
+        this.draw.rect.enable()
+      }
+      this.draw.enabled = this.draw.rect.enabled()
+    },
+    onDraw () {
+      this.draw.count = this.draw.layer.getLayers().length
+      this.draw.enabled = false
+      this.selectByAreas(this.draw.layer.toGeoJSON())
+    },
+    clearDraw () {
+      // console.log('clearDraw()')
+      this.draw.layer.eachLayer(d => this.draw.layer.removeLayer(d))
+      this.onDraw()
+    },
+    mapIsReady (map) {
+      // console.log('mapIsReady', map)
+      this.draw.map = map
+      this.draw.layer = new L.FeatureGroup()
+      this.draw.map.addLayer(this.draw.layer)
+      this.draw.rect = new L.Draw.Rectangle(this.draw.map)
+      map.on('draw:created', ({ layer }) => {
+        this.draw.layer.addLayer(layer)
+        this.onDraw()
+      })
+      map.on('draw:deleted', ({ layer }) => {
+        this.onDraw()
+      })
     }
   }
 }

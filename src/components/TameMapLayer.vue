@@ -29,8 +29,8 @@ export default {
       required: false,
       default: (d) => 'gray'
     },
-    selectedId: {
-      type: String,
+    selectedIds: {
+      type: Array,
       required: false
     },
     showLines: {
@@ -78,7 +78,7 @@ export default {
   mounted () {
     evt.$on('map:zoom', this.resize)
     evt.$on('map:render', this.render)
-    evt.$on('map:render:filter', this.renderFilter)
+    evt.$on('map:render:filter', this.renderFiltered)
 
     this.tip.html(d => `
       <strong>Tag ID: ${d.uid}</strong><br>
@@ -103,7 +103,7 @@ export default {
   beforeDestroy () {
     evt.$off('map:zoom', this.resize)
     evt.$off('map:render', this.render)
-    evt.$off('map:render:filter', this.renderFilter)
+    evt.$off('map:render:filter', this.renderFiltered)
     this.tip.destroy()
     this.container.selectAll('*').remove()
     this.container.remove()
@@ -113,8 +113,8 @@ export default {
       this.resize()
       this.fitBounds()
     },
-    selectedId () {
-      console.log('tame-map-layer:watch(selectedId)', this.selectedId)
+    selectedIds () {
+      // console.log('tame-map-layer:watch(selectedIds)', this.selectedIds)
       this.renderSelected()
     },
     showLines () {
@@ -186,14 +186,14 @@ export default {
         .enter()
         .append('circle')
         .on('click', function (d) {
-          console.log('click', this.selectedId, d.uid)
-          let id
-          if (vm.selectedId === d.uid) {
-            id = null
-          } else {
-            id = d.uid
-          }
-          !vm.disableClick && vm.$emit('click', id)
+          // console.log('click', this.selectedIds, d.uid)
+          // let id
+          // if (vm.selectedIds.includes(d.uid)) {
+          //   id = null
+          // } else {
+          //   id = d.uid
+          // }
+          !vm.disableClick && vm.$emit('click', d.uid)
           this.parentNode.parentNode.appendChild(this.parentNode) // move to front
         })
         .on('mouseenter', function (d) {
@@ -208,7 +208,7 @@ export default {
           d3.select(this.parentNode)
             .classed('highlight', false)
             .select('path')
-            .classed('hidden', !(vm.selectedId && d.uid === vm.selectedId) && !vm.showLines)
+            .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d.uid)) && !vm.showLines)
           tip.hide(d, this)
         })
         .attr('r', d => this.zoomLevel * this.getSize(d))
@@ -221,23 +221,23 @@ export default {
             .attr('cy', d => point[1])
         })
       this.renderSelected()
+      this.renderFiltered()
     },
-    renderFilter () {
-      // console.log('tame-map-layer:renderFilter')
+    renderFiltered () {
+      // console.log('tame-map-layer:renderFiltered')
       this.container
         .selectAll('g')
         .selectAll('circle')
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
-        // .style('fill', d => xf.isElementFiltered(d.$index) ? this.getColor(d) : 'none')
     },
     renderSelected () {
-      console.log('tame-map-layer:renderSelected()', this.selectedId)
+      // console.log('tame-map-layer:renderSelected()', this.selectedIds)
       this.container
         .selectAll('g')
-        .classed('selected', d => this.selectedId && d.key === this.selectedId)
-        .classed('unselected', d => this.selectedId && d.key !== this.selectedId)
+        .classed('selected', d => this.selectedIds.length > 0 && this.selectedIds.includes(d.key))
+        .classed('unselected', d => this.selectedIds.length > 0 && !this.selectedIds.includes(d.key))
         .select('path')
-        .classed('hidden', d => !(this.selectedId && d.key === this.selectedId) && !this.showLines)
+        .classed('hidden', d => !(this.selectedIds.length > 0 && this.selectedIds.includes(d.key)) && !this.showLines)
         // .select('path')
         // .classed('hidden', false)
     }
@@ -256,7 +256,7 @@ g.group path {
   stroke-width: 1.5px;
   fill: none;
   stroke: grey;
-  opacity: 0.5;
+  opacity: 0.35;
 }
 g.group path.hidden {
   display: none;

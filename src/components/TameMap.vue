@@ -1,6 +1,6 @@
 <template>
   <div class="tame-map">
-    <l-map ref="map" :center="center" :zoom="zoom" :options="{ ...options, zoomControl: false }">
+    <l-map ref="map" :center="center" :zoom="zoom" :options="{ ...options, zoomControl: false }" @ready="$emit('ready', map)">
       <l-control-zoom position="topright"></l-control-zoom>
       <l-control-layers position="topright"></l-control-layers>
       <l-tile-layer
@@ -52,6 +52,7 @@ export default {
     LTileLayer,
     LControlZoom,
     LControlLayers
+    // LControlDraw
   },
   data: () => ({
     ready: false,

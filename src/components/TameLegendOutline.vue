@@ -83,7 +83,7 @@ export default {
         .attr('cx', this.itemRadius)
         .attr('cy', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * (this.domain.length - i - 1))
         .attr('r', this.itemRadius)
-        .attr('fill', 'none')
+        .attr('fill', '#AAAAAA')
         .attr('stroke', d => this.colorScale(d))
         .attr('stroke-width', '2px')
 
