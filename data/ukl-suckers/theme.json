@@ -1,0 +1,52 @@
+{
+  "id": "ukl-suckers",
+  "label": "Upper Klamath Lake Suckers",
+  "columns": {
+    "id": "uid",
+    "datetime": "datetime",
+    "latitude": "lat",
+    "longitude": "lon"
+  },
+  "variables": [
+    {
+      "id": "cohort",
+      "description": "Cohort",
+      "type": "discrete",
+      "domain": ["TNC", "Rocky Point", "Shoalwater Bay"],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": false
+    },
+    {
+      "id": "length",
+      "description": "Length (mm)",
+      "type": "continuous",
+      "domain": [150, 250],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": true
+    },
+    {
+      "id": "season",
+      "description": "Season",
+      "type": "discrete",
+      "domain": ["Spring", "Summer", "Fall"],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": false
+    },
+    {
+      "id": "active",
+      "description": "Active",
+      "type": "discrete",
+      "domain": ["Inactive", "Active"],
+      "filter": true,
+      "color": true,
+      "outline": true,
+      "size": false
+    }
+  ]
+}

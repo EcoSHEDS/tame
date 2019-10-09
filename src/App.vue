@@ -33,7 +33,7 @@
               <v-toolbar dark dense color="primary">
                 <h4>
                   <v-icon size="18" left>mdi-database</v-icon>
-                  <strong>Dataset</strong>: Upper Klamath Lake Suckers
+                  <strong>Dataset</strong>: {{ theme ? theme.label : 'None' }}
                 </h4>
                 <v-spacer></v-spacer>
                 <v-dialog
@@ -299,6 +299,7 @@ export default {
     TameLegendOutline
   },
   data: () => ({
+    theme: null,
     dataset: [],
     dialogs: {
       about: false
@@ -358,82 +359,19 @@ export default {
     },
     color: {
       selected: null,
-      options: [
-        {
-          id: 'length',
-          description: 'Individual Length',
-          type: 'continuous',
-          domain: [150, 250]
-        },
-        {
-          id: 'season',
-          description: 'Season',
-          type: 'discrete',
-          domain: ['Spring', 'Summer', 'Fall']
-        },
-        {
-          id: 'cohort',
-          description: 'Cohort',
-          type: 'discrete',
-          domain: ['TNC', 'Rocky Point', 'Shoalwater Bay']
-        }
-      ]
+      options: []
     },
     size: {
       selected: null,
-      options: [
-        {
-          id: 'length',
-          description: 'Individual Length',
-          type: 'continuous',
-          domain: [150, 250]
-        }
-      ]
+      options: []
     },
     outline: {
       selected: null,
-      options: [
-        {
-          id: 'active',
-          description: 'Active',
-          type: 'discrete',
-          domain: ['Inactive', 'Active']
-        }
-      ]
+      options: []
     },
     filters: {
       selected: [],
-      options: [
-        {
-          id: 'datetime',
-          description: 'Date',
-          type: 'datetime'
-        },
-        {
-          id: 'length',
-          description: 'Individual Length',
-          type: 'continuous',
-          domain: [150, 250]
-        },
-        {
-          id: 'season',
-          description: 'Season',
-          type: 'discrete',
-          domain: ['Spring', 'Summer', 'Fall']
-        },
-        {
-          id: 'cohort',
-          description: 'Cohort',
-          type: 'discrete',
-          domain: ['TNC', 'Rocky Point', 'Shoalwater Bay']
-        },
-        {
-          id: 'active',
-          description: 'Active',
-          type: 'discrete',
-          domain: ['Inactive', 'Active']
-        }
-      ]
+      options: []
     }
   }),
   computed: {
@@ -478,37 +416,64 @@ export default {
     }
   },
   mounted () {
-    this.color.selected = this.color.options[2]
-    this.outline.selected = this.outline.options[0]
-    this.size.selected = this.size.options[0]
-    this.filters.selected = [this.filters.options[0]]
-
     evt.$on('filter', this.onFilter)
-    this.$http.get('ukl-suckers.csv')
-      .then((response) => {
-        const data = d3.csvParse(response.data)
-        const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
-        data.forEach((row, index) => {
-          row.$index = index
-          row.datetime = timeParser(row.datetime)
-          row.length = +row.length
-          row.lat = +row.lat
-          row.lon = +row.lon
-        })
-        this.dataset = data
-        xf.add(data)
-        evt.$emit('filter')
-      })
-      .catch((err) => {
-        console.log(err)
-        alert('Failed to load dataset. See console.')
-      })
+    this.loadTheme('deerfield')
   },
   beforeDestroy () {
     xf.remove(() => true)
     evt.$off('filter', this.onFilter)
   },
   methods: {
+    loadTheme (id) {
+      this.$http.get(`${id}/theme.json`)
+        .then((response) => {
+          this.theme = response.data
+          this.color.options = this.theme.variables.filter(d => d.color)
+          this.outline.options = this.theme.variables.filter(d => d.outline)
+          this.size.options = this.theme.variables.filter(d => d.size)
+          this.filters.options = [
+            {
+              id: 'datetime',
+              description: 'Date',
+              type: 'datetime'
+            },
+            ...this.theme.variables.filter(d => d.filter)
+          ]
+
+          this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
+          this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
+          this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
+          this.filters.selected = [this.filters.options[0]]
+
+          return this.theme
+        })
+        .then((theme) => {
+          return this.$http.get(`${theme.id}/data.csv`)
+            .then((response) => {
+              const data = d3.csvParse(response.data)
+              const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
+              data.forEach((row, index) => {
+                row.$index = index
+                row.datetime = timeParser(row.datetime)
+                row.length = +row.length
+                row.lat = +row.lat
+                row.lon = +row.lon
+              })
+              this.dataset = data
+              xf.add(data)
+
+              evt.$emit('filter')
+            })
+            .catch((err) => {
+              console.log(err)
+              alert('Failed to load dataset. See console.')
+            })
+        })
+        .catch((err) => {
+          console.log(err)
+          alert('Failed to load theme. See console.')
+        })
+    },
     getColor (d, i) {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
         return '#888888'

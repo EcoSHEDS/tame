@@ -153,7 +153,7 @@ export default {
         .dimension(dim)
         .group(group)
         .elasticY(true)
-        .x(d3.scaleTime().domain(timeExtent))
+        .x(d3.scaleUtc().domain(timeExtent))
         .xUnits(d3.utcDays)
         .on('filtered', () => {
           const filter = this.chart.dimension().currentFilter()

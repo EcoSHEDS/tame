@@ -1,0 +1,32 @@
+{
+  "id": "deerfield",
+  "label": "Deerfield Telemetry",
+  "columns": {
+    "id": "uid",
+    "datetime": "datetime",
+    "latitude": "lat",
+    "longitude": "lon"
+  },
+  "variables": [
+    {
+      "id": "tagging_site",
+      "description": "Tagging Site",
+      "type": "discrete",
+      "domain": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": false
+    },
+    {
+      "id": "fork_length",
+      "description": "Fork Length (mm)",
+      "type": "continuous",
+      "domain": [325, 550],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": true
+    }
+  ]
+}

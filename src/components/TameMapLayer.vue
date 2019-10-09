@@ -144,8 +144,8 @@ export default {
       if (!this.boundingBox) return
 
       const bounds = [
-        [this.boundingBox[1][0], this.boundingBox[0][0]], // bottomleft
-        [this.boundingBox[1][1], this.boundingBox[0][1]] // topright
+        [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
+        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.01] // topright
       ]
       this.map.fitBounds(bounds)
     },
@@ -250,13 +250,13 @@ export default {
 
 <style>
 g.group {
-  opacity: 0.7;
+  opacity: 0.9;
 }
 g.group path {
-  stroke-width: 1.5px;
+  stroke-width: 2.5px;
   fill: none;
   stroke: grey;
-  opacity: 0.35;
+  opacity: 0.5;
 }
 g.group path.hidden {
   display: none;
@@ -272,7 +272,7 @@ g.group.selected {
   opacity: 1;
 }
 g.group.unselected {
-  opacity: 0.2;
+  opacity: 0.3;
 }
 g.group.highlight:not(.selected) {
   opacity: 0.75;
