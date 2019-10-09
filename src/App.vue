@@ -428,22 +428,6 @@ export default {
       this.$http.get(`${id}/theme.json`)
         .then((response) => {
           this.theme = response.data
-          this.color.options = this.theme.variables.filter(d => d.color)
-          this.outline.options = this.theme.variables.filter(d => d.outline)
-          this.size.options = this.theme.variables.filter(d => d.size)
-          this.filters.options = [
-            {
-              id: 'datetime',
-              description: 'Date',
-              type: 'datetime'
-            },
-            ...this.theme.variables.filter(d => d.filter)
-          ]
-
-          this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
-          this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
-          this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
-          this.filters.selected = [this.filters.options[0]]
 
           return this.theme
         })
@@ -452,15 +436,44 @@ export default {
             .then((response) => {
               const data = d3.csvParse(response.data)
               const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
+              const numericVariables = theme.variables.filter(d => d.type === 'continuous').map(d => d.id)
+
               data.forEach((row, index) => {
                 row.$index = index
                 row.datetime = timeParser(row.datetime)
-                row.length = +row.length
                 row.lat = +row.lat
                 row.lon = +row.lon
+                numericVariables.forEach(v => {
+                  row[v] = +row[v]
+                })
               })
               this.dataset = data
               xf.add(data)
+
+              this.color.options = [
+                {
+                  id: 'uid',
+                  description: 'Individual ID',
+                  type: 'discrete',
+                  domain: [...new Set(data.map(d => d.uid))].sort(d3.ascending)
+                },
+                ...this.theme.variables.filter(d => d.color)
+              ]
+              this.outline.options = this.theme.variables.filter(d => d.outline)
+              this.size.options = this.theme.variables.filter(d => d.size)
+              this.filters.options = [
+                {
+                  id: 'datetime',
+                  description: 'Date',
+                  type: 'datetime'
+                },
+                ...this.theme.variables.filter(d => d.filter)
+              ]
+
+              this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
+              this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
+              this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
+              this.filters.selected = [this.filters.options[0]]
 
               evt.$emit('filter')
             })

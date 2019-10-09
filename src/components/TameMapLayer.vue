@@ -145,7 +145,7 @@ export default {
 
       const bounds = [
         [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
-        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.01] // topright
+        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
       ]
       this.map.fitBounds(bounds)
     },
