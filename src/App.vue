@@ -434,7 +434,7 @@ export default {
         .then((theme) => {
           return this.$http.get(`${theme.id}/data.csv`)
             .then((response) => {
-              const data = d3.csvParse(response.data)
+              let data = d3.csvParse(response.data)
               const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
               const numericVariables = theme.variables.filter(d => d.type === 'continuous').map(d => d.id)
 
@@ -447,8 +447,53 @@ export default {
                   row[v] = +row[v]
                 })
               })
-              this.dataset = data
-              xf.add(data)
+
+              const groupByTag = d3.nest()
+                .key(d => d[theme.columns.id])
+                .sortValues((a, b) => (a.datetime < b.datetime ? -1 : a.datetime > b.datetime ? 1 : a.datetime >= b.datetime ? 0 : NaN))
+                .entries(data)
+
+              const mapByIndex = new Map()
+              groupByTag.forEach(d => {
+                const n = d.values.length
+
+                if (n <= 1) return
+
+                for (let i = 0; i < (n - 1); i++) {
+                  const start = d.values[i]
+                  const end = d.values[i + 1]
+
+                  const days = (end.datetime - start.datetime) / 1000 / 86400
+                  const meters = L.latLng(start.lat, start.lon).distanceTo([end.lat, end.lon])
+
+                  const velocity = meters / days
+
+                  mapByIndex.set(start.$index, {
+                    '$duration': days,
+                    '$distance': meters,
+                    '$velocity': velocity
+                  })
+                }
+
+                mapByIndex.set(d.values[n - 1].$index, {
+                  '$duration': null,
+                  '$distance': null,
+                  '$velocity': null
+                })
+              })
+
+              this.dataset = data.map(d => ({
+                ...d,
+                ...mapByIndex.get(d.$index)
+              }))
+
+              // const velocityDomain = [
+              //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
+              //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
+              // ]
+              const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
+
+              xf.add(this.dataset)
 
               this.color.options = [
                 {
@@ -466,6 +511,24 @@ export default {
                   id: 'datetime',
                   description: 'Date',
                   type: 'datetime'
+                },
+                {
+                  id: '$velocity',
+                  description: 'Velocity (m/day)',
+                  type: 'continuous',
+                  domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
+                },
+                {
+                  id: '$distance',
+                  description: 'Distance to Next Location (m)',
+                  type: 'continuous',
+                  domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
+                },
+                {
+                  id: '$duration',
+                  description: 'Time to Next Location (days)',
+                  type: 'continuous',
+                  domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
                 },
                 ...this.theme.variables.filter(d => d.filter)
               ]

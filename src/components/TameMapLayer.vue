@@ -80,15 +80,26 @@ export default {
     evt.$on('map:render', this.render)
     evt.$on('map:render:filter', this.renderFiltered)
 
+    // this.tip.html(d => `
+    //   <strong>Tag ID: ${d.uid}</strong><br>
+    //   Latitude: ${d.lat.toFixed(4)}<br>
+    //   Longitude: ${d.lon.toFixed(4)}<br>
+    //   Date/Time: ${this.$moment.utc(d.datetime).format('MMM DD, YYYY hh:mm a')}<br>
+    //   Season: ${d.season}<br>
+    //   Length: ${d.length}<br>
+    //   Cohort: ${d.cohort}<br>
+    //   Active: ${d.active}<br>
+    // `)
     this.tip.html(d => `
       <strong>Tag ID: ${d.uid}</strong><br>
       Latitude: ${d.lat.toFixed(4)}<br>
       Longitude: ${d.lon.toFixed(4)}<br>
       Date/Time: ${this.$moment.utc(d.datetime).format('MMM DD, YYYY hh:mm a')}<br>
-      Season: ${d.season}<br>
-      Length: ${d.length}<br>
-      Cohort: ${d.cohort}<br>
-      Active: ${d.active}<br>
+      Distance to Next (m): ${d.$distance.toFixed(1)}<br>
+      Time to Next (days): ${d.$duration.toFixed(1)}<br>
+      Velocity (m/day): ${d.$velocity.toFixed(2)}<br>
+      Tagging Site: ${d.tagging_site}<br>
+      Fork Length (mm): ${d.fork_length.toFixed(0)}<br>
     `)
 
     this.container = this.overlay.append('g')
