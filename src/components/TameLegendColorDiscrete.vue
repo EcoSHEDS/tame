@@ -1,5 +1,9 @@
 <template>
   <div>
+    <div ref="svgContainer"></div>
+    <div class="subheading ml-3 mb-4" v-if="variable.domain.length > maxCount">
+      ... and {{ variable.domain.length - 10 }} more (not shown)
+    </div>
   </div>
 </template>
 
@@ -19,6 +23,7 @@ export default {
   data () {
     return {
       id: 'legend-color',
+      maxCount: 10,
       svg: null,
       width: 218,
       itemRadius: 8,
@@ -34,10 +39,10 @@ export default {
   },
   computed: {
     domain () {
-      return this.variable ? this.variable.domain : []
+      return this.variable ? this.variable.domain.slice(0, this.maxCount) : []
     },
     height () {
-      return this.domain.length * (this.itemRadius * 2 + this.itemPadding) + this.margins.top + this.margins.bottom
+      return this.domain.length * (this.itemRadius * 2 + this.itemPadding) + this.margins.top + this.margins.bottom - 10
     },
     colorScale () {
       // console.log('tame-legend-color-discrete:colorScale', this.variable)
@@ -72,7 +77,7 @@ export default {
       if (!(this.variable && this.variable.type === 'discrete')) return
       // console.log('tame-legend-color-discrete:renderColor()', this.variable)
 
-      this.svg = d3.select(this.$el)
+      this.svg = d3.select(this.$refs.svgContainer)
         .append('svg')
         .attr('height', this.height)
         .attr('width', this.width)
