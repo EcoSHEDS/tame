@@ -12,7 +12,7 @@
       "id": "tagging_site",
       "description": "Tagging Site",
       "type": "discrete",
-      "domain": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"],
+      "domain": ["Beaver Hole", "Beaver Island", "Bridge to Nowhere", "Hoosac Tunnel Bridge", "Long Run", "Pelham Brook", "Pinball", "Shady Pool", "Take Out", "Zoar Books"],
       "filter": true,
       "color": true,
       "outline": false,
@@ -27,6 +27,26 @@
       "color": true,
       "outline": false,
       "size": true
+    },
+    {
+      "id": "adipose_clip",
+      "description": "Adipose Clip",
+      "type": "discrete",
+      "domain": ["yes", "no"],
+      "filter": true,
+      "color": true,
+      "outline": true,
+      "size": false
+    },
+    {
+      "id": "sex",
+      "description": "Sex",
+      "type": "discrete",
+      "domain": ["unk", "male", "female"],
+      "filter": true,
+      "color": true,
+      "outline": false,
+      "size": false
     }
   ]
 }

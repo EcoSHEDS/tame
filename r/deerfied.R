@@ -6,16 +6,18 @@ library(lubridate)
 
 # load --------------------------------------------------------------------
 
-df_orig <- read_csv("../data/deerfield-20191008.csv", col_types = cols(
+df_orig <- read_csv("../data/deerfield/deerfieldTelemetry_2019-10-15 144105_.csv", col_types = cols(
   X1 = col_double(),
-  taggingSite = col_double(),
+  taggingSite = col_character(),
   tagID = col_double(),
   forkLength = col_double(),
+  adiposeClip = col_character(),
+  sex = col_character(),
   dateTime = col_character(),
   lon = col_double(),
-  lat = col_double(),
-  date = col_date(format = "")
-))
+  lat = col_double()
+)) %>% 
+  select(-X1)
 
 stopifnot(all(!is.na(df_orig)))
 
@@ -23,7 +25,6 @@ stopifnot(all(!is.na(df_orig)))
 # transform ---------------------------------------------------------------
 
 df <- df_orig %>% 
-  select(-X1, -date) %>% 
   janitor::clean_names() %>% 
   select(
     uid = tag_id,
@@ -31,28 +32,25 @@ df <- df_orig %>%
     lat,
     lon,
     tagging_site,
-    fork_length
+    fork_length,
+    adipose_clip,
+    sex
   ) %>% 
   arrange(datetime, uid) %>% 
   mutate(
-    datetime = ymd_hms(datetime, tz = "US/Eastern"),
-    tagging_site = sprintf("%02d", tagging_site)
+    datetime = ymd_hms(datetime, tz = "US/Eastern")
   )
   
 
 # domains -----------------------------------------------------------------
 
 df$fork_length %>% summary
-df$tagging_site %>% table
+df$tagging_site %>% unique %>% str_c('"', ., '"', collapse = ", ")
+df$adipose_clip %>% table
+df$sex %>% table
 
 # plots -------------------------------------------------------------------
 
-df %>% 
-  group_by(tagging_site) %>% 
-  count() %>% 
-  ggplot(aes(tagging_site, n)) +
-  geom_col() +
-  labs(title = "Tagging Site")
 df %>% 
   group_by(date = floor_date(datetime, unit = "day")) %>% 
   count() %>% 
@@ -68,6 +66,18 @@ df %>%
   geom_histogram() +
   labs(title = "Fork Length (mm)")
 df %>% 
+  ggplot(aes(tagging_site)) +
+  geom_histogram(stat = "count") +
+  labs(title = "Tagging Site")
+df %>% 
+  ggplot(aes(adipose_clip)) +
+  geom_histogram(stat = "count") +
+  labs(title = "Adipose Clip")
+df %>% 
+  ggplot(aes(sex)) +
+  geom_histogram(stat = "count") +
+  labs(title = "Sex")
+df %>% 
   group_by(uid) %>% 
   count() %>% 
   ggplot(aes(n)) +
@@ -79,4 +89,4 @@ df %>%
 
 df %>% 
   mutate(datetime = force_tz(datetime, "UTC")) %>% 
-  write_csv("../data/deerfield.csv")
+  write_csv("../data/deerfield/data.csv")

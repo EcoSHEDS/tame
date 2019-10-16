@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "npm-run-all --parallel data serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
@@ -37,6 +38,7 @@
     "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-vue": "^5.0.0",
+    "npm-run-all": "^4.1.5",
     "sass": "^1.22.7",
     "sass-loader": "^7.1.0",
     "vue-cli-plugin-vuetify": "^0.6.1",

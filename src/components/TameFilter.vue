@@ -165,7 +165,7 @@ export default {
           evt.$emit('map:render:filter')
           evt.$emit('filter')
         })
-
+      this.chart.xAxis().ticks(10).tickFormat(d3.timeFormat('%m/%d'))
       this.chart.yAxis().ticks(4)
     }
 
