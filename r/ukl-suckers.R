@@ -100,4 +100,4 @@ df %>%
 
 df %>% 
   mutate(datetime = force_tz(datetime, "UTC")) %>% 
-  write_csv("../data/ukl-suckers.csv")
+  write_csv("../public/data/ukl-suckers.csv")
