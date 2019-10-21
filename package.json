@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm-run-all --parallel data serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "yarn build && scp -r -C dist/* jeff@ecosheds.org:/conte/www/dev/tame",
-    "data": "http-server -p 8083 --cors ./data"
+    "deploy": "yarn build && scp -r -C dist/* jeff@ecosheds.org:/conte/www/dev/tame"
   },
   "dependencies": {
     "@mdi/font": "^3.8.95",
