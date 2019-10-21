@@ -9,7 +9,7 @@
         <span class="text-uppercase overline ml-3">Alpha Version</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text small href="http://ecosheds.org">
+      <v-btn text small href="https://ecosheds.org">
         <v-icon small left>mdi-home</v-icon> SHEDS
       </v-btn>
     </v-app-bar>

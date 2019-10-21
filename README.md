@@ -29,7 +29,7 @@ In the respective `.env` file, wet the `VUE_APP_API_BASEURL` variable to the roo
 VUE_APP_API_BASEURL="http://localhost:8083/"
 
 # Option 2: Fetch files from AWS S3
-VUE_APP_API_BASEURL="http://ecosheds.org.s3.us-east-1.amazonaws.com/tame-dev"
+VUE_APP_API_BASEURL="https://ecosheds.org.s3.us-east-1.amazonaws.com/tame-dev"
 ```
 
 NOTE: the `.env` files are tracked by the repo. Override them using `.env.development.local`, which will not be tracked.

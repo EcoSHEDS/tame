@@ -45,7 +45,7 @@ df <- df_orig %>%
 # domains -----------------------------------------------------------------
 
 df$fork_length %>% summary
-df$tagging_site %>% unique %>% str_c('"', ., '"', collapse = ", ")
+df$tagging_site %>% unique() %>% sort() %>% str_c('"', ., '"', collapse = ", ")
 df$adipose_clip %>% table
 df$sex %>% table
 
