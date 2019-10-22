@@ -7,7 +7,7 @@
           ({{ filterRange[0].toFixed(1) }} - {{ filterRange[1].toFixed(1) }})
         </span>
         <span v-else-if="filterRange && variable.type === 'datetime'">
-          ({{ filterRange[0] | moment('MM/DD/YYYY') }} - {{ filterRange[1] | moment('MM/DD/YYYY') }})
+          ({{ filterRange[0] | moment('add', '1 day') | moment('MM/DD/YYYY') }} - {{ filterRange[1] | moment('MM/DD/YYYY') }})
         </span>
       </strong>
       <v-spacer></v-spacer>
@@ -144,6 +144,7 @@ export default {
       const dim = xf.dimension(d => d3.utcDay(d.datetime))
       const group = dim.group().reduceCount()
       const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d.datetime)))
+      timeExtent[1] = this.$moment(timeExtent[1]).add(1, 'day').toDate()
       this.filterRange = timeExtent
 
       this.chart = dc.barChart(el)
@@ -155,6 +156,7 @@ export default {
         .elasticY(true)
         .x(d3.scaleUtc().domain(timeExtent))
         .xUnits(d3.utcDays)
+        .round(d3.utcDay.round)
         .on('filtered', () => {
           const filter = this.chart.dimension().currentFilter()
           if (filter) {
@@ -165,7 +167,7 @@ export default {
           evt.$emit('map:render:filter')
           evt.$emit('filter')
         })
-      this.chart.xAxis().ticks(10).tickFormat(d3.timeFormat('%m/%d'))
+      this.chart.xAxis().ticks(10).tickFormat(d3.utcFormat('%m/%d'))
       this.chart.yAxis().ticks(4)
     }
 
