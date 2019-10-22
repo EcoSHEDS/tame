@@ -6,7 +6,7 @@ library(lubridate)
 
 # load --------------------------------------------------------------------
 
-df_orig <- read_csv("../data/deerfield/deerfieldTelemetry_2019-10-15 144105_.csv", col_types = cols(
+df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/20191021/telemetryDataFinal telemetryDataFinal_2019-10-18 16_24_45_.csv", col_types = cols(
   X1 = col_double(),
   taggingSite = col_character(),
   tagID = col_double(),
@@ -38,7 +38,7 @@ df <- df_orig %>%
   ) %>% 
   arrange(datetime, uid) %>% 
   mutate(
-    datetime = ymd_hms(datetime, tz = "US/Eastern")
+    datetime = mdy_hm(datetime, tz = "US/Eastern")
   )
   
 
