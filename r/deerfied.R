@@ -6,7 +6,7 @@ library(lubridate)
 
 # load --------------------------------------------------------------------
 
-df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/20191120/telemetryDataFinal telemetryDataFinal_2019-11-20 15_36_00_.csv", col_types = cols(
+df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/20191123/telemetryDataFinal telemetryDataFinal_2019-11-23 15_20_00_.csv", col_types = cols(
   X1 = col_double(),
   taggingSite = col_character(),
   tagID = col_double(),
