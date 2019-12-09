@@ -6,7 +6,7 @@ library(lubridate)
 
 # load --------------------------------------------------------------------
 
-df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/20191123/telemetryDataFinal telemetryDataFinal_2019-11-23 15_20_00_.csv", col_types = cols(
+df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/deerfield/20191206/telemetryDataFinal telemetryDataFinal_2019-12-06 13_52_00_.csv", col_types = cols(
   X1 = col_double(),
   taggingSite = col_character(),
   tagID = col_double(),
@@ -15,7 +15,8 @@ df_orig <- read_csv("~/Dropbox/SHEDS/tame/data/20191123/telemetryDataFinal telem
   sex = col_character(),
   dateTime = col_character(),
   lon = col_double(),
-  lat = col_double()
+  lat = col_double(),
+  dayNight = col_character()
 )) %>% 
   select(-X1)
 
@@ -34,7 +35,8 @@ df <- df_orig %>%
     tagging_site,
     fork_length,
     adipose_clip,
-    sex
+    sex,
+    day_night
   ) %>% 
   arrange(datetime, uid) %>% 
   mutate(
@@ -48,7 +50,7 @@ df$fork_length %>% summary
 df$tagging_site %>% unique() %>% sort() %>% str_c('"', ., '"', collapse = ", ")
 df$adipose_clip %>% table
 df$sex %>% table
-
+df$day_night %>% table
 # plots -------------------------------------------------------------------
 
 df %>% 
@@ -77,6 +79,10 @@ df %>%
   ggplot(aes(sex)) +
   geom_histogram(stat = "count") +
   labs(title = "Sex")
+df %>% 
+  ggplot(aes(day_night)) +
+  geom_histogram(stat = "count") +
+  labs(title = "Day/Night")
 df %>% 
   group_by(uid) %>% 
   count() %>% 

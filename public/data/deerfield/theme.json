@@ -47,6 +47,16 @@
       "color": true,
       "outline": false,
       "size": false
+    },
+    {
+      "id": "day_night",
+      "description": "Day/Night",
+      "type": "discrete",
+      "domain": ["day", "night"],
+      "filter": true,
+      "color": true,
+      "outline": true,
+      "size": false
     }
   ]
 }
