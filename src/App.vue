@@ -246,7 +246,16 @@
               </v-toolbar>
               <v-card-text v-show="!legend.collapse">
                 <div class="grey--text text--darken-2">
-                  <h4>Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }} ({{ (crossfilter.counts.filtered / crossfilter.counts.total * 100).toFixed(0) }}%)</h4>
+                  <h4>
+                    Records:
+                    {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
+                    <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
+                  </h4>
+                  <h4>
+                    Tags:
+                    {{ counts.tags.filtered.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
+                    <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100).toFixed(0) }}%)</span>
+                  </h4>
                 </div>
                 <v-divider class="my-2"></v-divider>
                 <TameLegendColor :variable="color.selected"></TameLegendColor>
@@ -340,11 +349,19 @@ export default {
       visible: process.env.NODE_ENV === 'development',
       collapse: false
     },
-    crossfilter: {
-      counts: {
+    counts: {
+      records: {
+        filtered: 0,
+        total: 0
+      },
+      tags: {
         filtered: 0,
         total: 0
       }
+    },
+    tags: {
+      dim: null,
+      group: null
     },
     selected: {
       collapse: false,
@@ -487,6 +504,9 @@ export default {
                 ...mapByIndex.get(d.$index)
               }))
 
+              this.tags.dim = xf.dimension(d => d[theme.columns.id])
+              this.tags.group = this.tags.dim.group().reduceCount()
+
               // const velocityDomain = [
               //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
               //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
@@ -572,8 +592,11 @@ export default {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
     },
     onFilter () {
-      this.crossfilter.counts.filtered = xf.allFiltered().length
-      this.crossfilter.counts.total = xf.size()
+      this.counts.records.filtered = xf.allFiltered().length
+      this.counts.records.total = xf.size()
+
+      this.counts.tags.filtered = this.tags.group.all().filter(d => d.value > 0).length
+      this.counts.tags.total = this.tags.group.size()
     },
     selectByAreas (features) {
       if (!features || features.features.length === 0) {
