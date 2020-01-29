@@ -1,6 +1,12 @@
 <template>
   <div class="tame-map">
-    <l-map ref="map" :center="center" :zoom="zoom" :options="{ ...options, zoomControl: false }" @ready="$emit('ready', map)">
+    <l-map
+      ref="map"
+      style="width:100%;height:100%"
+      :center="center"
+      :zoom="zoom"
+      :options="{ ...options, zoomControl: false }"
+      @ready="$emit('ready', map)">
       <l-control-zoom position="topright"></l-control-zoom>
       <l-control-layers position="topright"></l-control-layers>
       <l-tile-layer
@@ -19,6 +25,7 @@
 
 <script>
 import { LMap, LTileLayer, LControlZoom, LControlLayers } from 'vue2-leaflet'
+import L from 'leaflet'
 import * as d3 from 'd3'
 
 import evt from '@/events'
@@ -81,40 +88,27 @@ export default {
       // console.log('zoom:', this.map.getZoom())
       this.zoomLevel = this.map.getZoom()
       evt.$emit('map:zoom', this.map.getZoom())
+      evt.$emit('map:render')
     })
 
-    this.svg = d3.select(this.map.getPanes().overlayPane).append('svg')
-    this.svg.style('z-index', 201)
-    this.overlay = this.svg.append('g').attr('class', 'leaflet-zoom-hide')
+    const svgLayer = L.svg()
+    this.map.addLayer(svgLayer)
 
-    this.$on('resize', this.resize)
+    this.svg = d3.select(svgLayer.getPane()).select('svg')
+      .classed('leaflet-zoom-animated', false)
+      .classed('leaflet-zoom-hide', true)
+      .classed('map', true)
+      .attr('pointer-events', null)
+      .style('z-index', 201)
 
     this.ready = true
   },
   methods: {
-    resize (bounds) {
-      if (bounds) this.bounds = bounds
-      const padding = 100
-
-      const topLeft = this.bounds[0]
-      const bottomRight = this.bounds[1]
-
-      const width = bottomRight[0] - topLeft[0]
-      const height = topLeft[1] - bottomRight[1]
-
-      this.svg.attr('width', width + padding)
-        .attr('height', height + padding)
-        .style('left', `${topLeft[0] - (padding / 2)}px`)
-        .style('top', `${bottomRight[1] - (padding / 2)}px`)
-
-      this.svg.select('g')
-        .attr('transform', `translate(${-(topLeft[0] - (padding / 2))},${-(bottomRight[1] - (padding / 2))})`)
-    }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .tame-map {
   width: 100%;
   height: 100%;
@@ -122,6 +116,28 @@ export default {
   top: 0;
   left: 0;
   z-index: 0;
+}
+
+.tame-map circle {
+  cursor: pointer !important;
+  pointer-events: visible !important;
+}
+
+.d3-tip {
+  line-height: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #000;
+  border-radius: 2px;
+  pointer-events: none;
+  font-family: sans-serif;
+  z-index: 1000;
+  margin-left: 20px;
+}
+
+.leaflet-control-container > .leaflet-top.leaflet-right {
+  right: 310px;
+  top: 2px;
 }
 
 /* circle {

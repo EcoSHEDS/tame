@@ -15,8 +15,8 @@
     </v-app-bar>
 
     <v-content>
-      <tame-map :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
-        <tame-map-layer
+      <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
+        <TameMapLayer
           :data="dataset"
           :getColor="getColor"
           :getOutline="getOutline"
@@ -24,8 +24,8 @@
           :selected-ids="selected.ids"
           :showLines="map.showLines"
           @click="selectId">
-        </tame-map-layer>
-      </tame-map>
+        </TameMapLayer>
+      </TameMap>
       <v-container fill-height fluid class="ml-2">
         <v-layout row>
           <v-flex grow-shrink-0>
@@ -226,7 +226,7 @@
                         Click and drag on a histogram to filter the dataset.
                         Only observations that meet ALL filter criteria are shown on the map.
                       </p>
-                      <tame-filter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></tame-filter>
+                      <TameFilter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></TameFilter>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -249,9 +249,9 @@
                   <h4>Filtered: {{ crossfilter.counts.filtered.toLocaleString() }} of {{ crossfilter.counts.total.toLocaleString() }} ({{ (crossfilter.counts.filtered / crossfilter.counts.total * 100).toFixed(0) }}%)</h4>
                 </div>
                 <v-divider class="my-2"></v-divider>
-                <tame-legend-color :variable="color.selected"></tame-legend-color>
-                <tame-legend-size :variable="size.selected"></tame-legend-size>
-                <tame-legend-outline :variable="outline.selected"></tame-legend-outline>
+                <TameLegendColor :variable="color.selected"></TameLegendColor>
+                <TameLegendSize :variable="size.selected"></TameLegendSize>
+                <TameLegendOutline :variable="outline.selected"></TameLegendOutline>
               </v-card-text>
             </v-card>
             <v-card class="mb-3" v-if="debug.visible">
@@ -655,8 +655,4 @@ export default {
 </script>
 
 <style>
-.leaflet-control-container > .leaflet-top.leaflet-right {
-  right: 280px;
-  top: 2px;
-}
 </style>

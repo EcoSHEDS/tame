@@ -51,8 +51,8 @@ export default {
     map () {
       return this.$parent.map
     },
-    overlay () {
-      return this.$parent.overlay
+    svg () {
+      return this.$parent.svg
     },
     disableClick () {
       return this.$parent.disableClick
@@ -76,7 +76,8 @@ export default {
     }
   },
   mounted () {
-    evt.$on('map:zoom', this.resize)
+    // console.log('tame-map-layer:mounted')
+    // evt.$on('map:zoom', this.resize)
     evt.$on('map:render', this.render)
     evt.$on('map:render:filter', this.renderFiltered)
 
@@ -94,26 +95,26 @@ export default {
       Sex: ${d.sex}
     `)
 
-    this.container = this.overlay.append('g')
+    this.container = this.svg.select('g')
     this.container.call(this.tip)
-    this.resize()
+    // this.resize()
 
     if (this.data) {
-      this.resize()
+      // this.resize()
       this.fitBounds()
+      this.render()
     }
   },
   beforeDestroy () {
-    evt.$off('map:zoom', this.resize)
+    // console.log('tame-map-layer:beforeDestroy')
+    // evt.$off('map:zoom', this.resize)
     evt.$off('map:render', this.render)
     evt.$off('map:render:filter', this.renderFiltered)
     this.tip.destroy()
-    this.container.selectAll('*').remove()
-    this.container.remove()
   },
   watch: {
     data () {
-      this.resize()
+      // this.resize()
       this.fitBounds()
     },
     selectedIds () {
@@ -125,24 +126,24 @@ export default {
     }
   },
   methods: {
-    resize () {
-      if (!this.boundingBox) return
+    // resize () {
+    //   if (!this.boundingBox) return
 
-      const topLeft = {
-        lon: this.boundingBox[0][0],
-        lat: this.boundingBox[1][0]
-      }
-      const bottomRight = {
-        lon: this.boundingBox[0][1],
-        lat: this.boundingBox[1][1]
-      }
-      const bounds = [topLeft, bottomRight]
+    //   const topLeft = {
+    //     lon: this.boundingBox[0][0],
+    //     lat: this.boundingBox[1][0]
+    //   }
+    //   const bottomRight = {
+    //     lon: this.boundingBox[0][1],
+    //     lat: this.boundingBox[1][1]
+    //   }
+    //   const bounds = [topLeft, bottomRight]
 
-      const projectedBounds = bounds.map(this.projectPoint)
+    //   const projectedBounds = bounds.map(this.projectPoint)
 
-      this.$parent.$emit('resize', projectedBounds)
-      this.render()
-    },
+    //   this.$parent.$emit('resize', projectedBounds)
+    //   this.render()
+    // },
     fitBounds () {
       if (!this.boundingBox) return
 
@@ -150,6 +151,7 @@ export default {
         [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
         [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
       ]
+
       this.map.fitBounds(bounds)
     },
     projectPoint (d) {
@@ -158,36 +160,55 @@ export default {
       return [point.x, point.y]
     },
     render () {
-      // console.log('tame-map-layer:render')
       if (!this.data) return
 
       const vm = this
       const tip = this.tip
 
-      this.container
-        .selectAll('g')
-        .remove()
-
-      const groups = this.container
-        .selectAll('g')
-        .data(this.nestedData, d => d.key)
-        .enter()
-        .append('g')
-        .classed('group', true)
-
       const line = d3.line()
         .x(d => this.projectPoint(d)[0])
         .y(d => this.projectPoint(d)[1])
 
-      groups.append('path')
-        .datum(d => d.values, d => d.key)
+      const groups = this.container
+        .selectAll('g')
+        .data(this.nestedData, d => d.key)
+        .join(
+          enter => enter
+            .append('g')
+            .classed('group', true),
+          update => update,
+          exit => exit.remove()
+        )
+
+      groups
+        .selectAll('path')
+        .data(d => [d.values])
+        .join(
+          enter => enter.append('path'),
+          update => update,
+          exit => exit.remove()
+        )
         .attr('d', line)
-        .classed('hidden', !this.showLines)
+        .classed('hidden', !vm.showLines)
 
       groups.selectAll('circle')
         .data(d => d.values, d => d.$index)
-        .enter()
-        .append('circle')
+        .join(
+          enter => enter
+            .append('circle')
+            .attr('class', 'point'),
+          update => update,
+          exit => exit.remove()
+        )
+        .attr('r', d => this.zoomLevel * this.getSize(d))
+        .style('fill', this.getColor)
+        .style('stroke', this.getOutline)
+        .each(function (d, i) {
+          const point = vm.projectPoint(d)
+          d3.select(this)
+            .attr('cx', d => point[0])
+            .attr('cy', d => point[1])
+        })
         .on('click', function (d) {
           // console.log('click', this.selectedIds, d.uid)
           // let id
@@ -214,22 +235,13 @@ export default {
             .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d.uid)) && !vm.showLines)
           tip.hide(d, this)
         })
-        .attr('r', d => this.zoomLevel * this.getSize(d))
-        .style('fill', this.getColor)
-        .style('stroke', this.getOutline)
-        .each(function (d, i) {
-          const point = vm.projectPoint(d)
-          d3.select(this)
-            .attr('cx', d => point[0])
-            .attr('cy', d => point[1])
-        })
+
       this.renderSelected()
       this.renderFiltered()
     },
     renderFiltered () {
       // console.log('tame-map-layer:renderFiltered')
       this.container
-        .selectAll('g')
         .selectAll('circle')
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
     },
@@ -241,8 +253,6 @@ export default {
         .classed('unselected', d => this.selectedIds.length > 0 && !this.selectedIds.includes(d.key))
         .select('path')
         .classed('hidden', d => !(this.selectedIds.length > 0 && this.selectedIds.includes(d.key)) && !this.showLines)
-        // .select('path')
-        // .classed('hidden', false)
     }
   },
   render: function (h) {
