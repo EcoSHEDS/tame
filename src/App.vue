@@ -2,15 +2,13 @@
   <v-app>
     <v-app-bar app clipped-left dark>
       <v-toolbar-title class="headline">
-        <span>SHEDS</span>
-        <span class="font-weight-light px-2">|</span>
-        <span class="font-weight-light">Tagged Animal Movement Explorer (TAME)</span>
-        <!-- <span class="font-weight-light px-2">|</span> -->
-        <span class="text-uppercase overline ml-3">Alpha Version</span>
+        <v-icon left>mdi-fish</v-icon>
+        <span>Tagged Animal Movement Explorer (TAME)</span>
+        <span class="text-uppercase overline ml-3">Beta Version</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn text small href="https://ecosheds.org">
-        <v-icon small left>mdi-home</v-icon> SHEDS
+      <v-btn text href="https://ecosheds.org">
+        <v-icon left>mdi-home</v-icon> SHEDS
       </v-btn>
     </v-app-bar>
 
