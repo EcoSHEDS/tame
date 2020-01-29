@@ -246,16 +246,17 @@
               </v-toolbar>
               <v-card-text v-show="!legend.collapse">
                 <div class="grey--text text--darken-2">
-                  <h4>
+                  <h4>Filter Summary</h4>
+                  <div class="pl-2">
                     Records:
                     {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
                     <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
-                  </h4>
-                  <h4>
+                  </div>
+                  <div class="pl-2">
                     Tags:
                     {{ counts.tags.filtered.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
                     <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100).toFixed(0) }}%)</span>
-                  </h4>
+                  </div>
                 </div>
                 <v-divider class="my-2"></v-divider>
                 <TameLegendColor :variable="color.selected"></TameLegendColor>
