@@ -10,16 +10,22 @@
       <v-btn text to="/" class="mx-4">
         Home
       </v-btn>
-      <v-btn text to="/about" class="mx-4">
+      <v-btn text :to="{ name: 'about' }" class="mx-4">
         About
       </v-btn>
-      <v-btn text to="/projects" class="mx-4">
+      <v-btn text :to="{ name: 'projects' }" class="mx-4">
         Projects
       </v-btn>
-      <v-btn text to="/login" class="mx-4">
-        Login
+      <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
+        My Account
       </v-btn>
-      <v-btn text to="/signup" class="mx-4" dark outlined>
+      <v-btn text class="mx-4" v-if="user" @click="logout">
+        Log Out
+      </v-btn>
+      <v-btn text :to="{ name: 'login' }" class="mx-4" v-if="!user">
+        Log In
+      </v-btn>
+      <v-btn text :to="{ name: 'signup' }" class="mx-4" dark outlined v-if="!user">
         Sign Up
       </v-btn>
       <!-- <v-btn text href="https://ecosheds.org">
@@ -34,7 +40,26 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+import { AmplifyEventBus } from 'aws-amplify-vue'
+
 export default {
-  name: 'App'
+  name: 'App',
+  computed: {
+    ...mapGetters(['user'])
+  },
+  methods: {
+    logout () {
+      console.log('logout')
+      this.$Amplify.Auth.signOut()
+        .then(() => {
+          return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
+        })
+        .catch((e) => {
+          console.log(e)
+          alert('Error occurred trying to log out')
+        })
+    }
+  }
 }
 </script>

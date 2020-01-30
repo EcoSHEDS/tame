@@ -1,0 +1,9 @@
+{
+	"auth": {
+		"tame8b769dde": {
+			"service": "Cognito",
+			"providerPlugin": "awscloudformation",
+			"dependsOn": []
+		}
+	}
+}

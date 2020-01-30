@@ -4,7 +4,7 @@
       <v-row>
         <v-col>
           <h1 class="display-2">Welcome</h1>
-          <v-card class="my-8" color="grey lighten-2">
+          <v-card class="my-8">
             <v-card-text>
               <v-btn color="primary" to="/projects">Project List</v-btn>
             </v-card-text>

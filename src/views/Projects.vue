@@ -20,7 +20,7 @@
             </v-card>
           </div>
           <div v-if="status === 'ready'">
-            <v-card class="my-8" color="grey lighten-2" v-for="project in projects" :key="project.id">
+            <v-card class="my-8" v-for="project in projects" :key="project.id">
               <v-card-title primary-title>
                 {{ project.label }}
               </v-card-title>
