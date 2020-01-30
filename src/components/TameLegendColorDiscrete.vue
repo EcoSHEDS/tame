@@ -2,7 +2,7 @@
   <div>
     <div ref="svgContainer"></div>
     <div class="subheading ml-3 mb-4" v-if="variable.domain.length > maxCount">
-      ... and {{ variable.domain.length - 10 }} more (not shown)
+      ... and {{ variable.domain.length - 10 }} more
     </div>
   </div>
 </template>

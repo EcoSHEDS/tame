@@ -48,7 +48,7 @@ export default {
       return this.variable ? this.variable.domain : [0, 1]
     },
     height () {
-      return this.ticks.length * (this.maxRadius * 2 + this.itemPadding) + this.margins.top + this.margins.bottom
+      return this.ticks.length * (this.maxRadius * 1.5 + this.itemPadding) + this.margins.top + this.margins.bottom
     }
   },
   watch: {
@@ -95,7 +95,7 @@ export default {
 
       items.append('circle')
         .attr('cx', this.maxRadius)
-        .attr('cy', (d, i) => this.maxRadius + (this.maxRadius * 2 + this.itemPadding) * (this.ticks.length - i - 1))
+        .attr('cy', (d, i) => this.maxRadius + (this.maxRadius * 1.5 + this.itemPadding) * (this.ticks.length - i - 1))
         .attr('r', (d) => this.maxRadius * this.sizeScale(d))
         .attr('fill', 'none')
         .attr('stroke', '#777')
@@ -103,7 +103,7 @@ export default {
 
       items.append('text')
         .attr('x', this.maxRadius * 2 + 10)
-        .attr('y', (d, i) => this.maxRadius + (this.maxRadius * 2 + this.itemPadding) * (this.ticks.length - i - 1))
+        .attr('y', (d, i) => this.maxRadius + (this.maxRadius * 1.5 + this.itemPadding) * (this.ticks.length - i - 1))
         .attr('dy', '0.3em')
         .text(d => d)
     },

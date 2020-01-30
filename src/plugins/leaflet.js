@@ -1,3 +1,4 @@
+import L from 'leaflet' // eslint-disable-line
 import 'leaflet-draw'
 
 import 'leaflet/dist/leaflet.css'

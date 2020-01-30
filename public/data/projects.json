@@ -1,0 +1,14 @@
+[
+  {
+    "id": "deerfield",
+    "label": "Deerfield Telemetry"
+  },
+  {
+    "id": "ukl-suckers",
+    "label": "Upper Klamath Lake Suckers"
+  },
+  {
+    "id": "test",
+    "label": "Does Not Exist"
+  }
+]
