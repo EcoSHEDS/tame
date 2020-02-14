@@ -16,6 +16,9 @@
       <v-btn text :to="{ name: 'projects' }" class="mx-4">
         Projects
       </v-btn>
+      <v-btn text :to="{ name: 'createProject' }" class="mx-4">
+        Create Project
+      </v-btn>
       <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
         My Account
       </v-btn>

@@ -22,9 +22,12 @@
           <div v-if="status === 'ready'">
             <v-card class="my-8" v-for="project in projects" :key="project.id">
               <v-card-title primary-title>
-                {{ project.label }}
+                {{ project.name }}
               </v-card-title>
               <v-card-text>
+                <p>
+                  {{ project.description }}
+                </p>
                 <v-btn color="primary" :to="`/project/${ project.id }`">Load Project</v-btn>
               </v-card-text>
             </v-card>
@@ -46,9 +49,10 @@ export default {
   },
   mounted () {
     console.log('Projects:mounted')
-    this.$http.get('projects.json')
+    this.$http.get('projects/')
       .then(response => response.data)
       .then((projects) => {
+        console.log(projects)
         this.projects = projects
         this.status = 'ready'
       })

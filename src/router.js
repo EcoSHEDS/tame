@@ -9,6 +9,7 @@ import Home from './views/Home.vue'
 import About from './views/About.vue'
 import Project from './views/Project.vue'
 import Projects from './views/Projects.vue'
+import CreateProject from './views/CreateProject.vue'
 
 import AuthView from './views/auth/Auth.vue'
 import Account from './views/auth/Account.vue'
@@ -115,6 +116,11 @@ const router = new Router({
       path: '/projects',
       name: 'projects',
       component: Projects
+    },
+    {
+      path: '/projects/create',
+      name: 'createProject',
+      component: CreateProject
     },
     {
       path: '/project/:id',
