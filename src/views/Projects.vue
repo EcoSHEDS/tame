@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-layout row wrap style="max-width:960px" mx-auto>
+    <v-layout row wrap style="max-width:960px" mx-auto class="mt-8">
       <v-row>
         <v-col>
           <h1 class="display-2 pb-8">Project List</h1>
@@ -28,7 +28,7 @@
                 <p>
                   {{ project.description }}
                 </p>
-                <v-btn color="primary" :to="`/project/${ project.id }`">Load Project</v-btn>
+                <v-btn color="primary" :to="`/project/${ project.id }`">Launch Project</v-btn>
               </v-card-text>
             </v-card>
           </div>
