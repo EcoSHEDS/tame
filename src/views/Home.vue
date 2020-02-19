@@ -1,5 +1,6 @@
 <template>
-  <v-container>
+  <div></div>
+  <!-- <v-container>
     <v-layout row wrap style="max-width:960px" mx-auto>
       <v-row>
         <v-col>
@@ -12,7 +13,7 @@
         </v-col>
       </v-row>
     </v-layout>
-  </v-container>
+  </v-container> -->
 </template>
 
 <script>

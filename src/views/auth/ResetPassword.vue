@@ -1,8 +1,10 @@
 <template>
-  <v-card class="pa-4">
-    <v-card-title primary-title>
-      Reset Password
-    </v-card-title>
+  <v-card>
+    <v-toolbar color="primary" dark class="mb-8">
+      <span class="title">Request Password Reset</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-card-text>
       <v-form @submit.prevent="submit">
         <v-text-field
@@ -42,11 +44,6 @@
           @input="$v.repeatPassword.$touch()"
           @blur="$v.repeatPassword.$touch()"
         ></v-text-field>
-
-        <div class="mt-4">
-          <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-          <v-btn @click="clear">clear</v-btn>
-        </div>
       </v-form>
 
       <v-alert type="error" :value="!!serverError" class="mt-8">
@@ -59,6 +56,12 @@
 
       Status: {{ submitStatus }}
     </v-card-text>
+    <v-card-actions class="mx-4 pb-4">
+      <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+      <v-btn @click="clear">clear</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn :to="{ name: 'login' }">cancel</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

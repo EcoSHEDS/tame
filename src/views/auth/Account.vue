@@ -1,13 +1,15 @@
 <template>
-  <v-card class="pa-4">
-    <v-card-title primary-title>
-      My Account
-    </v-card-title>
+  <v-card>
+    <v-toolbar color="primary" dark class="mb-8">
+      <span class="title">My Account</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-card-text>
       Name: {{ user.attributes.name }}<br>
       Email: {{ user.attributes.email }}<br>
       Affiliation: {{ user.attributes['custom:affiliation'] }}<br>
-      <v-btn color="primary" :to="{ name: 'changePassword' }" class="mt-8">Change Password</v-btn>
+      <v-btn color="default" :to="{ name: 'changePassword' }" class="mt-8">Change Password</v-btn>
     </v-card-text>
   </v-card>
 </template>

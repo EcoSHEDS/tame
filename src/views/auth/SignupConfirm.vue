@@ -1,32 +1,27 @@
 <template>
   <v-card>
-    <v-card-title primary-title>
-      Verify Email
-    </v-card-title>
+    <v-toolbar color="primary" dark class="mb-8">
+      <span class="title">Verify Email</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-card-text>
-      <v-form @submit.prevent="submit">
-        <v-text-field
-          v-model="email"
-          :error-messages="emailErrors"
-          label="Email Address"
-          required
-          @input="$v.email.$touch()"
-          @blur="$v.email.$touch()"
-        ></v-text-field>
-        <v-text-field
-          v-model="code"
-          :error-messages="codeErrors"
-          label="Verification Code"
-          required
-          @input="$v.code.$touch()"
-          @blur="$v.code.$touch()"
-        ></v-text-field>
-
-        <div class="my-4">
-          <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-          <v-btn @click="clear">clear</v-btn>
-        </div>
-      </v-form>
+      <v-text-field
+        v-model="email"
+        :error-messages="emailErrors"
+        label="Email Address"
+        required
+        @input="$v.email.$touch()"
+        @blur="$v.email.$touch()"
+      ></v-text-field>
+      <v-text-field
+        v-model="code"
+        :error-messages="codeErrors"
+        label="Verification Code"
+        required
+        @input="$v.code.$touch()"
+        @blur="$v.code.$touch()"
+      ></v-text-field>
 
       <v-alert type="error" :value="!!serverError" class="mt-8">
         {{serverError}}
@@ -41,6 +36,12 @@
 
       Status: {{ submitStatus }}
     </v-card-text>
+    <v-card-actions class="mx-4 pb-4">
+      <v-btn color="primary" class="mr-4" :loading="submitStatus === 'PENDING'" @click="submit">submit</v-btn>
+      <v-btn @click="clear">clear</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn :to="{ name: 'login' }">cancel</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

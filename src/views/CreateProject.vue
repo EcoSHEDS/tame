@@ -1,290 +1,294 @@
 <template>
-  <v-container>
-    <v-layout row wrap style="max-width:800px" mx-auto class="mt-8">
-      <v-row>
-        <v-col>
-          <h1 class="display-2 pb-8">Create New Project</h1>
-          <v-stepper v-model="step" vertical non-linear>
-            <v-stepper-step :complete="status.project === 'FINISHED'" step="1">Project information</v-stepper-step>
-            <v-stepper-content step="1">
-              <v-card>
-                <v-card-text>
-                  <!-- <v-form @submit.prevent="submitProject"> -->
-                    <v-text-field
-                      v-model="project.name"
-                      :error-messages="projectNameErrors"
-                      label="Name"
-                      required
-                      counter
-                      outlined
-                      @input="$v.project.name.$touch()"
-                      @blur="$v.project.name.$touch()"
-                    ></v-text-field>
-                    <v-textarea
-                      v-model="project.description"
-                      :error-messages="projectDescriptionErrors"
-                      label="Brief Description"
-                      required
-                      counter
-                      outlined
-                      rows="3"
-                      @input="$v.project.description.$touch()"
-                      @blur="$v.project.description.$touch()"
-                    ></v-textarea>
+  <v-card>
+    <v-toolbar color="primary" dark class="mb-0">
+      <span class="title">Create New Project</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
 
-                    <div>
-                      Automated ID: <code>{{ projectId }}</code>
-                    </div>
+    <v-stepper v-model="step" vertical non-linear class="mt-0 mb-4" style="border-radius:0">
+      <v-stepper-step :complete="status.project === 'FINISHED'" step="1">Project information</v-stepper-step>
+      <v-stepper-content step="1">
+        <v-card>
+          <v-card-text>
+            <!-- <v-form @submit.prevent="submitProject"> -->
+              <v-text-field
+                v-model="project.name"
+                :error-messages="projectNameErrors"
+                label="Name"
+                required
+                counter
+                outlined
+                @input="$v.project.name.$touch()"
+                @blur="$v.project.name.$touch()"
+              ></v-text-field>
+              <v-textarea
+                v-model="project.description"
+                :error-messages="projectDescriptionErrors"
+                label="Brief Description"
+                required
+                counter
+                outlined
+                rows="3"
+                @input="$v.project.description.$touch()"
+                @blur="$v.project.description.$touch()"
+              ></v-textarea>
 
-                  <v-alert type="error" :value="!!stepError.project" class="mt-8">
-                    {{stepError.project}}
-                  </v-alert>
+              <div>
+                Automated ID: <code>{{ projectId }}</code>
+              </div>
 
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn type="submit" color="primary" class="pl-4 mr-4" :loading="status.project === 'PENDING'" @click="submitProject">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-stepper-content>
+            <v-alert type="error" :value="!!stepError.project" class="mt-8">
+              {{stepError.project}}
+            </v-alert>
 
-            <v-stepper-step :complete="status.file === 'FINISHED'" step="2">Upload dataset file</v-stepper-step>
-            <v-stepper-content step="2">
-              <v-card>
-                <v-card-text>
-                  <v-file-input
-                    v-model="file.localFile"
-                    label="Select the dataset file"
-                    outlined
-                    hint="Note: to re-upload a file after modifying it, first clear the selection and select the file again."
-                    persistent-hint
-                    class="mb-4"
-                    prepend-inner-icon="$file"
-                    prepend-icon=""
-                    @change="validateFile">
-                  </v-file-input>
-                  <div v-if="status.file === 'PENDING'">
-                    Validating file...
-                  </div>
-                  <div v-else-if="status.file === 'ERROR'">
-                    <v-alert type="error" outlined>
-                      <span v-html="stepError.file"></span>
-                    </v-alert>
-                  </div>
-                  <div v-else-if="status.file === 'FINISHED'">
-                    <div>
-                      <div class="subtitle-2">
-                        File Information
-                      </div>
-                      <div class="ml-4">
-                        Filename: <strong>{{ file.localFile.name }}</strong><br>
-                        # Rows: <strong>{{ file.parsedFile.data.length.toLocaleString() }}</strong><br>
-                        Columns: <strong>{{ file.parsedFile.meta.fields.join(', ') }}</strong>
-                      </div>
-                    </div>
-                    <v-alert type="success" outlined class="mt-8">
-                      File has been successfully validated, please continue.
-                    </v-alert>
-                  </div>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn color="default" @click="goBackFile" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-                  <v-btn color="primary" @click="submitFile" class="mx-4 pl-4" :disabled="status.file !== 'FINISHED'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-stepper-content>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn type="submit" color="primary" class="pl-4 mr-4" :loading="status.project === 'PENDING'" @click="submitProject">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
 
-            <v-stepper-step :complete="status.columns === 'FINISHED'" step="3">Define primary variables</v-stepper-step>
-            <v-stepper-content step="3">
-              <v-card>
-                <v-card-text v-if="file.parsedFile">
-                  <v-row>
-                    <v-col md="6">
-                      <v-select
-                        :items="file.parsedFile.meta.fields"
-                        v-model="columns.id"
-                        label="Select individual (tag) ID column"
-                        outlined
-                        required
-                        :error-messages="columnsIdErrors"
-                        @input="$v.columns.id.$touch()"
-                        @blur="$v.columns.id.$touch()"
-                      ></v-select>
-                    </v-col>
-                    <v-col md="6">
-                      <v-select
-                        :items="file.parsedFile.meta.fields"
-                        v-model="columns.datetime"
-                        label="Select date/time column"
-                        outlined
-                        required
-                        :error-messages="columnsDatetimeErrors"
-                        @input="$v.columns.datetime.$touch()"
-                        @blur="$v.columns.datetime.$touch()"
-                      ></v-select>
-                    </v-col>
-                  </v-row>
-                  <v-row>
+      <v-stepper-step :complete="status.file === 'FINISHED'" step="2">Upload dataset file</v-stepper-step>
+      <v-stepper-content step="2">
+        <v-card>
+          <v-card-text>
+            <v-file-input
+              v-model="file.localFile"
+              label="Select the dataset file"
+              outlined
+              hint="Note: to re-upload a file after modifying it, first clear the selection and select the file again."
+              persistent-hint
+              class="mb-4"
+              prepend-inner-icon="$file"
+              prepend-icon=""
+              @change="validateFile">
+            </v-file-input>
+            <div v-if="status.file === 'PENDING'">
+              Validating file...
+            </div>
+            <div v-else-if="status.file === 'ERROR'">
+              <v-alert type="error" outlined>
+                <span v-html="stepError.file"></span>
+              </v-alert>
+            </div>
+            <div v-else-if="status.file === 'FINISHED'">
+              <div>
+                <div class="subtitle-2">
+                  File Information
+                </div>
+                <div class="ml-4">
+                  Filename: <strong>{{ file.localFile.name }}</strong><br>
+                  # Rows: <strong>{{ file.parsedFile.data.length.toLocaleString() }}</strong><br>
+                  Columns: <strong>{{ file.parsedFile.meta.fields.join(', ') }}</strong>
+                </div>
+              </div>
+              <v-alert type="success" outlined class="mt-8">
+                File has been successfully validated, please continue.
+              </v-alert>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="default" @click="goBackFile" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="submitFile" class="mx-4 pl-4" :disabled="status.file !== 'FINISHED'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
 
-                    <v-col md="6">
-                      <v-select
-                        :items="file.parsedFile.meta.fields"
-                        v-model="columns.latitude"
-                        label="Select latitude variable"
-                        outlined
-                        required
-                        :error-messages="columnsLatitudeErrors"
-                        @input="$v.columns.latitude.$touch()"
-                        @blur="$v.columns.latitude.$touch()"
-                      ></v-select>
-                    </v-col>
-                    <v-col md="6">
-                      <v-select
-                        :items="file.parsedFile.meta.fields"
-                        v-model="columns.longitude"
-                        label="Select longitude variable"
-                        outlined
-                        required
-                        :error-messages="columnsLongitudeErrors"
-                        @input="$v.columns.longitude.$touch()"
-                        @blur="$v.columns.longitude.$touch()"
-                      ></v-select>
-                    </v-col>
-                  </v-row>
-                  <v-row v-if="status.columns === 'ERROR'">
-                    <v-col>
-                      <v-alert type="error" outlined>
-                        <span v-html="stepError.columns"></span>
-                      </v-alert>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-                <v-card-text v-else>
-                  <v-alert type="error">
-                    File has not been validated. Return to previous step.
-                  </v-alert>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn color="default" @click="goBackColumns" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-                  <v-btn color="primary" @click="submitColumns" class="mx-4 pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-stepper-content>
+      <v-stepper-step :complete="status.columns === 'FINISHED'" step="3">Define primary variables</v-stepper-step>
+      <v-stepper-content step="3">
+        <v-card>
+          <v-card-text v-if="file.parsedFile">
+            <v-row>
+              <v-col md="6">
+                <v-select
+                  :items="file.parsedFile.meta.fields"
+                  v-model="columns.id"
+                  label="Select individual (tag) ID column"
+                  outlined
+                  required
+                  :error-messages="columnsIdErrors"
+                  @input="$v.columns.id.$touch()"
+                  @blur="$v.columns.id.$touch()"
+                ></v-select>
+              </v-col>
+              <v-col md="6">
+                <v-select
+                  :items="file.parsedFile.meta.fields"
+                  v-model="columns.datetime"
+                  label="Select date/time column"
+                  outlined
+                  required
+                  :error-messages="columnsDatetimeErrors"
+                  @input="$v.columns.datetime.$touch()"
+                  @blur="$v.columns.datetime.$touch()"
+                ></v-select>
+              </v-col>
+            </v-row>
+            <v-row>
 
-            <v-stepper-step :complete="status.variable === 'FINISHED'" step="4">Define additional variables</v-stepper-step>
-            <v-stepper-content step="4">
-              <v-card>
-                <v-card-text v-if="variables.length > 0">
-                  <v-row>
-                    <v-col md="4" class="mr-2">
-                      <div>Columns</div>
-                      <v-list>
-                        <v-list-item-group v-model="selectedVariableIndex" color="primary">
-                          <v-list-item v-for="variable in variables" :key="'variable-' + variable.id">
-                            <v-list-item-content>
-                              <v-list-item-title>
-                                <v-icon left v-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
-                                <v-icon left v-else>mdi-checkbox-blank-circle-outline</v-icon>
-                                {{variable.id}}
-                              </v-list-item-title>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list-item-group>
-                      </v-list>
-                    </v-col>
-                    <v-divider vertical></v-divider>
-                    <v-col md="7" class="ml-2">
-                      <v-text-field
-                        name="variableId"
-                        label="Column"
-                        disabled
-                        required
-                        outlined
-                        :value="variable.id"
-                      ></v-text-field>
-                      <v-text-field
-                        v-model="variable.name"
-                        name="variableName"
-                        label="Variable label"
-                        counter
-                        required
-                        outlined
-                        :error-messages="variableNameErrors"
-                        @input="$v.variable.name.$touch()"
-                        @blur="$v.variable.name.$touch()"
-                      ></v-text-field>
-                      <v-select
-                        :items="variableTypeOptions"
-                        item-value="value"
-                        item-text="label"
-                        v-model="variable.type"
-                        label="Type of variable"
-                        outlined
-                        required
-                        :error-messages="variableTypeErrors"
-                        @input="$v.variable.type.$touch()"
-                        @blur="$v.variable.type.$touch()"
-                      ></v-select>
-                      <v-text-field
-                        v-model="variable.description"
-                        name="variableDescription"
-                        label="Description (optional)"
-                        counter
-                        required
-                        outlined
-                        :error-messages="variableDescriptionErrors"
-                        @input="$v.variable.description.$touch()"
-                        @blur="$v.variable.description.$touch()"
-                      ></v-text-field>
-                      <v-row>
-                        <v-col>
-                          <v-checkbox label="Crossfilter" v-model="variable.filter"></v-checkbox>
-                          <v-checkbox label="Color" v-model="variable.color"></v-checkbox>
-                        </v-col>
-                        <v-col>
-                          <v-checkbox label="Size" :disabled="variable.type === 'discrete'" v-model="variable.size"></v-checkbox>
-                          <v-checkbox label="Outline" :disabled="variable.type === 'continuous'" v-model="variable.outline"></v-checkbox>
-                        </v-col>
-                      </v-row>
-                      <v-btn color="primary" @click="nextVariable">Validate and continue</v-btn>
-                      <v-alert type="error" :value="variableError" class="mt-8">
-                        <span v-html="variableError"></span>
-                      </v-alert>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-                <v-card-text v-else>
-                  <p>Dataset does not contain any other variables, please continue.</p>
-                </v-card-text>
-                <v-alert type="error" :value="status.allVariables === 'ERROR'" class="mt-8">
-                  {{stepError.allVariables}}
+              <v-col md="6">
+                <v-select
+                  :items="file.parsedFile.meta.fields"
+                  v-model="columns.latitude"
+                  label="Select latitude variable"
+                  outlined
+                  required
+                  :error-messages="columnsLatitudeErrors"
+                  @input="$v.columns.latitude.$touch()"
+                  @blur="$v.columns.latitude.$touch()"
+                ></v-select>
+              </v-col>
+              <v-col md="6">
+                <v-select
+                  :items="file.parsedFile.meta.fields"
+                  v-model="columns.longitude"
+                  label="Select longitude variable"
+                  outlined
+                  required
+                  :error-messages="columnsLongitudeErrors"
+                  @input="$v.columns.longitude.$touch()"
+                  @blur="$v.columns.longitude.$touch()"
+                ></v-select>
+              </v-col>
+            </v-row>
+            <v-row v-if="status.columns === 'ERROR'">
+              <v-col>
+                <v-alert type="error" outlined>
+                  <span v-html="stepError.columns"></span>
                 </v-alert>
-                <v-card-actions>
-                  <v-btn color="default" @click="goBackVariable" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-                  <v-btn color="primary" @click="submitVariable" :disabled="status.allVariables !== 'FINISHED'" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-stepper-content>
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-card-text v-else>
+            <v-alert type="error">
+              File has not been validated. Return to previous step.
+            </v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="default" @click="goBackColumns" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="submitColumns" class="mx-4 pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
 
-            <v-stepper-step step="5">Review</v-stepper-step>
-            <v-stepper-content step="5">
-              <v-card>
-                <v-card-text>
-                  <p>Review project...</p>
-                  <v-alert type="error" :value="status.review === 'ERROR'">
-                    <span v-html="stepError.review"></span>
-                  </v-alert>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn color="default" @click="step -= 1" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-                  <v-btn color="primary" @click="submit" :loading="status.review === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-stepper-content>
-          </v-stepper>
-        </v-col>
-      </v-row>
-    </v-layout>
-  </v-container>
+      <v-stepper-step :complete="status.variable === 'FINISHED'" step="4">Define additional variables</v-stepper-step>
+      <v-stepper-content step="4">
+        <v-card>
+          <v-card-text v-if="variables.length > 0">
+            <v-row>
+              <v-col md="4" class="mr-2">
+                <div>Columns</div>
+                <v-list>
+                  <v-list-item-group v-model="selectedVariableIndex" color="primary">
+                    <v-list-item v-for="variable in variables" :key="'variable-' + variable.id">
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          <v-icon left v-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
+                          <v-icon left v-else>mdi-checkbox-blank-circle-outline</v-icon>
+                          {{variable.id}}
+                        </v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list-item-group>
+                </v-list>
+              </v-col>
+              <v-divider vertical></v-divider>
+              <v-col md="7" class="ml-2">
+                <v-text-field
+                  name="variableId"
+                  label="Column"
+                  disabled
+                  required
+                  outlined
+                  :value="variable.id"
+                ></v-text-field>
+                <v-text-field
+                  v-model="variable.name"
+                  name="variableName"
+                  label="Variable label"
+                  counter
+                  required
+                  outlined
+                  :error-messages="variableNameErrors"
+                  @input="$v.variable.name.$touch()"
+                  @blur="$v.variable.name.$touch()"
+                ></v-text-field>
+                <v-select
+                  :items="variableTypeOptions"
+                  item-value="value"
+                  item-text="label"
+                  v-model="variable.type"
+                  label="Type of variable"
+                  outlined
+                  required
+                  :error-messages="variableTypeErrors"
+                  @input="$v.variable.type.$touch()"
+                  @blur="$v.variable.type.$touch()"
+                ></v-select>
+                <v-text-field
+                  v-model="variable.description"
+                  name="variableDescription"
+                  label="Description (optional)"
+                  counter
+                  required
+                  outlined
+                  :error-messages="variableDescriptionErrors"
+                  @input="$v.variable.description.$touch()"
+                  @blur="$v.variable.description.$touch()"
+                ></v-text-field>
+                <v-row>
+                  <v-col>
+                    <v-checkbox label="Crossfilter" v-model="variable.filter"></v-checkbox>
+                    <v-checkbox label="Color" v-model="variable.color"></v-checkbox>
+                  </v-col>
+                  <v-col>
+                    <v-checkbox label="Size" :disabled="variable.type === 'discrete'" v-model="variable.size"></v-checkbox>
+                    <v-checkbox label="Outline" :disabled="variable.type === 'continuous'" v-model="variable.outline"></v-checkbox>
+                  </v-col>
+                </v-row>
+                <v-btn color="primary" @click="nextVariable">Validate and continue</v-btn>
+                <v-alert type="error" :value="variableError" class="mt-8">
+                  <span v-html="variableError"></span>
+                </v-alert>
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-card-text v-else>
+            <p>Dataset does not contain any other variables, please continue.</p>
+          </v-card-text>
+          <v-alert type="error" :value="status.allVariables === 'ERROR'" class="mt-8">
+            {{stepError.allVariables}}
+          </v-alert>
+          <v-card-actions>
+            <v-btn color="default" @click="goBackVariable" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="submitVariable" :disabled="status.allVariables !== 'FINISHED'" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
+
+      <v-stepper-step step="5">Review</v-stepper-step>
+      <v-stepper-content step="5">
+        <v-card>
+          <v-card-text>
+            <p>Review project...</p>
+            <v-alert type="error" :value="status.review === 'ERROR'">
+              <span v-html="stepError.review"></span>
+            </v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="default" @click="step -= 1" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="submit" :loading="status.review === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
+    </v-stepper>
+
+    <v-card-actions class="mx-4 pb-4">
+      <v-spacer></v-spacer>
+      <v-btn to="/">close</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>

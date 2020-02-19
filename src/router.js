@@ -6,6 +6,7 @@ import { Auth } from 'aws-amplify'
 import store from './store'
 
 import Home from './views/Home.vue'
+import Welcome from './views/Welcome.vue'
 import About from './views/About.vue'
 import Project from './views/Project.vue'
 import Projects from './views/Projects.vue'
@@ -62,12 +63,26 @@ const router = new Router({
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Home,
+      meta: {
+        width: 1000
+      }
+    },
+    {
+      path: '/welcome',
+      name: 'welcome',
+      component: Welcome,
+      meta: {
+        width: 1000
+      }
     },
     {
       path: '/about',
       name: 'about',
-      component: About
+      component: About,
+      meta: {
+        width: 1000
+      }
     },
     {
       path: '/auth',
@@ -78,48 +93,69 @@ const router = new Router({
         {
           path: 'account',
           name: 'account',
-          component: Account
+          component: Account,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'login',
           name: 'login',
-          component: Login
+          component: Login,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'logout',
           name: 'logout',
-          component: Logout
+          component: Logout,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'signup',
           name: 'signup',
-          component: Signup
+          component: Signup,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'signup-confirm',
           name: 'signupConfirm',
-          component: SignupConfirm
+          component: SignupConfirm,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'change-password',
           name: 'changePassword',
-          component: ChangePassword
+          component: ChangePassword,
+          meta: {
+            width: 600
+          }
         },
         {
           path: 'reset-password',
           name: 'resetPassword',
-          component: ResetPassword
+          component: ResetPassword,
+          meta: {
+            width: 600
+          }
         }
       ]
     },
     {
       path: '/projects',
-      name: 'projects',
+      name: 'listProjects',
       component: Projects
     },
     {
-      path: '/projects/create',
-      name: 'createProject',
+      path: '/new-project',
+      name: 'newProject',
       component: CreateProject
     },
     {

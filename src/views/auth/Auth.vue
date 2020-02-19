@@ -1,13 +1,5 @@
 <template>
-  <v-container>
-    <v-layout row wrap style="max-width:500px" mx-auto class="mt-8">
-      <v-row>
-        <v-col>
-          <router-view></router-view>
-        </v-col>
-      </v-row>
-    </v-layout>
-  </v-container>
+  <router-view></router-view>
 </template>
 
 <script>

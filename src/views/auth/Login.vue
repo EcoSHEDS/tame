@@ -1,45 +1,47 @@
 <template>
-  <v-card class="pa-4">
-    <v-card-title primary-title>
-      Log In
-    </v-card-title>
+  <v-card>
+    <v-toolbar color="primary" dark class="mb-8">
+      <span class="title">Log In</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-card-text>
-      <v-form @submit.prevent="submit">
-        <v-text-field
-          v-model="email"
-          :error-messages="emailErrors"
-          label="Email Address"
-          required
-          @input="$v.email.$touch()"
-          @blur="$v.email.$touch()"
-        ></v-text-field>
-        <v-text-field
-          v-model="password"
-          :error-messages="passwordErrors"
-          label="Password"
-          required
-          type="password"
-          @input="$v.password.$touch()"
-          @blur="$v.password.$touch()"
-        ></v-text-field>
+      <v-text-field
+        v-model="email"
+        :error-messages="emailErrors"
+        label="Email Address"
+        required
+        @input="$v.email.$touch()"
+        @blur="$v.email.$touch()"
+      ></v-text-field>
+      <v-text-field
+        v-model="password"
+        :error-messages="passwordErrors"
+        label="Password"
+        required
+        type="password"
+        @input="$v.password.$touch()"
+        @blur="$v.password.$touch()"
+      ></v-text-field>
 
-        <div class="mt-4">
-          <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-          <v-btn @click="clear">clear</v-btn>
-        </div>
-      </v-form>
-
-      <v-alert type="error" :value="!!serverError" outlined class="mt-8">
+      <v-alert type="error" :value="!!serverError" outlined class="mt-4">
         {{serverError}}
       </v-alert>
 
-      <div class="mt-8">
+      <div class="mt-4">
         <router-link :to="{ name: 'resetPassword' }">Forgot your password?</router-link><br>
         <router-link :to="{ name: 'signup' }">Don't have an account?</router-link>
       </div>
 
       Status: {{ submitStatus }}
     </v-card-text>
+
+    <v-card-actions class="mx-4 pb-4">
+      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+      <v-btn @click="clear">clear</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn @click="$router.push({ name: 'home' })">cancel</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

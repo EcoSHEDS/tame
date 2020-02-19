@@ -1,51 +1,46 @@
 <template>
-  <v-card class="pa-4">
-    <v-card-title primary-title>
-      Change Password
-    </v-card-title>
+  <v-card>
+    <v-toolbar color="primary" dark class="mb-8">
+      <span class="title">Change Password</span>
+      <v-spacer></v-spacer>
+      <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-card-text>
-      <v-form @submit.prevent="submit">
-        <v-text-field
-          v-model="email"
-          :error-messages="emailErrors"
-          label="Email Address"
-          required
-          @input="$v.email.$touch()"
-          @blur="$v.email.$touch()"
-        ></v-text-field>
-        <v-text-field
-          v-model="oldPassword"
-          :error-messages="oldPasswordErrors"
-          label="Current Password"
-          required
-          type="password"
-          @input="$v.oldPassword.$touch()"
-          @blur="$v.oldPassword.$touch()"
-        ></v-text-field>
-        <v-text-field
-          v-model="newPassword"
-          :error-messages="newPasswordErrors"
-          label="New Password"
-          required
-          type="password"
-          @input="$v.newPassword.$touch()"
-          @blur="$v.newPassword.$touch()"
-        ></v-text-field>
-        <v-text-field
-          v-model="repeatPassword"
-          :error-messages="repeatPasswordErrors"
-          label="Confirm New Password"
-          required
-          type="password"
-          @input="$v.repeatPassword.$touch()"
-          @blur="$v.repeatPassword.$touch()"
-        ></v-text-field>
-
-        <div class="mt-4">
-          <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-          <v-btn @click="clear">clear</v-btn>
-        </div>
-      </v-form>
+      <v-text-field
+        v-model="email"
+        :error-messages="emailErrors"
+        label="Email Address"
+        required
+        @input="$v.email.$touch()"
+        @blur="$v.email.$touch()"
+      ></v-text-field>
+      <v-text-field
+        v-model="oldPassword"
+        :error-messages="oldPasswordErrors"
+        label="Current Password"
+        required
+        type="password"
+        @input="$v.oldPassword.$touch()"
+        @blur="$v.oldPassword.$touch()"
+      ></v-text-field>
+      <v-text-field
+        v-model="newPassword"
+        :error-messages="newPasswordErrors"
+        label="New Password"
+        required
+        type="password"
+        @input="$v.newPassword.$touch()"
+        @blur="$v.newPassword.$touch()"
+      ></v-text-field>
+      <v-text-field
+        v-model="repeatPassword"
+        :error-messages="repeatPasswordErrors"
+        label="Confirm New Password"
+        required
+        type="password"
+        @input="$v.repeatPassword.$touch()"
+        @blur="$v.repeatPassword.$touch()"
+      ></v-text-field>
 
       <v-alert type="error" :value="!!serverError">
         {{serverError}}
@@ -53,6 +48,13 @@
 
       Status: {{ submitStatus }}
     </v-card-text>
+
+    <v-card-actions class="mx-4 pb-4">
+      <v-btn color="primary" class="mr-4" :loading="submitStatus === 'PENDING'" @click="submit">submit</v-btn>
+      <v-btn @click="clear">clear</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn :to="{ name: 'account' }">cancel</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 
