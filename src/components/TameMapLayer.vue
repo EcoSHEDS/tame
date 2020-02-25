@@ -90,11 +90,7 @@ export default {
       Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
       Distance to Next (m): ${d.$distance ? d.$distance.toFixed(1) : 'N/A'}<br>
       Time to Next (days): ${d.$duration ? d.$duration.toFixed(1) : 'N/A'}<br>
-      Velocity (m/day): ${d.$velocity ? d.$velocity.toFixed(2) : 'N/A'}<br>
-      Tagging Site: ${d.tagging_site}<br>
-      Fork Length (mm): ${d.fork_length ? d.fork_length.toFixed(0) : 'N/A'}<br>
-      Adipose Clip: ${d.adipose_clip}<br>
-      Sex: ${d.sex}
+      Velocity (m/day): ${d.$velocity ? d.$velocity.toFixed(2) : 'N/A'}
     `)
 
     this.container = this.svg.select('g')

@@ -2,7 +2,7 @@
   <v-card elevation-1 class="my-2">
     <v-toolbar dense color="grey lighten-3" flat height="32">
       <strong>
-        {{ variable.description }}
+        {{ variable.name }}
         <span v-if="filterRange && variable.type === 'continuous'">
           ({{ filterRange[0].toFixed(1) }} - {{ filterRange[1].toFixed(1) }})
         </span>
