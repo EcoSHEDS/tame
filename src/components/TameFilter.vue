@@ -49,6 +49,7 @@ import * as d3 from 'd3'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'TameFilter',
@@ -63,6 +64,9 @@ export default {
       hide: false,
       filterRange: null
     }
+  },
+  computed: {
+    ...mapGetters(['project'])
   },
   mounted () {
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
@@ -141,9 +145,9 @@ export default {
             })
         })
     } else if (variable.type === 'datetime') {
-      const dim = xf.dimension(d => d3.utcDay(d.datetime))
+      const dim = xf.dimension(d => d3.utcDay(d[this.project.columns.datetime]))
       const group = dim.group().reduceCount()
-      const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d.datetime)))
+      const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d[this.project.columns.datetime])))
       timeExtent[1] = this.$moment(timeExtent[1]).add(1, 'day').toDate()
       this.filterRange = timeExtent
 

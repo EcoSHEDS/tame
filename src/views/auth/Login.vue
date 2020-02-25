@@ -61,10 +61,10 @@ export default {
     return {
       submitStatus: 'READY',
       serverError: '',
-      // email: '',
-      // password: ''
-      email: 'jeff@walkerenvres.com',
-      password: 'walkerenvres'
+      email: '',
+      password: ''
+      // email: 'jeff@walkerenvres.com',
+      // password: 'walkerenvres'
     }
   },
   computed: {

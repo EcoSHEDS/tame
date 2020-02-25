@@ -46,11 +46,21 @@
       <v-container fill-height fluid>
         <v-layout row>
           <v-flex grow-shrink-0 class="ml-3">
-            <v-card width="550" class="mb-3">
+            <v-card class="mb-3" style="background:transparent" elevation="0">
+              <v-card-actions class="pl-0">
+                <v-btn color="green" dark :to="{ name: 'newProject' }">
+                  <v-icon left small>mdi-pencil</v-icon>New Project
+                </v-btn>
+                <v-btn color="green" dark :to="{ name: 'listProjects' }">
+                  <v-icon left small>mdi-folder-open-outline</v-icon>Load Project
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+            <v-card width="550" class="mb-3" v-if="ready">
               <v-toolbar dark dense color="primary">
                 <h4>
                   <span v-if="ready">
-                    <v-icon left>mdi-database</v-icon> {{ theme ? theme.label : 'None' }}
+                    <v-icon left>mdi-database</v-icon> {{ project ? project.name : 'None' }}
                   </span>
                   <span v-else-if="loading">
                     <v-progress-circular
@@ -96,6 +106,11 @@
                   </v-card>
                 </v-dialog>
               </v-toolbar>
+              <v-card-actions class="justify-space-between">
+                <v-btn disabled :to="{ name: 'editProject' }"><v-icon left small>mdi-settings</v-icon>Settings</v-btn>
+                <v-btn :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
+                <!-- <v-btn @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn> -->
+              </v-card-actions>
             </v-card>
             <v-card width="550" class="mb-3" v-if="ready">
               <v-tabs
@@ -124,7 +139,7 @@
                         v-model="color.selected"
                         label="Color By"
                         item-value="id"
-                        item-text="description"
+                        item-text="name"
                         return-object
                         clearable
                         :items="color.options">
@@ -133,7 +148,7 @@
                         v-model="size.selected"
                         label="Size By"
                         item-value="id"
-                        item-text="description"
+                        item-text="name"
                         return-object
                         clearable
                         :items="size.options">
@@ -142,13 +157,11 @@
                         v-model="outline.selected"
                         label="Outline By"
                         item-value="id"
-                        item-text="description"
+                        item-text="name"
                         return-object
                         clearable
                         :items="outline.options">
                       </v-autocomplete>
-                      <v-switch v-model="map.showLines" label="Show All Connection Lines">
-                      </v-switch>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -226,7 +239,7 @@
                         dense
                         return-object
                         item-value="id"
-                        item-text="description"
+                        item-text="name"
                         chips
                         deletable-chips
                         clearable
@@ -293,7 +306,7 @@
           </v-flex>
         </v-layout>
       </v-container>
-      <v-dialog v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
+      <v-dialog v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')" class="dialog">
         <router-view></router-view>
       </v-dialog>
     </v-content>
@@ -303,7 +316,7 @@
 <script>
 import * as d3 from 'd3'
 import L from 'leaflet'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import { AmplifyEventBus } from 'aws-amplify-vue'
 
 import evt from '@/events'
@@ -327,14 +340,16 @@ export default {
     TameLegendOutline
   },
   data: () => ({
-    showDialog: false,
+    showDialog: true,
     loading: false,
     ready: false,
     error: null,
     theme: null,
     dataset: [],
     dialogs: {
-      about: false
+      about: false,
+      publish: false,
+      edit: false
     },
     legend: {
       collapse: false
@@ -415,7 +430,7 @@ export default {
     }
   }),
   computed: {
-    ...mapGetters(['user']),
+    ...mapGetters(['user', 'project']),
     colorScale () {
       let valueScale, colorScale, scale
       if (this.color.selected && this.color.selected.type === 'continuous') {
@@ -458,13 +473,14 @@ export default {
     },
     'draw.operation' () {
       this.onDraw()
+    },
+    project () {
+      this.initProject()
     }
   },
   mounted () {
     evt.$on('filter', this.onFilter)
-    if (this.$route.name === 'project') {
-      this.loadTheme(this.$route.params.id)
-    } else {
+    if (this.$route.name === 'home' && !this.project) {
       this.$router.push('/welcome')
     }
   },
@@ -473,6 +489,7 @@ export default {
     evt.$off('filter', this.onFilter)
   },
   methods: {
+    ...mapActions(['loadProject']),
     closeDialog () {
       this.showDialog = false
       setTimeout(() => {
@@ -490,134 +507,121 @@ export default {
           alert('Error occurred trying to log out')
         })
     },
-    loadTheme (id) {
-      this.$http.get(`${id}/theme.json`)
-        .then((response) => {
-          this.theme = response.data
+    initProject () {
+      console.log('initProject', this.project)
+      if (!this.project) return
 
-          return this.theme
+      const { data, columns, variables } = this.project
+      console.log(data)
+      // const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
+      const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
+
+      data.forEach((row, index) => {
+        row.$index = index
+        // row[columns.datetime] = timeParser(row[columns.datetime])
+        row[columns.datetime] = new Date(row[columns.datetime])
+        row[columns.latitude] = +row[columns.latitude]
+        row[columns.longitude] = +row[columns.longitude]
+        numericVariables.forEach(v => {
+          row[v] = +row[v]
         })
-        .then((theme) => {
-          return this.$http.get(`${theme.id}/data.csv`)
-            .then((response) => {
-              let data = d3.csvParse(response.data)
-              const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
-              const numericVariables = theme.variables.filter(d => d.type === 'continuous').map(d => d.id)
+      })
 
-              data.forEach((row, index) => {
-                row.$index = index
-                row.datetime = timeParser(row.datetime)
-                row.lat = +row.lat
-                row.lon = +row.lon
-                numericVariables.forEach(v => {
-                  row[v] = +row[v]
-                })
-              })
+      const groupByTag = d3.nest()
+        .key(d => d[columns.id])
+        .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
+        .entries(data)
 
-              const groupByTag = d3.nest()
-                .key(d => d[theme.columns.id])
-                .sortValues((a, b) => (a.datetime < b.datetime ? -1 : a.datetime > b.datetime ? 1 : a.datetime >= b.datetime ? 0 : NaN))
-                .entries(data)
+      const mapByIndex = new Map()
+      groupByTag.forEach(d => {
+        const n = d.values.length
 
-              const mapByIndex = new Map()
-              groupByTag.forEach(d => {
-                const n = d.values.length
+        if (n <= 1) return
 
-                if (n <= 1) return
+        for (let i = 0; i < (n - 1); i++) {
+          const start = d.values[i]
+          const end = d.values[i + 1]
 
-                for (let i = 0; i < (n - 1); i++) {
-                  const start = d.values[i]
-                  const end = d.values[i + 1]
+          const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
+          const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
 
-                  const days = (end.datetime - start.datetime) / 1000 / 86400
-                  const meters = L.latLng(start.lat, start.lon).distanceTo([end.lat, end.lon])
+          const velocity = meters / days
 
-                  const velocity = meters / days
+          mapByIndex.set(start.$index, {
+            '$duration': days,
+            '$distance': meters,
+            '$velocity': velocity
+          })
+        }
 
-                  mapByIndex.set(start.$index, {
-                    '$duration': days,
-                    '$distance': meters,
-                    '$velocity': velocity
-                  })
-                }
-
-                mapByIndex.set(d.values[n - 1].$index, {
-                  '$duration': null,
-                  '$distance': null,
-                  '$velocity': null
-                })
-              })
-
-              this.dataset = data.map(d => ({
-                ...d,
-                ...mapByIndex.get(d.$index)
-              }))
-
-              this.tags.dim = xf.dimension(d => d[theme.columns.id])
-              this.tags.group = this.tags.dim.group().reduceCount()
-
-              // const velocityDomain = [
-              //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
-              //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
-              // ]
-              const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
-
-              xf.add(this.dataset)
-
-              this.color.options = [
-                {
-                  id: 'uid',
-                  description: 'Individual ID',
-                  type: 'discrete',
-                  domain: [...new Set(data.map(d => d.uid))].sort(d3.ascending)
-                },
-                ...this.theme.variables.filter(d => d.color)
-              ]
-              this.outline.options = this.theme.variables.filter(d => d.outline)
-              this.size.options = this.theme.variables.filter(d => d.size)
-              this.filters.options = [
-                {
-                  id: 'datetime',
-                  description: 'Date',
-                  type: 'datetime'
-                },
-                {
-                  id: '$velocity',
-                  description: 'Velocity (m/day)',
-                  type: 'continuous',
-                  domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
-                },
-                {
-                  id: '$distance',
-                  description: 'Distance to Next Location (m)',
-                  type: 'continuous',
-                  domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
-                },
-                {
-                  id: '$duration',
-                  description: 'Time to Next Location (days)',
-                  type: 'continuous',
-                  domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
-                },
-                ...this.theme.variables.filter(d => d.filter)
-              ]
-
-              this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
-              this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
-              this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
-              this.filters.selected = [this.filters.options[0]]
-
-              this.ready = true
-              evt.$emit('filter')
-            })
+        mapByIndex.set(d.values[n - 1].$index, {
+          '$duration': null,
+          '$distance': null,
+          '$velocity': null
         })
-        .catch((err) => {
-          this.error = 'Failed to load dataset'
-          console.log(err)
-        })
-        .finally(() => {
-          this.loading = false
-        })
+      })
+
+      this.dataset = data.map(d => ({
+        ...d,
+        ...mapByIndex.get(d.$index)
+      }))
+
+      this.tags.dim = xf.dimension(d => d[columns.id])
+      this.tags.group = this.tags.dim.group().reduceCount()
+
+      // const velocityDomain = [
+      //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
+      //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
+      // ]
+      const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
+
+      xf.add(this.dataset)
+
+      this.color.options = [
+        {
+          id: columns.id,
+          name: 'Individual ID',
+          type: 'discrete',
+          domain: [...new Set(data.map(d => d[columns.id]))].sort(d3.ascending)
+        },
+        ...variables.filter(d => d.color)
+      ]
+      this.outline.options = variables.filter(d => d.outline)
+      this.size.options = variables.filter(d => d.size)
+      this.filters.options = [
+        {
+          id: 'datetime',
+          name: 'Date',
+          type: 'datetime'
+        },
+        {
+          id: '$velocity',
+          name: 'Velocity (m/day)',
+          type: 'continuous',
+          domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
+        },
+        {
+          id: '$distance',
+          name: 'Distance to Next Location (m)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
+        },
+        {
+          id: '$duration',
+          name: 'Time to Next Location (days)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+        },
+        ...variables.filter(d => d.filter)
+      ]
+
+      this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
+      this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
+      this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
+      this.filters.selected = [this.filters.options[0]]
+
+      this.ready = true
+      evt.$emit('filter')
     },
     getColor (d, i) {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
@@ -663,16 +667,16 @@ export default {
     },
     selectByAreasIntersection (allRows, features) {
       let rows = allRows
-      let ids = [...new Set(allRows.map(d => d.uid))]
+      let ids = [...new Set(allRows.map(d => d[this.project.columns.id]))]
       features.features.forEach((feature, i) => {
-        rows = this.pointsInArea(allRows.filter(d => ids.includes(d.uid)), feature)
-        ids = [...new Set(rows.map(d => d.uid))]
+        rows = this.pointsInArea(allRows.filter(d => ids.includes(d[this.project.columns.id])), feature)
+        ids = [...new Set(rows.map(d => d[this.project.columns.id]))]
       })
       return ids
     },
     selectByAreasUnion (allRows, features) {
       let rows = this.pointsInArea(allRows, features)
-      return [...new Set(rows.map(d => d.uid))]
+      return [...new Set(rows.map(d => d[this.project.columns.id]))]
     },
     pointsInArea (points, feature) {
       return points.filter(d => d3.geoContains(feature, [d.lon, d.lat]))
@@ -721,7 +725,22 @@ export default {
       map.on('draw:deleted', ({ layer }) => {
         this.onDraw()
       })
+    },
+    closeProject () {
+      this.loadProject()
+        .then(() => {
+          this.$router.push({ name: 'welcome' })
+        })
     }
   }
 }
 </script>
+
+<style>
+.v-dialog:not(.v-dialog--fullscreen) {
+  position: absolute;
+  top: 64px;
+  margin-top: 20px !important;
+  max-height: calc(100vh - 100px) !important;
+}
+</style>

@@ -8,9 +8,11 @@ import store from './store'
 import Home from './views/Home.vue'
 import Welcome from './views/Welcome.vue'
 import About from './views/About.vue'
-import Project from './views/Project.vue'
-import Projects from './views/Projects.vue'
+import ViewProject from './views/ViewProject.vue'
+import ListProjects from './views/ListProjects.vue'
 import CreateProject from './views/CreateProject.vue'
+import EditProject from './views/EditProject.vue'
+import PublishProject from './views/PublishProject.vue'
 
 import AuthView from './views/auth/Auth.vue'
 import Account from './views/auth/Account.vue'
@@ -151,17 +153,27 @@ const router = new Router({
     {
       path: '/projects',
       name: 'listProjects',
-      component: Projects
+      component: ListProjects
     },
     {
-      path: '/new-project',
+      path: '/new',
       name: 'newProject',
       component: CreateProject
     },
     {
+      path: '/edit',
+      name: 'editProject',
+      component: EditProject
+    },
+    {
+      path: '/publish',
+      name: 'publishProject',
+      component: PublishProject
+    },
+    {
       path: '/project/:id',
-      name: 'project',
-      component: Project
+      name: 'viewProject',
+      component: ViewProject
     },
     {
       path: '*',

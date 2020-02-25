@@ -41,7 +41,7 @@
 
 <script>
 export default {
-  name: 'Projects',
+  name: 'ListProjects',
   data () {
     return {
       status: 'loading',
@@ -50,11 +50,9 @@ export default {
   },
   mounted () {
     console.log('Projects:mounted')
-    this.$http.get('projects/')
-      .then(response => response.data)
-      .then((projects) => {
-        console.log(projects)
-        this.projects = projects
+    this.$Amplify.API.get('tame', '/projects', {})
+      .then(data => {
+        this.projects = data
         this.status = 'ready'
       })
       .catch((err) => {

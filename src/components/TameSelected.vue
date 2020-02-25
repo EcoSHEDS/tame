@@ -69,6 +69,7 @@
 
 <script>
 import { xf } from '@/crossfilter'
+import { mapGetters } from 'vuex'
 export default {
   name: 'TameSelected',
   props: {
@@ -83,8 +84,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['project']),
     values () {
-      return xf.all().filter(d => d.uid === this.id)
+      return xf.all().filter(d => d[this.project.columns.id] === this.id)
     }
   }
 }

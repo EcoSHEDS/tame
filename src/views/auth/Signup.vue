@@ -85,16 +85,16 @@ export default {
     return {
       submitStatus: 'READY',
       serverError: '',
-      // name: '',
-      // affiliation: '',
-      // email: '',
-      // password: '',
-      // repeatPassword: ''
-      name: 'Jeff Walker',
-      affiliation: 'WalkerEnvRes',
-      email: 'jeff@walkerenvres.com',
-      password: 'walkerenvres',
-      repeatPassword: 'walkerenvres'
+      name: '',
+      affiliation: '',
+      email: '',
+      password: '',
+      repeatPassword: ''
+      // name: 'Jeff Walker',
+      // affiliation: 'WalkerEnvRes',
+      // email: 'jeff@walkerenvres.com',
+      // password: 'walkerenvres',
+      // repeatPassword: 'walkerenvres'
     }
   },
   computed: {

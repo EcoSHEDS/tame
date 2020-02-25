@@ -76,13 +76,14 @@ export default {
     return {
       submitStatus: 'READY',
       serverError: '',
-      // email: '',
-      // password: '',
+      email: '',
+      oldPassword: '',
+      newPassword: '',
+      repeatPassword: ''
+      // email: 'jeff@walkerenvres.com',
+      // oldPassword: 'walkerenvres',
+      // newPassword: 'walkerenvres',
       // repeatPassword: 'walkerenvres'
-      email: 'jeff@walkerenvres.com',
-      oldPassword: 'walkerenvres',
-      newPassword: 'walkerenvres',
-      repeatPassword: 'walkerenvres'
     }
   },
   computed: {

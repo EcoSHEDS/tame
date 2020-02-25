@@ -11,38 +11,33 @@
       <v-stepper-content step="1">
         <v-card>
           <v-card-text>
-            <!-- <v-form @submit.prevent="submitProject"> -->
-              <v-text-field
-                v-model="project.name"
-                :error-messages="projectNameErrors"
-                label="Name"
-                required
-                counter
-                outlined
-                @input="$v.project.name.$touch()"
-                @blur="$v.project.name.$touch()"
-              ></v-text-field>
-              <v-textarea
-                v-model="project.description"
-                :error-messages="projectDescriptionErrors"
-                label="Brief Description"
-                required
-                counter
-                outlined
-                rows="3"
-                @input="$v.project.description.$touch()"
-                @blur="$v.project.description.$touch()"
-              ></v-textarea>
-
-              <div>
-                Automated ID: <code>{{ projectId }}</code>
-              </div>
+            <v-text-field
+              v-model="project.name"
+              :error-messages="projectNameErrors"
+              label="Name"
+              required
+              counter
+              outlined
+              @input="$v.project.name.$touch()"
+              @blur="$v.project.name.$touch()"
+            ></v-text-field>
+            <v-textarea
+              v-model="project.description"
+              :error-messages="projectDescriptionErrors"
+              label="Brief Description"
+              required
+              counter
+              outlined
+              rows="3"
+              @input="$v.project.description.$touch()"
+              @blur="$v.project.description.$touch()"
+            ></v-textarea>
 
             <v-alert type="error" :value="!!stepError.project" class="mt-8">
               {{stepError.project}}
             </v-alert>
-
           </v-card-text>
+
           <v-card-actions>
             <v-btn type="submit" color="primary" class="pl-4 mr-4" :loading="status.project === 'PENDING'" @click="submitProject">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
@@ -271,7 +266,7 @@
       <v-stepper-content step="5">
         <v-card>
           <v-card-text>
-            <p>Review project...</p>
+            <p>Work in progress...</p>
             <v-alert type="error" :value="status.review === 'ERROR'">
               <span v-html="stepError.review"></span>
             </v-alert>
@@ -294,9 +289,9 @@
 <script>
 import { validationMixin } from 'vuelidate'
 import { helpers, required, minLength, maxLength } from 'vuelidate/lib/validators'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import Papa from 'papaparse'
-import slugify from 'slugify'
+// import slugify from 'slugify'
 import Joi from '@hapi/joi'
 import * as d3 from 'd3'
 
@@ -326,25 +321,25 @@ export default {
     return {
       step: 1,
       project: {
-        name: 'Test Project',
-        description: 'A brief description of the test project'
+        // name: 'Test Project',
+        // description: 'A brief description of the test project'
         // id: '',
-        // name: '',
-        // description: ''
+        name: '',
+        description: ''
       },
       file: {
         localFile: null,
         parsedFile: null
       },
       columns: {
-        // id: null,
-        // datetime: null,
-        // latitude: null,
-        // longitude: null
-        id: 'uid',
-        datetime: 'datetime',
-        latitude: 'lat',
-        longitude: 'lon'
+        id: null,
+        datetime: null,
+        latitude: null,
+        longitude: null
+        // id: 'uid',
+        // datetime: 'datetime',
+        // latitude: 'lat',
+        // longitude: 'lon'
       },
       variableTypeOptions: [
         {
@@ -380,9 +375,9 @@ export default {
   },
   computed: {
     ...mapGetters(['user']),
-    projectId () {
-      return slugify(this.project.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
-    },
+    // projectId () {
+    //   return slugify(this.project.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
+    // },
     projectNameErrors () {
       const errors = []
       if (this.status.project === 'READY') return errors
@@ -457,45 +452,22 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['loadProject']),
     submit () {
       this.status.review = 'PENDING'
-      const project = Object.assign({}, this.project)
-      project.id = this.projectId
-      const version = {
-        projectId: project.id,
-        config: {
-          columns: this.columns,
-          variables: this.variables
-        }
+      const project = {
+        name: this.project.name,
+        description: this.project.description,
+        columns: this.columns,
+        variables: this.variables,
+        file: this.file.localFile,
+        isLocal: true
       }
-      this.$Amplify.Auth.currentSession()
-        .then(data => data.getIdToken().getJwtToken())
-        .then((token) => {
-          return this.$http.post('/projects', project, {
-            headers: {
-              Authorization: token
-            }
-          }).then(response => response.data)
-            .then(data => ({ savedProject: data, token }))
-        })
-        .then(({ savedProject, token }) => {
-          return this.$http.post(`/projects/${savedProject.id}/versions`, version, {
-            headers: {
-              Authorization: token
-            }
-          }).then(response => response.data)
-            .then(data => ({ savedProject, savedVersion: data, token }))
-        })
-        .then(result => {
-          console.log(result)
+      return this.loadProject(project)
+        .then((project) => {
+          console.log('project loaded:', project)
           this.status.review = 'FINISHED'
-          setTimeout(() => {
-            this.$router.push({ name: 'projects' })
-          }, 1000)
-        })
-        .catch(e => {
-          this.status.review = 'ERROR'
-          this.stepError.review = e.message || e
+          this.$router.push({ name: 'home' })
         })
     },
     setProjectError (e) {
@@ -516,18 +488,20 @@ export default {
         this.status.project = 'ERROR'
         return
       }
-      this.$http.get(`/projects/${this.projectId}`)
-        .then(() => {
-          this.setProjectError('Project with a similar name already exists and has the same ID. Please change the project name.')
-        })
-        .catch((e) => {
-          if (e.response && e.response.status === 404) {
-            this.status.project = 'FINISHED'
-            this.step = 2
-          } else {
-            this.setProjectError(e)
-          }
-        })
+      // this.$http.get(`/projects/${this.projectId}`)
+      //   .then(() => {
+      //     this.setProjectError('Project with a similar name already exists and has the same ID. Please change the project name.')
+      //   })
+      //   .catch((e) => {
+      //     if (e.response && e.response.status === 404) {
+      //       this.status.project = 'FINISHED'
+      //       this.step = 2
+      //     } else {
+      //       this.setProjectError(e)
+      //     }
+      //   })
+      this.status.project = 'FINISHED'
+      this.step = 2
     },
     setFileError (e) {
       this.status.file = 'ERROR'
@@ -641,7 +615,7 @@ export default {
         .filter(d => !Object.values(this.columns).includes(d))
         .map(key => ({
           id: key,
-          name: null,
+          name: key,
           description: null,
           type: null,
           domain: null,
@@ -651,6 +625,19 @@ export default {
           outline: false,
           valid: false
         }))
+      this.variables.forEach(variable => {
+        // check if first value is number
+        const value = this.file.parsedFile.data[0][variable.id]
+        if (isNaN(+value)) {
+          variable.type = 'discrete'
+        } else {
+          variable.type = 'continuous'
+        }
+        if (variable.type === 'continuous') {
+          variable.size = true
+        }
+        console.log(variable.id, variable.type, value, +value, isNaN(+value))
+      })
       if (this.variables.length > 0) {
         this.selectedVariableIndex = 0
         this.variable = this.variables[this.selectedVariableIndex]

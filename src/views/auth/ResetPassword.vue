@@ -84,14 +84,14 @@ export default {
       submitStatus: 'READY',
       requestSent: false,
       serverError: '',
-      // email: '',
-      // code: '',
-      // password: '',
-      // repeatPassword: ''
-      email: 'jeff@walkerenvres.com',
+      email: '',
       code: '',
-      password: 'walkerenvres',
-      repeatPassword: 'walkerenvres'
+      password: '',
+      repeatPassword: ''
+      // email: 'jeff@walkerenvres.com',
+      // code: '',
+      // password: 'walkerenvres',
+      // repeatPassword: 'walkerenvres'
     }
   },
   computed: {

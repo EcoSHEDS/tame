@@ -1,4 +1,5 @@
 <script>
+import { mapGetters } from 'vuex'
 import * as d3 from 'd3'
 import d3Tip from 'd3-tip'
 import * as L from 'leaflet'
@@ -48,6 +49,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['project']),
     map () {
       return this.$parent.map
     },
@@ -64,14 +66,14 @@ export default {
       // console.log('tame-map-layer:boundingBox')
       if (this.data.length === 0) return null
 
-      const lonExtent = d3.extent(this.data.map(d => d.lon))
-      const latExtent = d3.extent(this.data.map(d => d.lat))
+      const lonExtent = d3.extent(this.data.map(d => d[this.project.columns.longitude]))
+      const latExtent = d3.extent(this.data.map(d => d[this.project.columns.latitude]))
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
     },
     nestedData () {
       return d3.nest()
-        .key(d => d.uid)
-        .sortValues((a, b) => a.datetime.valueOf() - b.datetime.valueOf())
+        .key(d => d[this.project.columns.id])
+        .sortValues((a, b) => a[this.project.columns.datetime].valueOf() - b[this.project.columns.datetime].valueOf())
         .entries(this.data)
     }
   },
@@ -82,10 +84,10 @@ export default {
     evt.$on('map:render:filter', this.renderFiltered)
 
     this.tip.html(d => `
-      <strong>Tag ID: ${d.uid}</strong><br>
-      Latitude: ${d.lat.toFixed(4)}<br>
-      Longitude: ${d.lon.toFixed(4)}<br>
-      Date/Time: ${this.$moment.utc(d.datetime).format('MMM DD, YYYY hh:mm a')}<br>
+      <strong>Tag ID: ${d[this.project.columns.id]}</strong><br>
+      Latitude: ${d[this.project.columns.latitude].toFixed(4)}<br>
+      Longitude: ${d[this.project.columns.longitude].toFixed(4)}<br>
+      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
       Distance to Next (m): ${d.$distance ? d.$distance.toFixed(1) : 'N/A'}<br>
       Time to Next (days): ${d.$duration ? d.$duration.toFixed(1) : 'N/A'}<br>
       Velocity (m/day): ${d.$velocity ? d.$velocity.toFixed(2) : 'N/A'}<br>
@@ -155,7 +157,7 @@ export default {
       this.map.fitBounds(bounds)
     },
     projectPoint (d) {
-      const latLng = new L.LatLng(d.lat, d.lon)
+      const latLng = new L.LatLng(d[this.project.columns.latitude], d[this.project.columns.longitude])
       const point = this.map.latLngToLayerPoint(latLng)
       return [point.x, point.y]
     },
@@ -210,14 +212,14 @@ export default {
             .attr('cy', d => point[1])
         })
         .on('click', function (d) {
-          // console.log('click', this.selectedIds, d.uid)
+          // console.log('click', this.selectedIds, d[this.project.columns.id])
           // let id
-          // if (vm.selectedIds.includes(d.uid)) {
+          // if (vm.selectedIds.includes(d[this.project.columns.id])) {
           //   id = null
           // } else {
-          //   id = d.uid
+          //   id = d[this.project.columns.id]
           // }
-          !vm.disableClick && vm.$emit('click', d.uid)
+          !vm.disableClick && vm.$emit('click', d[vm.project.columns.id])
           this.parentNode.parentNode.appendChild(this.parentNode) // move to front
         })
         .on('mouseenter', function (d) {
@@ -232,7 +234,7 @@ export default {
           d3.select(this.parentNode)
             .classed('highlight', false)
             .select('path')
-            .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d.uid)) && !vm.showLines)
+            .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d[vm.project.columns.id])) && !vm.showLines)
           tip.hide(d, this)
         })
 
