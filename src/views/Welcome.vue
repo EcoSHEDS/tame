@@ -6,15 +6,11 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text>
-      <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Id labore asperiores quia deserunt dolor blanditiis beatae animi nisi dolorem odio officiis aliquam non repellendus, adipisci fugit quaerat, doloribus porro mollitia.
-      </p>
-      <p>
-        <router-link :to="{ name: 'newProject' }">Create a new project</router-link>
-        or
-        <router-link :to="{ name: 'listProjects' }">load an existing one</router-link>
-      </p>
+    <v-card-text class="py-8">
+      <v-card-actions class="justify-space-around">
+        <v-btn color="success" class="px-4" x-large :to="{ name: 'newProject' }">Create New Project</v-btn>
+        <v-btn color="success" class="px-4" x-large :to="{ name: 'listProjects' }">Load Existing Project</v-btn>
+      </v-card-actions>
     </v-card-text>
 
     <v-card-actions class="mx-4 pb-4">
