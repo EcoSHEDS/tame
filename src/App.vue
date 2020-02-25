@@ -108,7 +108,7 @@
               </v-toolbar>
               <v-card-actions class="justify-space-between">
                 <v-btn disabled :to="{ name: 'editProject' }"><v-icon left small>mdi-settings</v-icon>Settings</v-btn>
-                <v-btn :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
+                <v-btn disabled :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
                 <!-- <v-btn @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn> -->
               </v-card-actions>
             </v-card>
