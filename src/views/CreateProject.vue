@@ -7,7 +7,7 @@
     </v-toolbar>
 
     <v-stepper v-model="step" vertical non-linear class="mt-0 mb-4" style="border-radius:0">
-      <v-stepper-step :complete="status.project === 'FINISHED'" step="1">Project information</v-stepper-step>
+      <!-- <v-stepper-step :complete="status.project === 'FINISHED'" step="1">Project information</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
           <v-card-text>
@@ -42,12 +42,15 @@
             <v-btn type="submit" color="primary" class="pl-4 mr-4" :loading="status.project === 'PENDING'" @click="submitProject">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
-      </v-stepper-content>
+      </v-stepper-content> -->
 
-      <v-stepper-step :complete="status.file === 'FINISHED'" step="2">Upload dataset file</v-stepper-step>
-      <v-stepper-content step="2">
+      <v-stepper-step :complete="status.file === 'FINISHED'" step="1">Load dataset file</v-stepper-step>
+      <v-stepper-content step="1">
         <v-card>
           <v-card-text>
+            <p>
+              <v-icon left small>mdi-information</v-icon> The dataset file must be in comma-separated values (CSV) format and contain at least four columns for the tag/individual ID, date/time, latitude, and longitude.
+            </p>
             <v-file-input
               v-model="file.localFile"
               label="Select the dataset file"
@@ -90,10 +93,14 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="status.columns === 'FINISHED'" step="3">Define primary variables</v-stepper-step>
-      <v-stepper-content step="3">
+      <v-stepper-step :complete="status.columns === 'FINISHED'" step="2">Define primary variables</v-stepper-step>
+      <v-stepper-content step="2">
         <v-card>
           <v-card-text v-if="file.parsedFile">
+            <p>
+              <v-icon left small>mdi-information</v-icon> Select the column names containing each of the four primary variables.
+            </p>
+
             <v-row>
               <v-col md="6">
                 <v-select
@@ -167,8 +174,8 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="status.variable === 'FINISHED'" step="4">Define additional variables</v-stepper-step>
-      <v-stepper-content step="4">
+      <v-stepper-step :complete="status.variable === 'FINISHED'" step="3">Define additional variables</v-stepper-step>
+      <v-stepper-content step="3">
         <v-card>
           <v-card-text v-if="variables.length > 0">
             <v-row>
@@ -179,8 +186,9 @@
                     <v-list-item v-for="variable in variables" :key="'variable-' + variable.id">
                       <v-list-item-content>
                         <v-list-item-title>
-                          <v-icon left v-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
-                          <v-icon left v-else>mdi-checkbox-blank-circle-outline</v-icon>
+                          <v-icon left v-if="variable.skip" color="default">mdi-checkbox-blank-circle-outline</v-icon>
+                          <v-icon left v-else-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
+                          <v-icon left v-else color="error">mdi-close-circle-outline</v-icon>
                           {{variable.id}}
                         </v-list-item-title>
                       </v-list-item-content>
@@ -242,9 +250,13 @@
                     <v-checkbox label="Outline" :disabled="variable.type === 'continuous'" v-model="variable.outline"></v-checkbox>
                   </v-col>
                 </v-row>
-                <v-btn color="primary" @click="nextVariable">Validate and continue</v-btn>
-                <v-alert type="error" :value="variableError" class="mt-8">
-                  <span v-html="variableError"></span>
+                <v-card-actions>
+                  <v-btn color="success" @click="nextVariable(false)"><v-icon left>mdi-plus-circle</v-icon> Add Variable</v-btn>
+                  <v-spacer></v-spacer>
+                  <v-btn color="default" @click="nextVariable(true)"><v-icon left>mdi-skip-next-circle-outline</v-icon>Skip</v-btn>
+                </v-card-actions>
+                <v-alert type="error" :value="stepError.variable" class="mt-8">
+                  <span v-html="stepError.variable"></span>
                 </v-alert>
               </v-col>
             </v-row>
@@ -257,13 +269,13 @@
           </v-alert>
           <v-card-actions>
             <v-btn color="default" @click="goBackVariable" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="submitVariable" :disabled="status.allVariables !== 'FINISHED'" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="submitVariable" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step step="5">Review</v-stepper-step>
-      <v-stepper-content step="5">
+      <v-stepper-step step="4">Review</v-stepper-step>
+      <v-stepper-content step="4">
         <v-card>
           <v-card-text>
             <p>Work in progress...</p>
@@ -291,7 +303,6 @@ import { validationMixin } from 'vuelidate'
 import { helpers, required, minLength, maxLength } from 'vuelidate/lib/validators'
 import { mapGetters, mapActions } from 'vuex'
 import Papa from 'papaparse'
-// import slugify from 'slugify'
 import Joi from '@hapi/joi'
 import * as d3 from 'd3'
 
@@ -301,10 +312,10 @@ export default {
   name: 'CreateProject',
   mixins: [validationMixin],
   validations: {
-    project: {
-      name: { required, alphaNum, minLength: minLength(6), maxLength: maxLength(100) },
-      description: { required, minLength: minLength(6), maxLength: maxLength(500) }
-    },
+    // project: {
+    //   name: { required, alphaNum, minLength: minLength(6), maxLength: maxLength(100) },
+    //   description: { required, minLength: minLength(6), maxLength: maxLength(500) }
+    // },
     columns: {
       id: { required },
       datetime: { required },
@@ -320,13 +331,13 @@ export default {
   data () {
     return {
       step: 1,
-      project: {
-        // name: 'Test Project',
-        // description: 'A brief description of the test project'
-        // id: '',
-        name: '',
-        description: ''
-      },
+      // project: {
+      //   // name: 'Test Project',
+      //   // description: 'A brief description of the test project'
+      //   // id: '',
+      //   name: '',
+      //   description: ''
+      // },
       file: {
         localFile: null,
         parsedFile: null
@@ -351,12 +362,11 @@ export default {
           label: 'Discrete (Categorical)'
         }
       ],
-      variableError: null,
       variables: [],
       selectedVariableIndex: 0,
       variable: null,
       status: {
-        project: 'READY',
+        // project: 'READY',
         file: 'READY',
         columns: 'READY',
         variable: 'READY',
@@ -364,7 +374,7 @@ export default {
         review: 'READY'
       },
       stepError: {
-        project: null,
+        // project: null,
         file: null,
         columns: null,
         variable: null,
@@ -378,23 +388,23 @@ export default {
     // projectId () {
     //   return slugify(this.project.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
     // },
-    projectNameErrors () {
-      const errors = []
-      if (this.status.project === 'READY') return errors
-      !this.$v.project.name.required && errors.push('Name is required.')
-      !this.$v.project.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation.')
-      !this.$v.project.name.minLength && errors.push('Name must be at least 6 characters.')
-      !this.$v.project.name.maxLength && errors.push('Name cannot be more than 100 characters.')
-      return errors
-    },
-    projectDescriptionErrors () {
-      const errors = []
-      if (this.status.project === 'READY') return errors
-      !this.$v.project.description.required && errors.push('Description is required.')
-      !this.$v.project.description.minLength && errors.push('Description must be at least 6 characters.')
-      !this.$v.project.description.maxLength && errors.push('Description cannot be more than 500 characters.')
-      return errors
-    },
+    // projectNameErrors () {
+    //   const errors = []
+    //   if (this.status.project === 'READY') return errors
+    //   !this.$v.project.name.required && errors.push('Name is required.')
+    //   !this.$v.project.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation.')
+    //   !this.$v.project.name.minLength && errors.push('Name must be at least 6 characters.')
+    //   !this.$v.project.name.maxLength && errors.push('Name cannot be more than 100 characters.')
+    //   return errors
+    // },
+    // projectDescriptionErrors () {
+    //   const errors = []
+    //   if (this.status.project === 'READY') return errors
+    //   !this.$v.project.description.required && errors.push('Description is required.')
+    //   !this.$v.project.description.minLength && errors.push('Description must be at least 6 characters.')
+    //   !this.$v.project.description.maxLength && errors.push('Description cannot be more than 500 characters.')
+    //   return errors
+    // },
     columnsIdErrors () {
       const errors = []
       if (this.status.columns === 'READY') return errors
@@ -456,10 +466,9 @@ export default {
     submit () {
       this.status.review = 'PENDING'
       const project = {
-        name: this.project.name,
-        description: this.project.description,
+        name: this.file.localFile.name,
         columns: this.columns,
-        variables: this.variables,
+        variables: this.variables.filter(d => !d.skip),
         file: this.file.localFile,
         isLocal: true
       }
@@ -470,39 +479,39 @@ export default {
           this.$router.push({ name: 'home' })
         })
     },
-    setProjectError (e) {
-      this.status.project = 'ERROR'
-      this.stepError.project = e.message || e
-    },
-    resetProject () {
-      this.$v.project.$reset()
-      this.project.id = ''
-      this.project.name = ''
-      this.project.description = ''
-    },
-    submitProject () {
-      this.status.project = 'PENDING'
-      this.stepError.project = null
-      this.$v.project.$touch()
-      if (this.$v.project.$invalid) {
-        this.status.project = 'ERROR'
-        return
-      }
-      // this.$http.get(`/projects/${this.projectId}`)
-      //   .then(() => {
-      //     this.setProjectError('Project with a similar name already exists and has the same ID. Please change the project name.')
-      //   })
-      //   .catch((e) => {
-      //     if (e.response && e.response.status === 404) {
-      //       this.status.project = 'FINISHED'
-      //       this.step = 2
-      //     } else {
-      //       this.setProjectError(e)
-      //     }
-      //   })
-      this.status.project = 'FINISHED'
-      this.step = 2
-    },
+    // setProjectError (e) {
+    //   this.status.project = 'ERROR'
+    //   this.stepError.project = e.message || e
+    // },
+    // resetProject () {
+    //   this.$v.project.$reset()
+    //   this.project.id = ''
+    //   this.project.name = ''
+    //   this.project.description = ''
+    // },
+    // submitProject () {
+    //   this.status.project = 'PENDING'
+    //   this.stepError.project = null
+    //   this.$v.project.$touch()
+    //   if (this.$v.project.$invalid) {
+    //     this.status.project = 'ERROR'
+    //     return
+    //   }
+    //   // this.$http.get(`/projects/${this.projectId}`)
+    //   //   .then(() => {
+    //   //     this.setProjectError('Project with a similar name already exists and has the same ID. Please change the project name.')
+    //   //   })
+    //   //   .catch((e) => {
+    //   //     if (e.response && e.response.status === 404) {
+    //   //       this.status.project = 'FINISHED'
+    //   //       this.step = 2
+    //   //     } else {
+    //   //       this.setProjectError(e)
+    //   //     }
+    //   //   })
+    //   this.status.project = 'FINISHED'
+    //   this.step = 2
+    // },
     setFileError (e) {
       this.status.file = 'ERROR'
       this.stepError.file = e.message || e
@@ -537,7 +546,7 @@ export default {
     },
     submitFile () {
       if (this.status.file === 'FINISHED') {
-        this.step = 3
+        this.step += 1
       }
     },
     resetFile () {
@@ -548,7 +557,7 @@ export default {
     },
     goBackFile () {
       this.resetFile()
-      this.step = 1
+      this.step -= 1
     },
     setColumnsError (e) {
       this.status.columns = 'ERROR'
@@ -565,7 +574,7 @@ export default {
         .then((result) => {
           this.resetVariable()
           this.status.columns = 'FINISHED'
-          this.step = 4
+          this.step += 1
         })
         .catch((e) => {
           this.setColumnsError(e)
@@ -608,7 +617,7 @@ export default {
     },
     goBackColumns () {
       this.resetColumns()
-      this.step = 2
+      this.step -= 1
     },
     resetVariable () {
       this.variables = this.file.parsedFile.meta.fields
@@ -623,7 +632,8 @@ export default {
           color: true,
           size: false,
           outline: false,
-          valid: false
+          valid: false,
+          skip: true
         }))
       this.variables.forEach(variable => {
         // check if first value is number
@@ -636,7 +646,7 @@ export default {
         if (variable.type === 'continuous') {
           variable.size = true
         }
-        console.log(variable.id, variable.type, value, +value, isNaN(+value))
+        // console.log(variable.id, variable.type, value, +value, isNaN(+value))
       })
       if (this.variables.length > 0) {
         this.selectedVariableIndex = 0
@@ -645,16 +655,17 @@ export default {
       } else {
         this.status.allVariables = 'FINISHED'
       }
+
       this.status.variable = 'READY'
       this.stepError.variable = null
       this.stepError.allVariables = null
     },
     goBackVariable () {
       this.resetVariable()
-      this.step = 3
+      this.step -= 1
     },
     submitVariable () {
-      if (!this.variables.every(d => d.valid)) {
+      if (!this.variables.filter(d => !d.skip).every(d => d.valid)) {
         this.status.allVariables = 'ERROR'
         this.stepError.allVariables = 'One or more variables have not been validated. Go through the list of variables, and click the Validate button.'
         return
@@ -671,7 +682,7 @@ export default {
       if (this.variable.type === 'discrete') {
         this.variable.domain = [...new Set(this.file.parsedFile.data.map(d => d[this.variable.id]))].sort(d3.ascending)
         if (this.variable.outline && this.variable.domain.length !== 2) {
-          this.variableError = `Variable can only be an Outline option if it has exactly 2 unique values. Unselect the Outline option, and click Validate again.<br><br>Found ${this.variable.domain.length} values (${this.variable.domain.join(', ')})`
+          this.stepError.variable = `Variable can only be an Outline option if it has exactly 2 unique values. Unselect the Outline option, and click Validate again.<br><br>Found ${this.variable.domain.length} values (${this.variable.domain.join(', ')})`
           return false
         }
         this.variable.size = false
@@ -681,23 +692,30 @@ export default {
       }
       return true
     },
-    nextVariable () {
-      if (!this.validateVariable()) {
-        this.status.variable = 'ERROR'
-        return
+    nextVariable (skip) {
+      if (skip) {
+        this.variable.skip = true
+        this.variables[this.selectedVariableIndex] = this.variable
+      } else {
+        if (!this.validateVariable()) {
+          this.variable.valid = false
+          this.status.variable = 'ERROR'
+          return
+        }
+        this.$v.variable.$reset()
+        this.variable.skip = false
+        this.variable.valid = true
+        this.variables[this.selectedVariableIndex] = this.variable
       }
-      this.$v.variable.$reset()
-      this.variable.valid = true
-      this.variables[this.selectedVariableIndex] = this.variable
 
       this.status.variable = 'READY'
-      this.variableError = null
+      this.stepError.variable = null
 
       if (this.selectedVariableIndex < this.variables.length - 1) {
         this.selectedVariableIndex += 1
       }
 
-      if (this.variables.every(d => d.valid)) {
+      if (this.variables.filter(d => !d.skip).every(d => d.valid)) {
         this.status.allVariables = 'FINISHED'
       }
     }
