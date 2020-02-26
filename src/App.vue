@@ -651,35 +651,37 @@ export default {
       this.counts.tags.filtered = this.tags.group.all().filter(d => d.value > 0).length
       this.counts.tags.total = this.tags.group.size()
     },
-    selectByAreas (features) {
-      if (!features || features.features.length === 0) {
+    selectByAreas (layer) {
+      console.log('selectByAreas', layer, layer.features[0])
+      if (!layer || layer.features.length === 0) {
         this.selected.ids = []
         return
       }
       const allRows = xf.all()
       if (this.draw.operation === 'intersection') {
-        this.selected.ids = this.selectByAreasIntersection(allRows, features)
+        this.selected.ids = this.selectByAreasIntersection(allRows, layer)
       } else if (this.draw.operation === 'union') {
-        this.selected.ids = this.selectByAreasUnion(allRows, features)
+        this.selected.ids = this.selectByAreasUnion(allRows, layer)
       } else {
         alert('Invalid area selection operation')
       }
     },
-    selectByAreasIntersection (allRows, features) {
+    selectByAreasIntersection (allRows, layer) {
       let rows = allRows
       let ids = [...new Set(allRows.map(d => d[this.project.columns.id]))]
-      features.features.forEach((feature, i) => {
+      console.log(ids)
+      layer.features.forEach((feature, i) => {
         rows = this.pointsInArea(allRows.filter(d => ids.includes(d[this.project.columns.id])), feature)
         ids = [...new Set(rows.map(d => d[this.project.columns.id]))]
       })
       return ids
     },
-    selectByAreasUnion (allRows, features) {
-      let rows = this.pointsInArea(allRows, features)
+    selectByAreasUnion (allRows, layer) {
+      let rows = this.pointsInArea(allRows, layer)
       return [...new Set(rows.map(d => d[this.project.columns.id]))]
     },
     pointsInArea (points, feature) {
-      return points.filter(d => d3.geoContains(feature, [d.lon, d.lat]))
+      return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
     selectId (id) {
       console.log('app:selectId', id)
@@ -705,6 +707,7 @@ export default {
     onDraw () {
       this.draw.count = this.draw.layer.getLayers().length
       this.draw.enabled = false
+      console.log('onDraw', this.draw.layer, this.draw.layer.toGeoJSON())
       this.selectByAreas(this.draw.layer.toGeoJSON())
     },
     clearDraw () {
