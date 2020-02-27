@@ -34,10 +34,10 @@ export default {
       type: Array,
       required: false
     },
-    showLines: {
-      type: Boolean,
+    opacityUnselected: {
+      type: Number,
       required: false,
-      default: false
+      default: 0.3
     }
   },
   data () {
@@ -71,6 +71,7 @@ export default {
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
     },
     nestedData () {
+      if (!this.project) return []
       return d3.nest()
         .key(d => d[this.project.columns.id])
         .sortValues((a, b) => a[this.project.columns.datetime].valueOf() - b[this.project.columns.datetime].valueOf())
@@ -87,10 +88,7 @@ export default {
       <strong>Tag ID: ${d[this.project.columns.id]}</strong><br>
       Latitude: ${d[this.project.columns.latitude].toFixed(4)}<br>
       Longitude: ${d[this.project.columns.longitude].toFixed(4)}<br>
-      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
-      Distance to Next (m): ${d.$distance ? d.$distance.toFixed(1) : 'N/A'}<br>
-      Time to Next (days): ${d.$duration ? d.$duration.toFixed(1) : 'N/A'}<br>
-      Velocity (m/day): ${d.$velocity ? d.$velocity.toFixed(2) : 'N/A'}
+      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}
     `)
 
     this.container = this.svg.select('g')
@@ -119,29 +117,11 @@ export default {
       // console.log('tame-map-layer:watch(selectedIds)', this.selectedIds)
       this.renderSelected()
     },
-    showLines () {
-      this.render()
+    opacityUnselected () {
+      this.renderOpacity()
     }
   },
   methods: {
-    // resize () {
-    //   if (!this.boundingBox) return
-
-    //   const topLeft = {
-    //     lon: this.boundingBox[0][0],
-    //     lat: this.boundingBox[1][0]
-    //   }
-    //   const bottomRight = {
-    //     lon: this.boundingBox[0][1],
-    //     lat: this.boundingBox[1][1]
-    //   }
-    //   const bounds = [topLeft, bottomRight]
-
-    //   const projectedBounds = bounds.map(this.projectPoint)
-
-    //   this.$parent.$emit('resize', projectedBounds)
-    //   this.render()
-    // },
     fitBounds () {
       if (!this.boundingBox) return
 
@@ -158,7 +138,8 @@ export default {
       return [point.x, point.y]
     },
     render () {
-      if (!this.data) return
+      // if (!this.data || !this.project) return
+      console.log('render', this.project, this.nestedData)
 
       const vm = this
       const tip = this.tip
@@ -187,7 +168,7 @@ export default {
           exit => exit.remove()
         )
         .attr('d', line)
-        .classed('hidden', !vm.showLines)
+        .classed('hidden', true)
 
       groups.selectAll('circle')
         .data(d => d.values, d => d.$index)
@@ -230,7 +211,7 @@ export default {
           d3.select(this.parentNode)
             .classed('highlight', false)
             .select('path')
-            .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d[vm.project.columns.id])) && !vm.showLines)
+            .classed('hidden', !(vm.selectedIds.length > 0 && vm.selectedIds.includes(d[vm.project.columns.id])))
           tip.hide(d, this)
         })
 
@@ -244,13 +225,38 @@ export default {
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
     },
     renderSelected () {
-      // console.log('tame-map-layer:renderSelected()', this.selectedIds)
+      console.log('tame-map-layer:renderSelected()', this.selectedIds)
+      if (this.selectedIds.length > 0) {
+        const selectedIds = this.selectedIds
+        this.container
+          .selectAll('g.group')
+          .each(function (d) {
+            const isSelected = selectedIds.includes(d.key)
+            d3.select(this)
+              .classed('selected', d => isSelected)
+              .classed('unselected', d => !isSelected)
+              .select('path')
+              .classed('hidden', d => !isSelected)
+          })
+        this.renderOpacity()
+      } else {
+        this.container
+          .selectAll('g.group')
+          .classed('selected', false)
+          .classed('unselected', false)
+          .style('opacity', null)
+          .select('path')
+          .classed('hidden', true)
+      }
+    },
+    renderOpacity () {
+      // console.log('renderOpacity', this.opacityUnselected)
       this.container
-        .selectAll('g')
-        .classed('selected', d => this.selectedIds.length > 0 && this.selectedIds.includes(d.key))
-        .classed('unselected', d => this.selectedIds.length > 0 && !this.selectedIds.includes(d.key))
-        .select('path')
-        .classed('hidden', d => !(this.selectedIds.length > 0 && this.selectedIds.includes(d.key)) && !this.showLines)
+        .selectAll('g.group')
+        .style('opacity', null)
+      this.container
+        .selectAll('g.group.unselected')
+        .style('opacity', this.opacityUnselected)
     }
   },
   render: function (h) {
@@ -282,9 +288,9 @@ g.group.highlight path {
 g.group.selected {
   opacity: 1;
 }
-g.group.unselected {
+/* g.group.unselected {
   opacity: 0.3;
-}
+} */
 g.group.highlight:not(.selected) {
   opacity: 0.75;
 }

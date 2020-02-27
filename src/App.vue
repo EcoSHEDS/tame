@@ -1,8 +1,7 @@
 <template>
   <v-app>
-    <v-app-bar app clipped-left dark>
+    <v-app-bar app clipped-left dark absolute>
       <v-toolbar-title class="headline">
-        <v-icon left>mdi-fish</v-icon>
         <span>Tagged Animal Movement Explorer (TAME)</span>
         <span class="text-uppercase overline ml-3">Beta</span>
       </v-toolbar-title>
@@ -25,9 +24,6 @@
       <v-btn text :to="{ name: 'signup' }" class="mx-4" dark outlined v-if="!user">
         Sign Up
       </v-btn>
-      <!-- <v-btn text href="https://ecosheds.org">
-        <v-icon left>mdi-home</v-icon> SHEDS
-      </v-btn> -->
     </v-app-bar>
 
     <v-content class="grey lighten-3">
@@ -39,19 +35,19 @@
           :getOutline="getOutline"
           :getSize="getSize"
           :selected-ids="selected.ids"
-          :showLines="map.showLines"
+          :opacity-unselected="map.opacityUnselected"
           @click="selectId">
         </TameMapLayer>
       </TameMap>
       <v-container fill-height fluid>
         <v-layout row>
           <v-flex grow-shrink-0 class="ml-3">
-            <v-card class="mb-3" style="background:transparent" elevation="0">
-              <v-card-actions class="pl-0">
-                <v-btn color="green" dark :to="{ name: 'newProject' }">
+            <v-card class="mb-3" style="background:transparent" elevation="0" width="550">
+              <v-card-actions class="pl-0 pb-0">
+                <v-btn color="green" style="width:50%" dark :to="{ name: 'newProject' }">
                   <v-icon left small>mdi-pencil</v-icon>New Project
                 </v-btn>
-                <v-btn color="green" dark :to="{ name: 'listProjects' }">
+                <v-btn color="green" style="width:50%" dark :to="{ name: 'listProjects' }">
                   <v-icon left small>mdi-folder-open-outline</v-icon>Load Project
                 </v-btn>
               </v-card-actions>
@@ -59,7 +55,7 @@
             <v-card width="550" class="mb-3" v-if="ready">
               <v-toolbar dark dense color="primary">
                 <h4>
-                  <span v-if="ready">
+                  <span v-if="ready" class="subtitle-1 font-weight-bold">
                     <v-icon left>mdi-database</v-icon> {{ project ? project.name : 'None' }}
                   </span>
                   <span v-else-if="loading">
@@ -80,13 +76,13 @@
                   </span>
                 </h4>
                 <v-spacer></v-spacer>
-                <v-dialog
+                <!-- <v-dialog
                   v-model="dialogs.about"
                   scrollable
                   width="800"
                   v-if="ready">
                   <template v-slot:activator="{ on }">
-                    <v-btn small class="grey darken-1" rounded v-on="on">
+                    <v-btn small class="grey lighten-1" dark rounded v-on="on">
                       <v-icon size="20" left>mdi-alert-circle-outline</v-icon> About
                     </v-btn>
                   </template>
@@ -104,12 +100,13 @@
                       <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
                     </v-card-text>
                   </v-card>
-                </v-dialog>
+                </v-dialog> -->
               </v-toolbar>
               <v-card-actions class="justify-space-between">
                 <v-btn disabled :to="{ name: 'editProject' }"><v-icon left small>mdi-settings</v-icon>Settings</v-btn>
-                <v-btn disabled :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
-                <!-- <v-btn @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn> -->
+                <v-btn :disabled="!project.isLocal" :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
+                <v-btn @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn>
+                <!-- <v-btn @click="deleteProject"><v-icon left small>mdi-close</v-icon>Delete</v-btn> -->
               </v-card-actions>
             </v-card>
             <v-card width="550" class="mb-3" v-if="ready">
@@ -135,6 +132,9 @@
                 <v-tab-item :transition="false" :reverse-transition="false">
                   <v-card v-show="!tabs.collapse">
                     <v-card-text>
+                      <div class="subtitle-2">
+                        Variable Selections
+                      </div>
                       <v-autocomplete
                         v-model="color.selected"
                         label="Color By"
@@ -142,6 +142,7 @@
                         item-text="name"
                         return-object
                         clearable
+                        @change="selectOption"
                         :items="color.options">
                       </v-autocomplete>
                       <v-autocomplete
@@ -151,6 +152,7 @@
                         item-text="name"
                         return-object
                         clearable
+                        @change="selectOption"
                         :items="size.options">
                       </v-autocomplete>
                       <v-autocomplete
@@ -160,8 +162,38 @@
                         item-text="name"
                         return-object
                         clearable
+                        @change="selectOption"
                         :items="outline.options">
                       </v-autocomplete>
+                    </v-card-text>
+
+                    <v-divider></v-divider>
+
+                    <v-card-text>
+                      <div class="subtitle-2">
+                        Display Settings
+                      </div>
+                      <v-row>
+                        <v-col cols="5" class="pb-0">
+                          <div class="body-1 grey--text text--darken-2 pt-1">
+                            Unselected Opacity
+                          </div>
+                        </v-col>
+                        <v-col cols="7" class="pb-0">
+                          <v-slider
+                            v-model="map.opacityUnselected"
+                            hide-details
+                            :min="0"
+                            :max="1"
+                            :step="0.01">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.opacityUnselected}}
+                              </div>
+                            </template>
+                          </v-slider>
+                        </v-col>
+                      </v-row>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -344,7 +376,6 @@ export default {
     loading: false,
     ready: false,
     error: null,
-    theme: null,
     dataset: [],
     dialogs: {
       about: false,
@@ -361,7 +392,7 @@ export default {
     map: {
       center: [35, -92.8],
       zoom: 5,
-      showLines: false,
+      opacityUnselected: 0.3,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -432,6 +463,7 @@ export default {
   computed: {
     ...mapGetters(['user', 'project']),
     colorScale () {
+      if (!this.project) return null
       let valueScale, colorScale, scale
       if (this.color.selected && this.color.selected.type === 'continuous') {
         valueScale = d3.scaleLinear()
@@ -447,10 +479,12 @@ export default {
       return scale
     },
     outlineScale () {
+      if (!this.project) return null
       return d3.scaleOrdinal(['orangered', 'white'])
         .domain(this.outline.selected.domain)
     },
     sizeScale () {
+      if (!this.project) return null
       return d3.scaleLinear()
         .domain(this.size.selected.domain)
         .range([0.1, 1])
@@ -462,15 +496,15 @@ export default {
       console.log('watch:$route', newVal)
       this.showDialog = newVal.path !== '/'
     },
-    'color.selected' () {
-      evt.$emit('map:render')
-    },
-    'outline.selected' () {
-      evt.$emit('map:render')
-    },
-    'size.selected' () {
-      evt.$emit('map:render')
-    },
+    // 'color.selected' () {
+    //   evt.$emit('map:render')
+    // },
+    // 'outline.selected' () {
+    //   evt.$emit('map:render')
+    // },
+    // 'size.selected' () {
+    //   evt.$emit('map:render')
+    // },
     'draw.operation' () {
       this.onDraw()
     },
@@ -507,12 +541,53 @@ export default {
           alert('Error occurred trying to log out')
         })
     },
+    selectOption () {
+      console.log('selectOption')
+      evt.$emit('map:render')
+    },
+    clearProject () {
+      this.unselectAll()
+      if (this.draw.enabled) {
+        this.clearDraw()
+        this.toggleDraw()
+      }
+      if (this.tags.group) {
+        this.tags.group.dispose()
+        this.tags.group = null
+      }
+      if (this.tags.dim) {
+        this.tags.dim.dispose()
+        this.tags.dim = null
+      }
+      xf.remove(d => true)
+      this.dataset = []
+      this.color.selected = null
+      this.color.options = []
+      this.size.selected = null
+      this.size.options = []
+      this.outline.selected = null
+      this.outline.options = []
+      this.filters.selected = []
+      this.filters.options = []
+      this.ready = false
+      evt.$emit('filter')
+      evt.$emit('map:render')
+    },
+    closeProject () {
+      this.loadProject()
+        .then(() => this.clearProject())
+        .then(() => {
+          this.$router.push({ name: 'welcome' })
+        })
+    },
     initProject () {
       console.log('initProject', this.project)
+      this.clearProject()
+
       if (!this.project) return
 
       const { data, columns, variables } = this.project
-      console.log(data)
+
       // const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
       const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
 
@@ -527,44 +602,46 @@ export default {
         })
       })
 
-      const groupByTag = d3.nest()
-        .key(d => d[columns.id])
-        .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
-        .entries(data)
+      // const groupByTag = d3.nest()
+      //   .key(d => d[columns.id])
+      //   .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
+      //   .entries(data)
 
-      const mapByIndex = new Map()
-      groupByTag.forEach(d => {
-        const n = d.values.length
+      // const mapByIndex = new Map()
+      // groupByTag.forEach(d => {
+      //   const n = d.values.length
 
-        if (n <= 1) return
+      //   if (n <= 1) return
 
-        for (let i = 0; i < (n - 1); i++) {
-          const start = d.values[i]
-          const end = d.values[i + 1]
+      //   for (let i = 0; i < (n - 1); i++) {
+      //     const start = d.values[i]
+      //     const end = d.values[i + 1]
 
-          const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
-          const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
+      //     const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
+      //     const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
 
-          const velocity = meters / days
+      //     const velocity = meters / days
 
-          mapByIndex.set(start.$index, {
-            '$duration': days,
-            '$distance': meters,
-            '$velocity': velocity
-          })
-        }
+      //     mapByIndex.set(start.$index, {
+      //       '$duration': days,
+      //       '$distance': meters,
+      //       '$velocity': velocity
+      //     })
+      //   }
 
-        mapByIndex.set(d.values[n - 1].$index, {
-          '$duration': null,
-          '$distance': null,
-          '$velocity': null
-        })
-      })
+      //   mapByIndex.set(d.values[n - 1].$index, {
+      //     '$duration': null,
+      //     '$distance': null,
+      //     '$velocity': null
+      //   })
+      // })
 
-      this.dataset = data.map(d => ({
-        ...d,
-        ...mapByIndex.get(d.$index)
-      }))
+      // this.dataset = data.map(d => ({
+      //   ...d,
+      //   ...mapByIndex.get(d.$index)
+      // }))
+
+      this.dataset = Object.freeze(data)
 
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
@@ -573,7 +650,7 @@ export default {
       //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
       //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
       // ]
-      const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
+      // const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
 
       xf.add(this.dataset)
 
@@ -594,24 +671,24 @@ export default {
           name: 'Date',
           type: 'datetime'
         },
-        {
-          id: '$velocity',
-          name: 'Velocity (m/day)',
-          type: 'continuous',
-          domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
-        },
-        {
-          id: '$distance',
-          name: 'Distance to Next Location (m)',
-          type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
-        },
-        {
-          id: '$duration',
-          name: 'Time to Next Location (days)',
-          type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
-        },
+        // {
+        //   id: '$velocity',
+        //   name: 'Velocity (m/day)',
+        //   type: 'continuous',
+        //   domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
+        // },
+        // {
+        //   id: '$distance',
+        //   name: 'Distance to Next Location (m)',
+        //   type: 'continuous',
+        //   domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
+        // },
+        // {
+        //   id: '$duration',
+        //   name: 'Time to Next Location (days)',
+        //   type: 'continuous',
+        //   domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+        // },
         ...variables.filter(d => d.filter)
       ]
 
@@ -648,8 +725,8 @@ export default {
       this.counts.records.filtered = xf.allFiltered().length
       this.counts.records.total = xf.size()
 
-      this.counts.tags.filtered = this.tags.group.all().filter(d => d.value > 0).length
-      this.counts.tags.total = this.tags.group.size()
+      this.counts.tags.filtered = this.tags.group ? this.tags.group.all().filter(d => d.value > 0).length : 0
+      this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     selectByAreas (layer) {
       console.log('selectByAreas', layer, layer.features[0])
@@ -684,10 +761,13 @@ export default {
       return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
     selectId (id) {
-      console.log('app:selectId', id)
+      console.log('app:selectId', id, this.selected.ids.includes(id))
       if (this.selected.ids.includes(id)) {
         const index = this.selected.ids.findIndex(d => d === id)
-        index > -1 && this.selected.ids.splice(index, 1)
+        if (index > -1) {
+          this.selected.ids.splice(index, 1)
+        }
+        console.log(index, this.selected.ids)
       } else {
         this.selected.ids.push(id)
       }
@@ -729,11 +809,12 @@ export default {
         this.onDraw()
       })
     },
-    closeProject () {
-      this.loadProject()
-        .then(() => {
-          this.$router.push({ name: 'welcome' })
-        })
+    deleteProject () {
+      console.log('deleteProject')
+      // this.loadProject()
+      //   .then(() => {
+      //     this.$router.push({ name: 'welcome' })
+      //   })
     }
   }
 }
@@ -742,8 +823,8 @@ export default {
 <style>
 .v-dialog:not(.v-dialog--fullscreen) {
   position: absolute;
-  top: 64px;
-  margin-top: 20px !important;
+  top: 65px;
+  /* margin-top: 20px !important; */
   max-height: calc(100vh - 100px) !important;
 }
 </style>

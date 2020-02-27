@@ -10,7 +10,7 @@ import './plugins/dc'
 import './plugins/leaflet'
 import './plugins/moment'
 
-import '@/assets/styles.css'
+import '@/assets/css/tame-styles.css'
 
 Vue.config.productionTip = false
 

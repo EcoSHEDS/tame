@@ -7,88 +7,41 @@
     </v-toolbar>
 
     <v-stepper v-model="step" vertical non-linear class="mt-0 mb-4" style="border-radius:0">
-      <!-- <v-stepper-step :complete="status.project === 'FINISHED'" step="1">Project information</v-stepper-step>
-      <v-stepper-content step="1">
-        <v-card>
-          <v-card-text>
-            <v-text-field
-              v-model="project.name"
-              :error-messages="projectNameErrors"
-              label="Name"
-              required
-              counter
-              outlined
-              @input="$v.project.name.$touch()"
-              @blur="$v.project.name.$touch()"
-            ></v-text-field>
-            <v-textarea
-              v-model="project.description"
-              :error-messages="projectDescriptionErrors"
-              label="Brief Description"
-              required
-              counter
-              outlined
-              rows="3"
-              @input="$v.project.description.$touch()"
-              @blur="$v.project.description.$touch()"
-            ></v-textarea>
-
-            <v-alert type="error" :value="!!stepError.project" class="mt-8">
-              {{stepError.project}}
-            </v-alert>
-          </v-card-text>
-
-          <v-card-actions>
-            <v-btn type="submit" color="primary" class="pl-4 mr-4" :loading="status.project === 'PENDING'" @click="submitProject">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-stepper-content> -->
-
       <v-stepper-step :complete="status.file === 'FINISHED'" step="1">Load dataset file</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
-          <v-card-text>
+          <v-card-text class="py-0">
             <p>
-              <v-icon left small>mdi-information</v-icon> The dataset file must be in comma-separated values (CSV) format and contain at least four columns for the tag/individual ID, date/time, latitude, and longitude.
+              The dataset file must be in comma-separated values (CSV) format and contain at least four columns for the tag/individual ID, date/time, latitude, and longitude.
             </p>
             <v-file-input
               v-model="file.localFile"
               label="Select the dataset file"
               outlined
-              hint="Note: to re-upload a file after modifying it, first clear the selection and select the file again."
-              persistent-hint
-              class="mb-4"
+              class="mt-8"
               prepend-inner-icon="$file"
               prepend-icon=""
               @change="validateFile">
             </v-file-input>
-            <div v-if="status.file === 'PENDING'">
-              Validating file...
-            </div>
-            <div v-else-if="status.file === 'ERROR'">
+            <div v-if="status.file === 'ERROR'">
               <v-alert type="error" outlined>
                 <span v-html="stepError.file"></span>
               </v-alert>
             </div>
             <div v-else-if="status.file === 'FINISHED'">
-              <div>
-                <div class="subtitle-2">
-                  File Information
-                </div>
-                <div class="ml-4">
+              <v-alert type="success" outlined>
+                File has been successfully loaded.<br><br>
+                Please review the following information and then continue.
+                <div class="mt-4">
                   Filename: <strong>{{ file.localFile.name }}</strong><br>
                   # Rows: <strong>{{ file.parsedFile.data.length.toLocaleString() }}</strong><br>
                   Columns: <strong>{{ file.parsedFile.meta.fields.join(', ') }}</strong>
                 </div>
-              </div>
-              <v-alert type="success" outlined class="mt-8">
-                File has been successfully validated, please continue.
               </v-alert>
             </div>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="default" @click="goBackFile" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="submitFile" class="mx-4 pl-4" :disabled="status.file !== 'FINISHED'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="submitFile" class="ml-2" :disabled="status.file !== 'FINISHED'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -96,13 +49,13 @@
       <v-stepper-step :complete="status.columns === 'FINISHED'" step="2">Define primary variables</v-stepper-step>
       <v-stepper-content step="2">
         <v-card>
-          <v-card-text v-if="file.parsedFile">
+          <v-card-text class="py-0" v-if="file.parsedFile">
             <p>
-              <v-icon left small>mdi-information</v-icon> Select the column names containing each of the four primary variables.
+              Select the column names for the primary variables.
             </p>
 
             <v-row>
-              <v-col md="6">
+              <v-col>
                 <v-select
                   :items="file.parsedFile.meta.fields"
                   v-model="columns.id"
@@ -114,13 +67,15 @@
                   @blur="$v.columns.id.$touch()"
                 ></v-select>
               </v-col>
-              <v-col md="6">
+              <v-col>
                 <v-select
                   :items="file.parsedFile.meta.fields"
                   v-model="columns.datetime"
                   label="Select date/time column"
                   outlined
                   required
+                  hint="Timestamps must be in ISO format (e.g., YYYY-MM-DD HH:mm)."
+                  persistent-hint
                   :error-messages="columnsDatetimeErrors"
                   @input="$v.columns.datetime.$touch()"
                   @blur="$v.columns.datetime.$touch()"
@@ -128,33 +83,36 @@
               </v-col>
             </v-row>
             <v-row>
-
-              <v-col md="6">
+              <v-col>
                 <v-select
                   :items="file.parsedFile.meta.fields"
                   v-model="columns.latitude"
                   label="Select latitude variable"
                   outlined
                   required
+                  hint="Latitude must be in decimal degrees."
+                  persistent-hint
                   :error-messages="columnsLatitudeErrors"
                   @input="$v.columns.latitude.$touch()"
                   @blur="$v.columns.latitude.$touch()"
                 ></v-select>
               </v-col>
-              <v-col md="6">
+              <v-col>
                 <v-select
                   :items="file.parsedFile.meta.fields"
                   v-model="columns.longitude"
                   label="Select longitude variable"
                   outlined
                   required
+                  hint="Longitude must be in decimal degrees. Values should be negative for locations in the U.S."
+                  persistent-hint
                   :error-messages="columnsLongitudeErrors"
                   @input="$v.columns.longitude.$touch()"
                   @blur="$v.columns.longitude.$touch()"
                 ></v-select>
               </v-col>
             </v-row>
-            <v-row v-if="status.columns === 'ERROR'">
+            <v-row v-if="status.columns === 'ERROR' && stepError.columns">
               <v-col>
                 <v-alert type="error" outlined>
                   <span v-html="stepError.columns"></span>
@@ -163,7 +121,7 @@
             </v-row>
           </v-card-text>
           <v-card-text v-else>
-            <v-alert type="error">
+            <v-alert type="error" outlined>
               File has not been validated. Return to previous step.
             </v-alert>
           </v-card-text>
@@ -177,10 +135,18 @@
       <v-stepper-step :complete="status.variable === 'FINISHED'" step="3">Define additional variables</v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
-          <v-card-text v-if="variables.length > 0">
+          <v-card-text class="py-0" v-if="variables.length > 0">
+            <p>
+              Add additional variables to the dataset from the remaining columns.
+            </p>
+            <p>
+              For each additional variable, please provide a descriptive label (default is to use the column name),
+              select the variable type (continuous or discrete), and specify the types of how this variable can be used in the application
+              (e.g. as a crossfilter or for assigning colors to the observed locations on the map).
+            </p>
             <v-row>
               <v-col md="4" class="mr-2">
-                <div>Columns</div>
+                <div>Additional Columns</div>
                 <v-list>
                   <v-list-item-group v-model="selectedVariableIndex" color="primary">
                     <v-list-item v-for="variable in variables" :key="'variable-' + variable.id">
@@ -198,14 +164,6 @@
               </v-col>
               <v-divider vertical></v-divider>
               <v-col md="7" class="ml-2">
-                <v-text-field
-                  name="variableId"
-                  label="Column"
-                  disabled
-                  required
-                  outlined
-                  :value="variable.id"
-                ></v-text-field>
                 <v-text-field
                   v-model="variable.name"
                   name="variableName"
@@ -229,58 +187,49 @@
                   @input="$v.variable.type.$touch()"
                   @blur="$v.variable.type.$touch()"
                 ></v-select>
-                <v-text-field
-                  v-model="variable.description"
-                  name="variableDescription"
-                  label="Description (optional)"
-                  counter
-                  required
-                  outlined
-                  :error-messages="variableDescriptionErrors"
-                  @input="$v.variable.description.$touch()"
-                  @blur="$v.variable.description.$touch()"
-                ></v-text-field>
+                <div>Include this variable in the following options:</div>
                 <v-row>
-                  <v-col>
-                    <v-checkbox label="Crossfilter" v-model="variable.filter"></v-checkbox>
-                    <v-checkbox label="Color" v-model="variable.color"></v-checkbox>
+                  <v-col class="pt-0">
+                    <v-checkbox hide-details label="Crossfilter" v-model="variable.filter"></v-checkbox>
+                    <v-checkbox hide-details label="Color" v-model="variable.color"></v-checkbox>
                   </v-col>
-                  <v-col>
-                    <v-checkbox label="Size" :disabled="variable.type === 'discrete'" v-model="variable.size"></v-checkbox>
-                    <v-checkbox label="Outline" :disabled="variable.type === 'continuous'" v-model="variable.outline"></v-checkbox>
+                  <v-col class="pt-0">
+                    <v-checkbox hide-details label="Size" :disabled="variable.type === 'discrete'" v-model="variable.size"></v-checkbox>
+                    <v-checkbox hide-details label="Outline" :disabled="variable.type === 'continuous'" v-model="variable.outline"></v-checkbox>
                   </v-col>
                 </v-row>
-                <v-card-actions>
+                <v-alert type="error" :value="stepError.variable" class="mt-4" outlined>
+                  <span v-html="stepError.variable"></span>
+                </v-alert>
+                <v-card-actions class="px-0 mt-4">
                   <v-btn color="success" @click="nextVariable(false)"><v-icon left>mdi-plus-circle</v-icon> Add Variable</v-btn>
                   <v-spacer></v-spacer>
                   <v-btn color="default" @click="nextVariable(true)"><v-icon left>mdi-skip-next-circle-outline</v-icon>Skip</v-btn>
                 </v-card-actions>
-                <v-alert type="error" :value="stepError.variable" class="mt-8">
-                  <span v-html="stepError.variable"></span>
-                </v-alert>
               </v-col>
             </v-row>
           </v-card-text>
           <v-card-text v-else>
-            <p>Dataset does not contain any other variables, please continue.</p>
+            <p>Dataset does not contain any additional variables, please continue.</p>
           </v-card-text>
-          <v-alert type="error" :value="status.allVariables === 'ERROR'" class="mt-8">
+          <v-alert type="error" :value="status.allVariables === 'ERROR'" class="mt-8" outlined>
             {{stepError.allVariables}}
           </v-alert>
-          <v-card-actions>
+          <v-card-actions class="mt-4">
             <v-btn color="default" @click="goBackVariable" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
             <v-btn color="primary" @click="submitVariable" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step step="4">Review</v-stepper-step>
+      <v-stepper-step step="4">Finish</v-stepper-step>
       <v-stepper-content step="4">
         <v-card>
           <v-card-text>
-            <p>Work in progress...</p>
-            <v-alert type="error" :value="status.review === 'ERROR'">
-              <span v-html="stepError.review"></span>
+            <v-alert type="success" outlined>
+              <span class="title">All done!</span><br><br>
+              You can change any of these options or upload a new version of the dataset by opening the <strong>Project Settings</strong>.<br><br>
+              You can also <strong>Publish</strong> your project to save it to the TAME server and make it available to other users.
             </v-alert>
           </v-card-text>
           <v-card-actions>
@@ -312,10 +261,6 @@ export default {
   name: 'CreateProject',
   mixins: [validationMixin],
   validations: {
-    // project: {
-    //   name: { required, alphaNum, minLength: minLength(6), maxLength: maxLength(100) },
-    //   description: { required, minLength: minLength(6), maxLength: maxLength(500) }
-    // },
     columns: {
       id: { required },
       datetime: { required },
@@ -324,20 +269,12 @@ export default {
     },
     variable: {
       name: { required, alphaNum, minLength: minLength(2), maxLength: maxLength(25) },
-      description: { maxLength: maxLength(25) },
       type: { required }
     }
   },
   data () {
     return {
       step: 1,
-      // project: {
-      //   // name: 'Test Project',
-      //   // description: 'A brief description of the test project'
-      //   // id: '',
-      //   name: '',
-      //   description: ''
-      // },
       file: {
         localFile: null,
         parsedFile: null
@@ -347,10 +284,6 @@ export default {
         datetime: null,
         latitude: null,
         longitude: null
-        // id: 'uid',
-        // datetime: 'datetime',
-        // latitude: 'lat',
-        // longitude: 'lon'
       },
       variableTypeOptions: [
         {
@@ -366,7 +299,6 @@ export default {
       selectedVariableIndex: 0,
       variable: null,
       status: {
-        // project: 'READY',
         file: 'READY',
         columns: 'READY',
         variable: 'READY',
@@ -374,7 +306,6 @@ export default {
         review: 'READY'
       },
       stepError: {
-        // project: null,
         file: null,
         columns: null,
         variable: null,
@@ -385,26 +316,6 @@ export default {
   },
   computed: {
     ...mapGetters(['user']),
-    // projectId () {
-    //   return slugify(this.project.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
-    // },
-    // projectNameErrors () {
-    //   const errors = []
-    //   if (this.status.project === 'READY') return errors
-    //   !this.$v.project.name.required && errors.push('Name is required.')
-    //   !this.$v.project.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation.')
-    //   !this.$v.project.name.minLength && errors.push('Name must be at least 6 characters.')
-    //   !this.$v.project.name.maxLength && errors.push('Name cannot be more than 100 characters.')
-    //   return errors
-    // },
-    // projectDescriptionErrors () {
-    //   const errors = []
-    //   if (this.status.project === 'READY') return errors
-    //   !this.$v.project.description.required && errors.push('Description is required.')
-    //   !this.$v.project.description.minLength && errors.push('Description must be at least 6 characters.')
-    //   !this.$v.project.description.maxLength && errors.push('Description cannot be more than 500 characters.')
-    //   return errors
-    // },
     columnsIdErrors () {
       const errors = []
       if (this.status.columns === 'READY') return errors
@@ -436,12 +347,6 @@ export default {
       !this.$v.variable.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation.')
       !this.$v.variable.name.minLength && errors.push('Name must be at least 2 characters.')
       !this.$v.variable.name.maxLength && errors.push('Name cannot be more than 25 characters.')
-      return errors
-    },
-    variableDescriptionErrors () {
-      const errors = []
-      if (this.status.variable === 'READY') return errors
-      !this.$v.variable.description.maxLength && errors.push('Description cannot be more than 100 characters.')
       return errors
     },
     variableTypeErrors () {
@@ -479,52 +384,24 @@ export default {
           this.$router.push({ name: 'home' })
         })
     },
-    // setProjectError (e) {
-    //   this.status.project = 'ERROR'
-    //   this.stepError.project = e.message || e
-    // },
-    // resetProject () {
-    //   this.$v.project.$reset()
-    //   this.project.id = ''
-    //   this.project.name = ''
-    //   this.project.description = ''
-    // },
-    // submitProject () {
-    //   this.status.project = 'PENDING'
-    //   this.stepError.project = null
-    //   this.$v.project.$touch()
-    //   if (this.$v.project.$invalid) {
-    //     this.status.project = 'ERROR'
-    //     return
-    //   }
-    //   // this.$http.get(`/projects/${this.projectId}`)
-    //   //   .then(() => {
-    //   //     this.setProjectError('Project with a similar name already exists and has the same ID. Please change the project name.')
-    //   //   })
-    //   //   .catch((e) => {
-    //   //     if (e.response && e.response.status === 404) {
-    //   //       this.status.project = 'FINISHED'
-    //   //       this.step = 2
-    //   //     } else {
-    //   //       this.setProjectError(e)
-    //   //     }
-    //   //   })
-    //   this.status.project = 'FINISHED'
-    //   this.step = 2
-    // },
     setFileError (e) {
       this.status.file = 'ERROR'
       this.stepError.file = e.message || e
     },
     validateFile () {
       console.log('validateFile', this.file.localFile)
+
+      if (!this.file.localFile) {
+        return this.resetFile()
+      }
+
       this.status.file = 'PENDING'
 
       const filename = this.file.localFile.name
       const fileExtension = filename.split('.').pop().toLowerCase()
 
       if (fileExtension !== 'csv') {
-        return this.setFileError('File type is not valid.<br>File must be a comma-separated value (CSV) file with extension \'.csv\'.')
+        return this.setFileError('File type is not valid.<br><br>File must be a comma-separated value (CSV) file with extension \'.csv\'.')
       }
 
       Papa.parse(this.file.localFile, {
@@ -536,6 +413,10 @@ export default {
           this.file.parsedFile = Object.freeze(results)
           if (results.errors.length > 0) {
             return this.setFileError(`${results.errors[0].message} (Row ${results.errors[0].row})`)
+          }
+          if (!results.meta.fields.every(d => d.length > 0)) {
+            const index = results.meta.fields.findIndex(d => d.length === 0) + 1
+            return this.setFileError(`File contains an unnamed column (column ${index}).<br><br>Please remove this column or add a name for it in the header row.`)
           }
           this.status.file = 'FINISHED'
         },
@@ -581,6 +462,7 @@ export default {
         })
     },
     validateColumns () {
+      console.log('validateColumns', this.columns)
       const rowSchema = Joi.object({
         [this.columns.id]: Joi.string().required(),
         [this.columns.datetime]: Joi.date().iso().required(),
@@ -625,7 +507,6 @@ export default {
         .map(key => ({
           id: key,
           name: key,
-          description: null,
           type: null,
           domain: null,
           filter: true,
@@ -682,7 +563,7 @@ export default {
       if (this.variable.type === 'discrete') {
         this.variable.domain = [...new Set(this.file.parsedFile.data.map(d => d[this.variable.id]))].sort(d3.ascending)
         if (this.variable.outline && this.variable.domain.length !== 2) {
-          this.stepError.variable = `Variable can only be an Outline option if it has exactly 2 unique values. Unselect the Outline option, and click Validate again.<br><br>Found ${this.variable.domain.length} values (${this.variable.domain.join(', ')})`
+          this.stepError.variable = `Variable can only be an Outline option if it has exactly 2 unique values (found ${this.variable.domain.length}: ${this.variable.domain.join(', ')}).<br><br>Unselect the Outline option and try again, or modify the dataset file and return to the beginning.`
           return false
         }
         this.variable.size = false
@@ -693,15 +574,18 @@ export default {
       return true
     },
     nextVariable (skip) {
+      console.log('nextVariable', skip)
       if (skip) {
         this.variable.skip = true
         this.variables[this.selectedVariableIndex] = this.variable
       } else {
         if (!this.validateVariable()) {
+          console.log('failed')
           this.variable.valid = false
           this.status.variable = 'ERROR'
           return
         }
+        console.log('ok')
         this.$v.variable.$reset()
         this.variable.skip = false
         this.variable.valid = true
@@ -713,7 +597,10 @@ export default {
 
       if (this.selectedVariableIndex < this.variables.length - 1) {
         this.selectedVariableIndex += 1
+      } else {
+        this.selectedVariableIndex = 0
       }
+      console.log('done')
 
       if (this.variables.filter(d => !d.skip).every(d => d.valid)) {
         this.status.allVariables = 'FINISHED'

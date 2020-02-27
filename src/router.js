@@ -75,7 +75,7 @@ const router = new Router({
       name: 'welcome',
       component: Welcome,
       meta: {
-        width: 1000
+        width: 800
       }
     },
     {

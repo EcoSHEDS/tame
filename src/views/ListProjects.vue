@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-toolbar color="primary" dark class="mb-8">
-      <span class="title">Available Projects</span>
+      <span class="title">Select a Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>

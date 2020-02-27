@@ -15,6 +15,20 @@
     </v-card-text>
     <v-card-text v-else>
       <v-text-field
+        label="Enter project name"
+        v-model="form.name"
+        hint="Must be unique and will be used to generate a URL to this project"
+        persistent-hint>
+      </v-text-field>
+
+      <v-text-field
+        label="Enter project description"
+        v-model="form.description"
+        hint="Describe how and why this dataset was collected."
+        persistent-hint>
+      </v-text-field>
+
+      <v-text-field
         label="Enter a project ID"
         v-model="projectId"
         hint="Must be unique and will be used to generate a URL to this project"
@@ -54,6 +68,10 @@ export default {
   name: 'PublishProject',
   data () {
     return {
+      form: {
+        name: '',
+        description: ''
+      },
       projectId: '',
       status: 'READY',
       serverError: null
@@ -72,7 +90,7 @@ export default {
   },
   mounted () {
     if (this.project) {
-      this.projectId = slugify(this.project.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
+      this.projectId = slugify(this.form.name, { lower: true, remove: /[*+~.,()'"!:@]/g })
     }
   },
   methods: {
@@ -102,8 +120,8 @@ export default {
 
         const newProject = {
           id: this.projectId,
-          name: this.project.name,
-          description: this.project.description,
+          name: this.form.name,
+          description: this.form.description,
           columns: this.project.columns,
           variables: this.project.variables,
           file: {

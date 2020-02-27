@@ -7,7 +7,8 @@
     </v-toolbar>
 
     <v-card-text v-if="status === 'LOADING'">
-      Loading...
+      <v-progress-circular :size="32" :width="5" indeterminate color="primary"></v-progress-circular>
+      <span class="headline ml-4" style="vertical-align:middle">Loading Project...</span>
     </v-card-text>
     <v-card-text v-else-if="status === 'ERROR'">
       <v-alert type="error" outlined>
