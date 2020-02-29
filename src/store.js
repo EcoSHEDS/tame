@@ -40,9 +40,9 @@ export default new Vuex.Store({
         return Promise.resolve(project)
       }
 
-      const file = await Storage.get(project.file.s3 ? project.file.s3.key : project.file.key, {
+      const file = await Storage.get(project.file.s3.key, {
         level: 'protected',
-        identityId: project.file.identityId
+        identityId: project.file.s3.identityId
       })
 
       if (!file) {
