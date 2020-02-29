@@ -69,13 +69,6 @@ export default {
       const lonExtent = d3.extent(this.data.map(d => d[this.project.columns.longitude]))
       const latExtent = d3.extent(this.data.map(d => d[this.project.columns.latitude]))
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
-    },
-    nestedData () {
-      if (!this.project) return []
-      return d3.nest()
-        .key(d => d[this.project.columns.id])
-        .sortValues((a, b) => a[this.project.columns.datetime].valueOf() - b[this.project.columns.datetime].valueOf())
-        .entries(this.data)
     }
   },
   mounted () {
@@ -139,7 +132,17 @@ export default {
     },
     render () {
       // if (!this.data || !this.project) return
-      console.log('render', this.project, this.nestedData)
+      // console.log('render', this.project, this.data)
+
+      let data = this.data
+      if (!this.project) {
+        data = []
+      }
+
+      const nestedData = d3.nest()
+        .key(d => d[this.project.columns.id])
+        .sortValues((a, b) => a[this.project.columns.datetime].valueOf() - b[this.project.columns.datetime].valueOf())
+        .entries(data)
 
       const vm = this
       const tip = this.tip
@@ -150,7 +153,7 @@ export default {
 
       const groups = this.container
         .selectAll('g')
-        .data(this.nestedData, d => d.key)
+        .data(nestedData, d => d.key)
         .join(
           enter => enter
             .append('g')
@@ -225,7 +228,7 @@ export default {
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
     },
     renderSelected () {
-      console.log('tame-map-layer:renderSelected()', this.selectedIds)
+      // console.log('tame-map-layer:renderSelected()', this.selectedIds)
       if (this.selectedIds.length > 0) {
         const selectedIds = this.selectedIds
         this.container

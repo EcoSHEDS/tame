@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import Papa from 'papaparse'
 import { Storage } from 'aws-amplify'
+
+import parse from '@/lib/parse'
 
 Vue.use(Vuex)
 
@@ -12,7 +13,11 @@ export default new Vuex.Store({
   },
   getters: {
     user: state => state.user,
-    project: state => state.project
+    project: state => state.project,
+    isOwner: (state) => {
+      if (!state.user || !state.project) return false
+      return !state.project.id || state.project.userId === state.user.username
+    }
   },
   mutations: {
     SET_USER (state, user) {
@@ -29,39 +34,32 @@ export default new Vuex.Store({
     },
     async loadProject ({ commit }, project) {
       if (!project) return commit('SET_PROJECT', null)
-      let file
-      if (project.isLocal) {
-        file = project.file
-      } else {
-        file = await Storage.get(project.file.key, {
-          level: 'protected',
-          identityId: project.file.identityId
-        })
+
+      if (project.file.parsed) {
+        commit('SET_PROJECT', project)
+        return Promise.resolve(project)
       }
-      console.log(file)
+
+      const file = await Storage.get(project.file.s3 ? project.file.s3.key : project.file.key, {
+        level: 'protected',
+        identityId: project.file.identityId
+      })
+
+      if (!file) {
+        return Promise.reject(new Error('Project file not found'))
+      }
 
       return new Promise((resolve, reject) => {
-        if (!project.file) return reject(new Error('Project file not found'))
-
-        Papa.parse(file, {
-          header: true,
-          comments: '#',
-          delimiter: ',',
-          download: !project.isLocal,
-          skipEmptyLines: 'greedy',
-          complete: (results) => {
-            // this.file.parsedFile = Object.freeze(results)
+        parse(file)
+          .then((results) => {
             if (results.errors.length > 0) {
-              return console.log(`${results.errors[0].message} (Row ${results.errors[0].row})`)
+              return reject(new Error(`${results.errors[0].message} (Row ${results.errors[0].row})`))
             }
-            project.data = Object.freeze(results.data)
+            project.file.parsed = Object.freeze(results)
             commit('SET_PROJECT', project)
             return resolve(project)
-          },
-          error: (e) => {
-            return reject(e)
-          }
-        })
+          })
+          .catch(e => reject(e))
       })
     }
   }

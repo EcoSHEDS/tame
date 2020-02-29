@@ -9,9 +9,6 @@
       <v-btn text :to="{ name: 'welcome' }" class="mx-4">
         Welcome
       </v-btn>
-      <v-btn text :to="{ name: 'about' }" class="mx-4">
-        About
-      </v-btn>
       <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
         My Account
       </v-btn>
@@ -56,7 +53,9 @@
               <v-toolbar dark dense color="primary">
                 <h4>
                   <span v-if="ready" class="subtitle-1 font-weight-bold">
-                    <v-icon left>mdi-database</v-icon> {{ project ? project.name : 'None' }}
+                    <v-icon left v-if="!project.id">mdi-paperclip</v-icon>
+                    <v-icon left v-else>mdi-database</v-icon>
+                    {{ project ? project.name : 'None' | truncate(50) }}
                   </span>
                   <span v-else-if="loading">
                     <v-progress-circular
@@ -76,37 +75,15 @@
                   </span>
                 </h4>
                 <v-spacer></v-spacer>
-                <!-- <v-dialog
-                  v-model="dialogs.about"
-                  scrollable
-                  width="800"
-                  v-if="ready">
-                  <template v-slot:activator="{ on }">
-                    <v-btn small class="grey lighten-1" dark rounded v-on="on">
-                      <v-icon size="20" left>mdi-alert-circle-outline</v-icon> About
-                    </v-btn>
-                  </template>
-
-                  <v-card>
-                    <v-toolbar dense color="grey lighten-2">
-                      <strong>About This Dataset</strong>
-                      <v-spacer></v-spacer>
-                      <v-btn height="24" width="24" icon @click="dialogs.about = false" class="grey darken-1 elevation-2 mr-0" dark>
-                        <v-icon small>mdi-close</v-icon>
-                      </v-btn>
-                    </v-toolbar>
-
-                    <v-card-text class="mt-4">
-                      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                    </v-card-text>
-                  </v-card>
-                </v-dialog> -->
+                <v-btn height="24" width="24" icon @click="closeProject" class="grey lighten-2 elevation-2 mr-0" light>
+                  <v-icon small>mdi-close</v-icon>
+                </v-btn>
               </v-toolbar>
-              <v-card-actions class="justify-space-between">
-                <v-btn disabled :to="{ name: 'editProject' }"><v-icon left small>mdi-settings</v-icon>Settings</v-btn>
-                <v-btn :disabled="!project.isLocal" :to="{ name: 'publishProject' }"><v-icon left small>mdi-publish</v-icon>Publish</v-btn>
-                <v-btn @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn>
-                <!-- <v-btn @click="deleteProject"><v-icon left small>mdi-close</v-icon>Delete</v-btn> -->
+              <v-card-actions v-if="isOwner">
+                <v-btn :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
+                <v-spacer></v-spacer>
+                <v-btn v-if="!!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
+                <v-btn :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
               </v-card-actions>
             </v-card>
             <v-card width="550" class="mb-3" v-if="ready">
@@ -125,7 +102,7 @@
                   <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
                 </v-tab>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey darken-1 elevation-2 mt-3 mr-4" dark>
+                <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey lighten-2 elevation-2 mt-3 mr-4" light>
                   <v-icon v-if="!tabs.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
@@ -295,9 +272,9 @@
           <v-flex grow-shrink-0 class="mr-0">
             <v-card width="250" :max-height="$vuetify.breakpoint.height - 100 - 120 * debug.visible" style="overflow-y: auto" class="mb-3" v-if="ready">
               <v-toolbar dense dark color="primary">
-                <strong>Legend</strong>
+                <span class="subtitle-1 font-weight-bold">Legend</span>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="legend.collapse = !legend.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+                <v-btn height="24" width="24" icon @click="legend.collapse = !legend.collapse" class="grey lighten-2 elevation-2 mr-0" light>
                   <v-icon v-if="!legend.collapse">mdi-menu-up</v-icon>
                   <v-icon v-else>mdi-menu-down</v-icon>
                 </v-btn>
@@ -378,8 +355,6 @@ export default {
     error: null,
     dataset: [],
     dialogs: {
-      about: false,
-      publish: false,
       edit: false
     },
     legend: {
@@ -461,7 +436,7 @@ export default {
     }
   }),
   computed: {
-    ...mapGetters(['user', 'project']),
+    ...mapGetters(['user', 'project', 'isOwner']),
     colorScale () {
       if (!this.project) return null
       let valueScale, colorScale, scale
@@ -509,7 +484,7 @@ export default {
       this.onDraw()
     },
     project () {
-      this.initProject()
+      this.resetProject()
     }
   },
   mounted () {
@@ -531,7 +506,6 @@ export default {
       }, 200)
     },
     logout () {
-      console.log('logout')
       this.$Amplify.Auth.signOut()
         .then(() => {
           return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
@@ -546,6 +520,7 @@ export default {
       evt.$emit('map:render')
     },
     clearProject () {
+      console.log('clearProject')
       this.unselectAll()
       if (this.draw.enabled) {
         this.clearDraw()
@@ -580,13 +555,18 @@ export default {
           this.$router.push({ name: 'welcome' })
         })
     },
+    resetProject () {
+      console.log('resetProject', this.project)
+      this.clearProject()
+      this.$nextTick(this.initProject)
+    },
     initProject () {
       console.log('initProject', this.project)
-      this.clearProject()
 
       if (!this.project) return
 
-      const { data, columns, variables } = this.project
+      const { file, columns, variables } = this.project
+      const data = file.parsed.data
 
       // const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
       const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
@@ -697,6 +677,7 @@ export default {
       this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
       this.filters.selected = [this.filters.options[0]]
 
+      this.selectOption()
       this.ready = true
       evt.$emit('filter')
     },

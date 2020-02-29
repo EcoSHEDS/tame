@@ -7,11 +7,10 @@ import store from './store'
 
 import Home from './views/Home.vue'
 import Welcome from './views/Welcome.vue'
-import About from './views/About.vue'
-import ViewProject from './views/ViewProject.vue'
 import ListProjects from './views/ListProjects.vue'
-import CreateProject from './views/CreateProject.vue'
-import EditProject from './views/EditProject.vue'
+import ProjectForm from './views/ProjectForm.vue'
+import LoadProject from './views/LoadProject.vue'
+import UnpublishProject from './views/UnpublishProject.vue'
 import PublishProject from './views/PublishProject.vue'
 
 import AuthView from './views/auth/Auth.vue'
@@ -28,9 +27,7 @@ import NotFound from './views/NotFound.vue'
 Vue.use(Router)
 
 AmplifyEventBus.$on('authState', async ({ state, redirect }) => {
-  console.log('amplify:on:authState', state)
   if (state === 'signedOut') {
-    // user = null;
     store.dispatch('setUser', null)
     router.push(redirect || { name: 'logout' })
   } else if (state === 'signIn') {
@@ -44,12 +41,10 @@ AmplifyEventBus.$on('authState', async ({ state, redirect }) => {
 function getUser () {
   return Auth.currentAuthenticatedUser()
     .then((data) => {
-      console.log('getUser:success', data)
       if (data && data.signInUserSession) {
         return store.dispatch('setUser', data)
       }
     }).catch((e) => {
-      console.log('getUser:error', e)
       if (e.code && e.code === 'UserNotConfirmedException') {
         AmplifyEventBus.$emit('authState', { state: 'confirmSignUp' })
       }
@@ -79,12 +74,46 @@ const router = new Router({
       }
     },
     {
-      path: '/about',
-      name: 'about',
-      component: About,
+      path: '/projects',
+      name: 'listProjects',
+      component: ListProjects
+    },
+    {
+      path: '/new',
+      name: 'newProject',
+      component: ProjectForm,
       meta: {
-        width: 1000
+        isNew: true
       }
+    },
+    {
+      path: '/edit',
+      name: 'editProject',
+      component: ProjectForm,
+      meta: {
+        isNew: false
+      }
+    },
+    {
+      path: '/publish',
+      name: 'publishProject',
+      component: PublishProject,
+      meta: {
+        width: 800
+      }
+    },
+    {
+      path: '/unpublish',
+      name: 'unpublishProject',
+      component: UnpublishProject,
+      meta: {
+        width: 800
+      }
+    },
+    {
+      path: '/project/:id',
+      name: 'loadProject',
+      component: LoadProject
     },
     {
       path: '/auth',
@@ -149,31 +178,6 @@ const router = new Router({
           }
         }
       ]
-    },
-    {
-      path: '/projects',
-      name: 'listProjects',
-      component: ListProjects
-    },
-    {
-      path: '/new',
-      name: 'newProject',
-      component: CreateProject
-    },
-    {
-      path: '/edit',
-      name: 'editProject',
-      component: EditProject
-    },
-    {
-      path: '/publish',
-      name: 'publishProject',
-      component: PublishProject
-    },
-    {
-      path: '/project/:id',
-      name: 'viewProject',
-      component: ViewProject
     },
     {
       path: '*',

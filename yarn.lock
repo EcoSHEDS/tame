@@ -9008,6 +9008,11 @@ vue2-filters@^0.7.2:
   resolved "https://registry.yarnpkg.com/vue2-filters/-/vue2-filters-0.7.2.tgz#762e8b24c9ccaa152ac43b06c21c3e41ed6c13eb"
   integrity sha512-7I74isiBUQFGaNbVv57NzHGqh54cLe0JNJmJmu66wxP5eOK/CqHN4iqHMgwPPPvPbgbFbpI/GjbHiIx8tNruwg==
 
+vue2-filters@^0.9.1:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/vue2-filters/-/vue2-filters-0.9.1.tgz#c31df2e44d523fac74d362a792c68890cfddc3f1"
+  integrity sha512-peQHwZIT4cv/SsFodfmS8QREOnpdbsblIcKg19Kgu6kDCZ2Q9vorI9QyRLDIdvziFsKYjDL4NtwqgKDUrgxNQg==
+
 vue2-leaflet@^2.2.1:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/vue2-leaflet/-/vue2-leaflet-2.4.2.tgz#f3b718c915b5391ec8469b96bacb282a543cda24"

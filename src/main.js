@@ -9,6 +9,7 @@ import './plugins/axios'
 import './plugins/dc'
 import './plugins/leaflet'
 import './plugins/moment'
+import './plugins/vue2-filters'
 
 import '@/assets/css/tame-styles.css'
 

@@ -32,7 +32,7 @@
 <script>
 import { mapActions } from 'vuex'
 export default {
-  name: 'ViewProject',
+  name: 'LoadProject',
   data () {
     return {
       status: 'LOADING',

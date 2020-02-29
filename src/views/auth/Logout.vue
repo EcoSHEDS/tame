@@ -5,10 +5,18 @@
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
+
     <v-card-text>
       <p>You have been logged out.</p>
       <p>This window will automatically close in 3 seconds...</p>
     </v-card-text>
+
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 pb-4">
+      <v-spacer></v-spacer>
+      <v-btn to="/">close</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

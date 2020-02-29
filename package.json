@@ -6,7 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame2 --delete"
+    "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame --delete"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.0",
@@ -28,6 +28,7 @@
     "vue": "^2.6.10",
     "vue-moment": "^4.0.0",
     "vue-router": "^3.0.3",
+    "vue2-filters": "^0.9.1",
     "vue2-leaflet": "^2.2.1",
     "vuelidate": "^0.7.5",
     "vuetify": "^2.0.0",

@@ -85,7 +85,7 @@ export default {
       evt.$emit('map:move', this.map.getCenter())
     })
     this.map.on('zoomend', () => {
-      // console.log('zoom:', this.map.getZoom())
+      console.log('map:zoomend')
       this.zoomLevel = this.map.getZoom()
       evt.$emit('map:zoom', this.map.getZoom())
       evt.$emit('map:render')
