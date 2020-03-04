@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lambda resource stack for TAME
+Parameters:
+  functionName:
+    Type: String
+    Default: tame-lambda
+  databaseArn:
+    Type: String
+    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-projects
+  roleName:
+    Type: String
+    Default: tame-lambda-role
+  policyName:
+    Type: String
+    Default: tame-lambda-execution-policy
+Resources:
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    DependsOn: LambdaExecutionRole
+    Properties:
+      FunctionName: !Ref functionName
+      Handler: lambda.handler
+      Environment:
+        Variables:
+          TAME_DB_REGION: !Ref "AWS::Region"
+          TAME_DB_TABLE_NAME: !Select [ 1, !Split ["/", !Ref databaseArn]]
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs12.x
+      Timeout: "25"
+      Code: /Users/jeff/Projects/sheds/tame/api
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Ref roleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+  LambdaExecutionPolicy:
+    Type: "AWS::IAM::Policy"
+    DependsOn: LambdaExecutionRole
+    Properties:
+      PolicyName: !Ref policyName
+      Roles: [!Ref LambdaExecutionRole]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: !Sub
+              - >-
+                arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*
+              - region: !Ref "AWS::Region"
+                account: !Ref "AWS::AccountId"
+                lambda: !Ref LambdaFunction
+          - Effect: Allow
+            Action:
+              - "dynamodb:GetItem"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:PutItem"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
+            Resource: !Ref databaseArn
+Outputs:
+  Region:
+    Value: !Ref "AWS::Region"
+  Name:
+    Value: !Ref LambdaFunction
+  Arn:
+    Value: !GetAtt LambdaFunction.Arn
+  LambdaExecutionRole:
+    Value: !Ref LambdaExecutionRole

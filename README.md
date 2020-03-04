@@ -70,101 +70,38 @@ npm run deploy
 
 # Cloud Formation Template
 
-After `amplify init`, add `Auth` and `Unauth` roles
+Create S3 bucket for deploying lambda code (`api/`).
 
-``` json
-{
-    "AWSTemplateFormatVersion" : "2010-09-09",
-    "Description" : "Auth and Unauth roles",
-    "Parameters":{
-        "AuthRoleName":{
-            "Type": "String",
-            "Default": "AuthRoleName"
-        },
-        "UnauthRoleName":{
-            "Type": "String",
-            "Default": "UnauthRoleName"
-        }
-    },
-    "Resources": {
-        "AuthRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "RoleName": {"Ref": "AuthRoleName"},
-                "AssumeRolePolicyDocument": {
-                  "Version": "2012-10-17",
-                  "Statement": [
-                    {
-                      "Sid": "",
-                      "Effect": "Deny",
-                      "Principal": {
-                        "Federated": "cognito-identity.amazonaws.com"
-                      },
-                      "Action": "sts:AssumeRoleWithWebIdentity"
-                    }
-                  ]
-                }
-            }
-        },
-        "UnauthRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "RoleName": {"Ref": "UnauthRoleName"},
-                "AssumeRolePolicyDocument":{
-                  "Version": "2012-10-17",
-                  "Statement": [
-                    {
-                      "Sid": "",
-                      "Effect": "Deny",
-                      "Principal": {
-                        "Federated": "cognito-identity.amazonaws.com"
-                      },
-                      "Action": "sts:AssumeRoleWithWebIdentity"
-                    }
-                  ]
-                }
-            }
-
-        }
-    },
-    "Outputs" : {
-        "Region": {
-            "Description": "CloudFormation provider root stack Region",
-            "Value": {"Ref": "AWS::Region"},
-            "Export": {
-                "Name" : { "Fn::Sub" : "${AWS::StackName}-Region"}
-            }
-        },
-        "StackName": {
-            "Description": "CloudFormation provider root stack ID",
-            "Value": {"Ref": "AWS::StackName"},
-            "Export": {
-                "Name" : { "Fn::Sub" : "${AWS::StackName}-StackName"}
-            }
-        },
-        "StackId": {
-            "Description": "CloudFormation provider root stack name",
-            "Value": {"Ref": "AWS::StackId"},
-            "Export": {
-                "Name" : { "Fn::Sub" : "${AWS::StackName}-StackId"}
-            }
-        },
-        "AuthRoleArn": {
-            "Value": {"Fn::GetAtt": ["AuthRole", "Arn"]}
-        },
-        "UnauthRoleArn": {
-            "Value": {"Fn::GetAtt": ["UnauthRole", "Arn"]}
-        },
-        "AuthRoleName": {
-            "Value": {"Ref": "AuthRole"}
-        },
-        "UnauthRoleName": {
-            "Value": {"Ref": "UnauthRole"}
-        }
-    }
-}
+```
+aws cloudformation create-stack --stack-name tame-deployment-dev --template-body file://aws/tame-deployment.yml --parameters ParameterKey=bucketName,ParameterValue=conte-tame-deployment-dev
 ```
 
-`Auth` and `Unauth` roles are used by an Identity Pool, which uses the User Pool for authentication.
+Run `package` command to upload lambda source code to S3 deployment bucket.
 
+```
+aws cloudformation package --template aws/tame-lambda-local.yml --s3-bucket conte-tame-deployment-dev --s3-prefix lambda --output-template aws/stacks/tame-lambda.yml
+```
 
+Upload CloudFormation templates to S3 deployment bucket.
+
+```
+aws s3 sync aws/stacks/ s3://conte-tame-deployment-dev/cf-templates
+```
+
+Create stacks
+
+```sh
+aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/stacks/tame-auth.yml --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation create-stack --stack-name tame-db --template-body file://aws/stacks/tame-db.yml
+aws cloudformation create-stack --stack-name tame-storage --template-body file://aws/stacks/tame-storage.yml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/stacks/tame-lambda.yml --capabilities CAPABILITY_NAMED_IAM
+
+aws cloudformation create-stack --stack-name tame-api --template-body file://aws/stacks/tame-api.yml --capabilities CAPABILITY_IAM
+```
+
+Update a stack
+
+```sh
+aws cloudformation deploy --stack-name tame-XXX --template-file aws/stacks/tame-XXX.yml --parameter-overrieds XXX=XXX --capabilities XXX
+```

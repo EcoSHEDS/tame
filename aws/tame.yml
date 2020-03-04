@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Nested resource stack for TAME
+Parameters:
+  env:
+    Type: String
+    Default: dev
+  deploymentBucketName:
+    Type: String
+    Default: conte-tame-deployment-dev
+Resources:
+  Auth:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Join ["", ["https://", !Ref deploymentBucketName, ".s3.amazonaws.com/cf-templates/tame-auth.yml"]]
+      Parameters:
+        userPoolName: !Join ["-", [tame-userpool, !Ref env]]
+        userPoolClientName: !Join ["-", [tame-userpool-client, !Ref env]]
+        userPoolClientWebName: !Join ["-", [tame-userpool-client-web, !Ref env]]
+        identityPoolName: !Join ["-", [tame-identitypool, !Ref env]]
+        authRoleName: !Join ["-", [tame-role-auth, !Ref env]]
+        unauthRoleName: !Join ["-", [tame-role-unauth, !Ref env]]
+  Storage:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn: Auth
+    Properties:
+      TemplateURL: !Join ["", ["https://", !Ref deploymentBucketName, ".s3.amazonaws.com/cf-templates/tame-storage.yml"]]
+      Parameters:
+        bucketName: !Join ["-", [tame-storage, !Ref env]]
+        authRoleName: !Join ["-", [tame-role-auth, !Ref env]]
+        unauthRoleName: !Join ["-", [tame-role-unauth, !Ref env]]
+  Database:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Join ["", ["https://", !Ref deploymentBucketName, ".s3.amazonaws.com/cf-templates/tame-db.yml"]]
+      Parameters:
+        tableName: !Join ["-", ["tame-projects", !Ref env]]

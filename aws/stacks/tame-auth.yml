@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Authentication resource stack for TAME
+Parameters:
+  userPoolName:
+    Type: String
+    Default: tame-userpool
+  userPoolClientName:
+    Type: String
+    Default: tame-userpool-client
+  userPoolClientWebName:
+    Type: String
+    Default: tame-userpool-client-web
+  identityPoolName:
+    Type: String
+    Default: tame-identitypool
+  authRoleName:
+    Type: String
+    Default: tame-role-auth
+  unauthRoleName:
+    Type: String
+    Default: tame-role-unauth
+Resources:
+  UserPool:
+    Type: "AWS::Cognito::UserPool"
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Ref userPoolName
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+          AttributeDataType: String
+        - Name: name
+          Required: true
+          Mutable: true
+          AttributeDataType: String
+        - Name: affiliation
+          Required: false
+          Mutable: true
+          AttributeDataType: String
+      AutoVerifiedAttributes: ["email"]
+      EmailVerificationMessage: "Your verification code is {####}. Please return to TAME and use this code to confirm your email."
+      EmailVerificationSubject: "[TAME] Your Verification Code"
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+      UsernameAttributes: ["email"]
+      MfaConfiguration: "OFF"
+  UserPoolClientWeb:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: !Ref userPoolClientWebName
+      RefreshTokenValidity: 30
+      UserPoolId: !Ref UserPool
+    DependsOn: UserPool
+  UserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: !Ref userPoolClientName
+      GenerateSecret: true
+      RefreshTokenValidity: 30
+      UserPoolId: !Ref UserPool
+    DependsOn: UserPool
+  IdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: !Ref identityPoolName
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !Sub
+            - cognito-idp.${region}.amazonaws.com/${client}
+            - { region: !Ref "AWS::Region", client: !Ref UserPool }
+        - ClientId: !Ref UserPoolClientWeb
+          ProviderName: !Sub
+            - cognito-idp.${region}.amazonaws.com/${client}
+            - { region: !Ref "AWS::Region", client: !Ref UserPool }
+    DependsOn: [UserPool, UserPoolClient, UserPoolClientWeb]
+  AuthRole:
+    Type: "AWS::IAM::Role"
+    DependsOn: IdentityPool
+    Properties:
+      RoleName: !Ref authRoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud:
+                  Ref: IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: authenticated
+  UnauthRole:
+    Type: "AWS::IAM::Role"
+    DependsOn: IdentityPool
+    Properties:
+      RoleName: !Ref unauthRoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud:
+                  Ref: IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+  IdentityPoolRoleMap:
+    Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        unauthenticated: !GetAtt UnauthRole.Arn
+        authenticated: !GetAtt AuthRole.Arn
+    DependsOn: [IdentityPool, UnauthRole, AuthRole]
+Outputs:
+  Region:
+    Value: !Ref AWS::Region
+  UserPoolId:
+    Value: !Ref UserPool
+    Description: Id for the user pool
+  UserPoolName:
+    Value: !Ref userPoolName
+  IdentityPoolId:
+    Value: !Ref IdentityPool
+    Description: Id for the identity pool
+  IdentityPoolName:
+    Value: !GetAtt IdentityPool.Name
+  AppClientIDWeb:
+    Value: !Ref UserPoolClientWeb
+    Description: The user pool app client id for web
+  AppClientID:
+    Value: !Ref UserPoolClient
+    Description: The user pool app client id
+  AuthRoleName:
+    Value: !Ref AuthRole
+    Description: IAM role name for authenticated users
+  UnauthRoleName:
+    Value: !Ref UnauthRole
+    Description: IAM role name for unauthenticated users
