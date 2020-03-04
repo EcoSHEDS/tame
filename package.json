@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame --delete"
+    "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame --delete",
+    "api": "cd api && npm start"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.0",
