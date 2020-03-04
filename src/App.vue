@@ -41,10 +41,10 @@
           <v-flex grow-shrink-0 class="ml-3">
             <v-card class="mb-3" style="background:transparent" elevation="0" width="550">
               <v-card-actions class="pl-0 pb-0">
-                <v-btn color="green" style="width:50%" dark :to="{ name: 'newProject' }">
+                <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'newProject' }">
                   <v-icon left small>mdi-pencil</v-icon>New Project
                 </v-btn>
-                <v-btn color="green" style="width:50%" dark :to="{ name: 'listProjects' }">
+                <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'listProjects' }">
                   <v-icon left small>mdi-folder-open-outline</v-icon>Load Project
                 </v-btn>
               </v-card-actions>

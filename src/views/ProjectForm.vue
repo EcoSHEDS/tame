@@ -399,6 +399,8 @@ export default {
       this.file.status = 'SUCCESS'
       this.columns.value = JSON.parse(JSON.stringify(this.project.columns))
       this.variables.value = JSON.parse(JSON.stringify(this.project.variables))
+    } else {
+      this.loadProject()
     }
   },
   methods: {

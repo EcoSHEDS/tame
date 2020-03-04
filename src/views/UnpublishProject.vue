@@ -75,7 +75,7 @@ export default {
       this.error = null
 
       try {
-        const key = this.project.file.key
+        const key = this.project.file.s3.key
 
         await this.$Amplify.Storage.remove(key, {
           level: 'protected'

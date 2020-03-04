@@ -17,7 +17,7 @@ Amplify.configure({
     endpoints: [
       {
         name: 'tame',
-        endpoint: 'https://x51i2beykf.execute-api.us-east-1.amazonaws.com/dev'
+        endpoint: process.env.VUE_APP_API_BASE_URL
       }
     ]
   }
