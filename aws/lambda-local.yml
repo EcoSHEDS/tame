@@ -3,16 +3,19 @@ Description: Lambda resource stack for TAME
 Parameters:
   functionName:
     Type: String
-    Default: tame-lambda
+    Default: tame-dev-lambda
   databaseArn:
     Type: String
-    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-projects
+    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-dev-projects
+  storageArn:
+    Type: String
+    Default: arn:aws:s3:::tame-dev-storage
   roleName:
     Type: String
-    Default: tame-lambda-role
+    Default: tame-dev-lambda-role
   policyName:
     Type: String
-    Default: tame-lambda-execution-policy
+    Default: tame-dev-lambda-policy
 Resources:
   LambdaFunction:
     Type: "AWS::Lambda::Function"
@@ -22,12 +25,12 @@ Resources:
       Handler: lambda.handler
       Environment:
         Variables:
-          TAME_DB_REGION: !Ref "AWS::Region"
-          TAME_DB_TABLE_NAME: !Select [ 1, !Split ["/", !Ref databaseArn]]
+          REGION: !Ref "AWS::Region"
+          TABLE_NAME: !Select [ 1, !Split ["/", !Ref databaseArn]]
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs12.x
       Timeout: "25"
-      Code: /Users/jeff/Projects/sheds/tame/api
+      Code: /Users/jeff/Projects/sheds/tame-dev/api
   LambdaExecutionRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -70,6 +73,11 @@ Resources:
               - "dynamodb:UpdateItem"
               - "dynamodb:DeleteItem"
             Resource: !Ref databaseArn
+          - Effect: Allow
+            Action:
+              - "s3:putObject"
+              - "s3:deleteObject"
+            Resource: !Join ["", [!Ref storageArn, "/*"]]
 Outputs:
   Region:
     Value: !Ref "AWS::Region"

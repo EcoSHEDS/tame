@@ -3,16 +3,19 @@ Description: Lambda resource stack for TAME
 Parameters:
   functionName:
     Type: String
-    Default: tame-lambda
+    Default: tame-dev-lambda
   databaseArn:
     Type: String
-    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-projects
+    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-dev-projects
+  storageArn:
+    Type: String
+    Default: arn:aws:s3:::tame-dev-storage
   roleName:
     Type: String
-    Default: tame-lambda-role
+    Default: tame-dev-lambda-role
   policyName:
     Type: String
-    Default: tame-lambda-execution-policy
+    Default: tame-dev-lambda-policy
 Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
@@ -23,9 +26,9 @@ Resources:
       Handler: lambda.handler
       Environment:
         Variables:
-          TAME_DB_REGION:
+          REGION:
             Ref: AWS::Region
-          TAME_DB_TABLE_NAME:
+          TABLE_NAME:
             Fn::Select:
             - 1
             - Fn::Split:
@@ -38,8 +41,8 @@ Resources:
       Runtime: nodejs12.x
       Timeout: '25'
       Code:
-        S3Bucket: conte-tame-deployment-dev
-        S3Key: lambda/77974adc0e4d664a4be7b10f2b5be12b
+        S3Bucket: tame-dev-deployment
+        S3Key: lambda/eb1e18d9914a64e42557e1ab6b97eb44
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -89,6 +92,15 @@ Resources:
           - dynamodb:DeleteItem
           Resource:
             Ref: databaseArn
+        - Effect: Allow
+          Action:
+          - s3:putObject
+          - s3:deleteObject
+          Resource:
+            Fn::Join:
+            - ''
+            - - Ref: storageArn
+              - /*
 Outputs:
   Region:
     Value:

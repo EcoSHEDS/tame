@@ -3,7 +3,7 @@ Description: DynamoDB resource stack for TAME
 Parameters:
   tableName:
     Type: String
-    Default: tame-projects
+    Default: tame-dev-projects
 Resources:
   DynamoDBTable:
     Type: 'AWS::DynamoDB::Table'
