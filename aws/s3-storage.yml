@@ -10,6 +10,23 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref bucketName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - "*"
+            MaxAge: "3000"
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref S3Bucket, "/*"]]
+            Principal: "*"
 Outputs:
   BucketName:
     Value: !Ref S3Bucket
