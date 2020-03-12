@@ -1,11 +1,11 @@
 const AWS = require('aws-sdk')
 
 const dynamodb = new AWS.DynamoDB({
-  region: process.env.TAME_DB_REGION || 'us-east-1',
+  region: process.env.REGION || 'us-east-1',
   apiVersion: '2012-08-10'
 })
 
-const TABLE = process.env.TAME_DB_TABLE_NAME
+const TABLE = process.env.TABLE_NAME
 
 console.log(`connecting to table: ${TABLE}`)
 

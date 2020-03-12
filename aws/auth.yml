@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Authentication resource stack for TAME
+Parameters:
+  userPoolName:
+    Type: String
+    Default: tame-dev-userpool
+  userPoolClientName:
+    Type: String
+    Default: tame-dev-userpool-client
+Resources:
+  UserPool:
+    Type: "AWS::Cognito::UserPool"
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Ref userPoolName
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+          AttributeDataType: String
+        - Name: name
+          Required: true
+          Mutable: true
+          AttributeDataType: String
+        - Name: affiliation
+          Required: false
+          Mutable: true
+          AttributeDataType: String
+      AutoVerifiedAttributes: ["email"]
+      EmailVerificationMessage: "Your verification code is {####}. Please return to TAME and use this code to confirm your email."
+      EmailVerificationSubject: "[TAME] Your Verification Code"
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+      UsernameAttributes: ["email"]
+      MfaConfiguration: "OFF"
+  UserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: !Ref userPoolClientName
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      UserPoolId: !Ref UserPool
+    DependsOn: UserPool
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+    Description: Id for the user pool
+  UserPoolName:
+    Value: !Ref userPoolName
+  AppClientID:
+    Value: !Ref UserPoolClient
+    Description: The user pool app client id

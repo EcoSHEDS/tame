@@ -3,7 +3,7 @@ Description: Resource stack for deploying lambda code and CF templates
 Parameters:
   bucketName:
     Type: String
-    Default: conte-tame-deployment-dev
+    Default: tame-dev-deployment
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"
