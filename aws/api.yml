@@ -20,6 +20,11 @@ Resources:
       Description: "TAME API Gateway"
       Name: !Ref apiName
       FailOnWarnings: true
+      Tags:
+        - Key: project
+          Value: tame
+        - Key: env
+          Value: dev
       Body:
         swagger: "2.0"
         info:

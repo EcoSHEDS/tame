@@ -13,6 +13,9 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       UserPoolName: !Ref userPoolName
+      UserPoolTags:
+        project: tame
+        env: dev
       Schema:
         - Name: email
           Required: true
