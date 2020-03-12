@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Resource stack for deploying lambda code and CF templates
+Description: Resource stack for deploying lambda code
 Parameters:
   bucketName:
     Type: String
-    Default: tame-dev-deployment
+    Default: tame-lambda
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"

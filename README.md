@@ -70,38 +70,60 @@ npm run deploy
 
 # Cloud Formation Template
 
-Create S3 bucket for deploying lambda code (`api/`).
+Create storage bucket (CHS-approval required).
 
 ```
-aws cloudformation create-stack --stack-name tame-deployment-dev --template-body file://aws/tame-deployment.yml --parameters ParameterKey=bucketName,ParameterValue=conte-tame-deployment-dev
+aws cloudformation create-stack --stack-name tame-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/s3-storage.json
 ```
+
+Create website bucket (CHS-approval required).
+
+```
+aws cloudformation create-stack --stack-name tame-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/s3-website.json
+```
+
+Create S3 bucket for deploying lambda code (`./api`).
+
+```
+aws cloudformation create-stack --stack-name tame-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/s3-lambda.json
+```
+
+Create database.
+
+```
+aws cloudformation create-stack --stack-name tame-db --template-body file://aws/db.yml --parameters file://aws/params/db.json
+```
+
+Create auth user pool.
+
+```
+aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/auth.yml --parameters file://aws/params/auth.json
+```
+
+Copy database ARN to `aws/params/lambda.json`.
 
 Run `package` command to upload lambda source code to S3 deployment bucket.
 
 ```
-aws cloudformation package --template aws/tame-lambda-local.yml --s3-bucket conte-tame-deployment-dev --s3-prefix lambda --output-template aws/stacks/tame-lambda.yml
+aws cloudformation package --template aws/lambda-local.yml --s3-bucket conte-tame-lambda-dev --s3-prefix lambda --output-template aws/lambda.yml
 ```
 
-Upload CloudFormation templates to S3 deployment bucket.
-
-```
-aws s3 sync aws/stacks/ s3://conte-tame-deployment-dev/cf-templates
-```
-
-Create stacks
+Create lambda
 
 ```sh
-aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/stacks/tame-auth.yml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/lambda.json --capabilities CAPABILITY_NAMED_IAM
+```
 
-aws cloudformation create-stack --stack-name tame-db --template-body file://aws/stacks/tame-db.yml
-aws cloudformation create-stack --stack-name tame-storage --template-body file://aws/stacks/tame-storage.yml --capabilities CAPABILITY_IAM
-aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/stacks/tame-lambda.yml --capabilities CAPABILITY_NAMED_IAM
+Copy lambda function ARN to `aws/params/api.json`.
 
-aws cloudformation create-stack --stack-name tame-api --template-body file://aws/stacks/tame-api.yml --capabilities CAPABILITY_IAM
+Create API
+
+```sh
+aws cloudformation create-stack --stack-name tame-api --template-body file://aws/api.yml --parameters file://aws/params/api.json
 ```
 
 Update a stack
 
 ```sh
-aws cloudformation deploy --stack-name tame-XXX --template-file aws/stacks/tame-XXX.yml --parameter-overrieds XXX=XXX --capabilities XXX
+aws cloudformation deploy --stack-name tame-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
 ```

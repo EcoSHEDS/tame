@@ -1,34 +1,29 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Storage S3 Bucket for TAME
 Parameters:
-  bucketName:
+  BucketName:
     Description: Name of S3 bucket
     Type: String
-    Default: tame-storage-dev
+    Default: tame-website-dev
 Resources:
   S3Bucket:
-    Type: "AWS::S3::Bucket"
-    DeletionPolicy: Retain
+    Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Ref bucketName
+      BucketName: !Ref BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
       Tags:
         - Key: project
           Value: tame
         - Key: env
           Value: dev
-      CorsConfiguration:
-        CorsRules:
-          - AllowedMethods:
-              - GET
-            AllowedOrigins:
-              - "*"
-            MaxAge: "3000"
   BucketPolicy:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
       Bucket: !Ref S3Bucket
       PolicyDocument:
-        Id: TameStorageBucketPolicy
+        Id: TameWebsiteBucketPolicy
         Version: '2012-10-17'
         Statement:
           - Sid: AllowWantedIps
@@ -37,6 +32,9 @@ Resources:
             Action: 's3:GetObject'
             Resource: !Join ['', ['arn:aws:s3:::', !Ref S3Bucket, '/*']]
 Outputs:
-  BucketUrl:
+  WebsiteURL:
+    Value: !GetAtt [S3Bucket, WebsiteURL]
+    Description: URL for website hosted on S3
+  S3BucketSecureURL:
     Value: !Join ['', ['https://', !GetAtt [S3Bucket, DomainName]]]
-    Description: URL for S3 bucket
+    Description: Secure URL for S3 bucket
