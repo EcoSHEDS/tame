@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Authentication resource stack for TAME
+Description: Cognito User Pool for TAME
 Parameters:
   userPoolName:
     Type: String
@@ -35,10 +35,10 @@ Resources:
       Policies:
         PasswordPolicy:
           MinimumLength: 8
-          RequireLowercase: false
-          RequireNumbers: false
+          RequireLowercase: true
+          RequireNumbers: true
           RequireSymbols: false
-          RequireUppercase: false
+          RequireUppercase: true
       UsernameAttributes: ["email"]
       MfaConfiguration: "OFF"
   UserPoolClient:
@@ -53,6 +53,9 @@ Outputs:
   UserPoolId:
     Value: !Ref UserPool
     Description: Id for the user pool
+  UserPoolArn:
+    Value: !GetAtt UserPool.Arn
+    Description: ARN for the user pool
   UserPoolName:
     Value: !Ref userPoolName
   AppClientID:

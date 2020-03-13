@@ -1,15 +1,15 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Lambda resource stack for TAME
+Description: Lambda function for TAME
 Parameters:
   functionName:
     Type: String
     Default: tame-dev-lambda
-  databaseArn:
+  databaseTable:
     Type: String
-    Default: arn:aws:dynamodb:us-east-1:474916309046:table/tame-dev-projects
-  storageArn:
+    Default: tame-dev-projects
+  storageBucket:
     Type: String
-    Default: arn:aws:s3:::tame-dev-storage
+    Default: tame-dev-storage
   roleName:
     Type: String
     Default: tame-dev-lambda-role
@@ -31,11 +31,12 @@ Resources:
       Environment:
         Variables:
           REGION: !Ref "AWS::Region"
-          TABLE_NAME: !Select [ 1, !Split ["/", !Ref databaseArn]]
+          TABLE_NAME: !Ref databaseTable
+          S3_BUCKET: !Ref storageBucket
       Role: !GetAtt LambdaExecutionRole.Arn
       Runtime: nodejs12.x
       Timeout: "25"
-      Code: C:/Users/jdwalker/Projects/tame/api
+      Code: ../api
   LambdaExecutionRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -54,7 +55,7 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - "sts:AssumeRole"
-      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/csr-Developer-Permissions-Boundary
+      # PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/csr-Developer-Permissions-Boundary
   LambdaExecutionPolicy:
     Type: "AWS::IAM::Policy"
     DependsOn: LambdaExecutionRole
@@ -83,18 +84,21 @@ Resources:
               - "dynamodb:PutItem"
               - "dynamodb:UpdateItem"
               - "dynamodb:DeleteItem"
-            Resource: !Ref databaseArn
+            Resource: !Sub
+              - >-
+                arn:aws:dynamodb:${region}:${account}:table/${table}
+              - region: !Ref "AWS::Region"
+                account: !Ref "AWS::AccountId"
+                table: !Ref databaseTable
           - Effect: Allow
             Action:
               - "s3:putObject"
               - "s3:deleteObject"
-            Resource: !Join ["", [!Ref storageArn, "/*"]]
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref storageBucket, "/*"]]
 Outputs:
   Region:
     Value: !Ref "AWS::Region"
-  Name:
+  FunctionName:
     Value: !Ref LambdaFunction
-  Arn:
+  FunctionArn:
     Value: !GetAtt LambdaFunction.Arn
-  LambdaExecutionRole:
-    Value: !Ref LambdaExecutionRole

@@ -2,7 +2,7 @@ Description: >
   CONTE Development Storage S3 Bucket For TAME Application
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-  BucketName:
+  bucketName:
     Description: Name of S3 bucket
     Type: String
     Default: conte-tame-storage-dev
@@ -11,7 +11,7 @@ Resources:
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Ref BucketName
+      BucketName: !Ref bucketName
       Tags:
         - Key: project
           Value: tame

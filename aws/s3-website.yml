@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Storage S3 Bucket for TAME
 Parameters:
-  BucketName:
+  bucketName:
     Description: Name of S3 bucket
     Type: String
     Default: tame-website-dev
@@ -9,7 +9,7 @@ Resources:
   S3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Ref BucketName
+      BucketName: !Ref bucketName
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: index.html

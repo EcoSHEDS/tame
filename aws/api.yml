@@ -1,18 +1,17 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: API Gateway resource stack for TAME
+Description: API Gateway for TAME
 Parameters:
   apiName:
     Type: String
     Default: tame-dev-api
-  stage:
+  apiStage:
     Type: String
     Default: dev
   functionName:
     Type: String
     Default: tame-dev-lambda
-  functionArn:
+  userPoolId:
     Type: String
-    Default: arn:aws:lambda:us-east-1:474916309046:function:tame-dev-lambda
 Resources:
   API:
     Type: "AWS::ApiGateway::RestApi"
@@ -33,7 +32,7 @@ Resources:
         host: !Join ["", ["apigateway.", !Ref "AWS::Region", ".amazonaws.com"]]
         schemes:
           - https
-        basePath: !Ref stage
+        basePath: !Ref apiStage
         paths:
           /projects:
             get:
@@ -50,7 +49,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -75,7 +74,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -133,7 +132,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -166,7 +165,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -199,7 +198,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -232,7 +231,7 @@ Resources:
                   - - 'arn:aws:apigateway:'
                     - !Ref 'AWS::Region'
                     - ':lambda:path/2015-03-31/functions/'
-                    - !Ref functionArn
+                    - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${functionName}
                     - /invocations
                 responses:
                   default:
@@ -281,7 +280,7 @@ Resources:
             x-amazon-apigateway-authtype: "cognito_user_pools"
             x-amazon-apigateway-authorizer:
               providerARNs:
-              - "arn:aws:cognito-idp:us-east-1:474916309046:userpool/us-east-1_UjJGeMvtH"
+              - !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${userPoolId}
               type: "cognito_user_pools"
         definitions:
           Empty:
@@ -305,8 +304,8 @@ Resources:
   APIDeployment:
     Type: "AWS::ApiGateway::Deployment"
     Properties:
-      Description: The API stage deployment for TAME
-      StageName: !Ref stage
+      Description: The API stage deployment
+      StageName: !Ref apiStage
       RestApiId: !Ref API
 Outputs:
   RootUrl:
@@ -318,4 +317,4 @@ Outputs:
         - .execute-api.
         - !Ref "AWS::Region"
         - .amazonaws.com/
-        - !Ref stage
+        - !Ref apiStage

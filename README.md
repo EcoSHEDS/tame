@@ -102,13 +102,15 @@ aws cloudformation create-stack --stack-name tame-auth --template-body file://aw
 
 Copy database ARN to `aws/params/lambda.json`.
 
-Run `package` command to upload lambda source code to S3 deployment bucket.
+Run `package` command to upload lambda source code to S3 deployment bucket and create `aws/lambda.yml` template.
 
 ```
 aws cloudformation package --template aws/lambda-local.yml --s3-bucket conte-tame-lambda-dev --s3-prefix lambda --output-template aws/lambda.yml
 ```
 
-Create lambda
+For CHS, copy the `PermissionsBoundary` for the `LambdaExecutionRole` from `aws/lambda-local.yml` to `aws/lambda.yml`.
+
+Create lambda.
 
 ```sh
 aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/lambda.json --capabilities CAPABILITY_NAMED_IAM

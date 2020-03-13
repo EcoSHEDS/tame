@@ -3,7 +3,7 @@ Description: Resource stack for deploying lambda code
 Parameters:
   bucketName:
     Type: String
-    Default: tame-lambda
+    Default: tame-dev-lambda
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"
