@@ -38,8 +38,8 @@
               </div>
               <div class="ml-4 mb-4">
                 Filename: <strong>{{ file.value.name }}</strong><br>
-                # Rows: <strong>{{ file.value.parsed.data.length.toLocaleString() }}</strong><br>
-                Columns: <strong>{{ file.value.parsed.meta.fields.join(', ') }}</strong>
+                # Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
+                Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
               </div>
             </div>
             <v-alert type="error" outlined :value="file.status === 'ERROR'">
@@ -63,7 +63,7 @@
             <v-row>
               <v-col>
                 <v-select
-                  :items="file.value.parsed.meta.fields"
+                  :items="file.parsed.meta.fields"
                   v-model="columns.value.id"
                   label="Select individual (tag) ID column"
                   outlined
@@ -73,7 +73,7 @@
               </v-col>
               <v-col>
                 <v-select
-                  :items="file.value.parsed.meta.fields"
+                  :items="file.parsed.meta.fields"
                   v-model="columns.value.datetime"
                   label="Select date/time column"
                   outlined
@@ -87,7 +87,7 @@
             <v-row>
               <v-col>
                 <v-select
-                  :items="file.value.parsed.meta.fields"
+                  :items="file.parsed.meta.fields"
                   v-model="columns.value.latitude"
                   label="Select latitude variable"
                   outlined
@@ -99,7 +99,7 @@
               </v-col>
               <v-col>
                 <v-select
-                  :items="file.value.parsed.meta.fields"
+                  :items="file.parsed.meta.fields"
                   v-model="columns.value.longitude"
                   label="Select longitude variable"
                   outlined
@@ -395,10 +395,13 @@ export default {
     this.isNew = this.$route.meta.isNew
 
     if (!this.isNew) {
-      this.file.value = JSON.parse(JSON.stringify(this.project.file))
+      this.file.value = this.project.file
+      this.file.parsed = this.project.dataset
       this.file.status = 'SUCCESS'
-      this.columns.value = JSON.parse(JSON.stringify(this.project.columns))
-      this.variables.value = JSON.parse(JSON.stringify(this.project.variables))
+      // this.columns.value = JSON.parse(JSON.stringify(this.project.columns))
+      // this.variables.value = JSON.parse(JSON.stringify(this.project.variables))
+      this.columns.value = this.project.columns
+      this.variables.value = this.project.variables
     } else {
       this.loadProject()
     }
@@ -453,7 +456,7 @@ export default {
         `)
       }
 
-      parse(localFile)
+      parse({ local: localFile })
         .then((results) => {
           this.file.input = null
           this.$refs.fileInput.blur()
@@ -474,9 +477,9 @@ export default {
           this.file.value = {
             name: localFile.name,
             size: localFile.size,
-            parsed: results,
             local: localFile
           }
+          this.file.parsed = results
           this.file.status = 'SUCCESS'
           this.resetColumns()
         })
@@ -502,7 +505,7 @@ export default {
         this.columns.value.latitude = null
         this.columns.value.longitude = null
       } else {
-        const fields = this.file.value.parsed.meta.fields
+        const fields = this.file.parsed.meta.fields
         if (!fields.includes(this.columns.value.id)) {
           this.columns.value.id = null
         }
@@ -544,7 +547,7 @@ export default {
         })
     },
     validateColumns () {
-      if (!this.file.value.parsed) {
+      if (!this.file.parsed) {
         this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
       }
       const c = this.columns.value
@@ -555,7 +558,7 @@ export default {
         [c.longitude]: Joi.number().required().min(-180).max(180)
       })
       const schema = Joi.array().items(rowSchema).required()
-      const data = this.file.value.parsed.data.map(d => ({
+      const data = this.file.parsed.data.map(d => ({
         [c.id]: d[c.id],
         [c.datetime]: d[c.datetime],
         [c.latitude]: +d[c.latitude],
@@ -575,7 +578,7 @@ export default {
       this.variable.status = 'READY'
       this.variable.error = null
 
-      const fields = this.file.value.parsed.meta.fields
+      const fields = this.file.parsed.meta.fields
         .filter(d => !Object.values(this.columns.value).includes(d))
 
       if (fields.length === 0) {
@@ -605,7 +608,7 @@ export default {
           skip: true
         }
 
-        const value = this.file.value.parsed.data[0][variable.id]
+        const value = this.file.parsed.data[0][variable.id]
         if (isNaN(+value)) {
           variable.type = 'discrete'
         } else {
@@ -660,7 +663,7 @@ export default {
       }
 
       if (this.variable.value.type === 'discrete') {
-        this.variable.value.domain = [...new Set(this.file.value.parsed.data.map(d => d[this.variable.value.id]))].sort(d3.ascending)
+        this.variable.value.domain = [...new Set(this.file.parsed.data.map(d => d[this.variable.value.id]))].sort(d3.ascending)
         if (this.variable.value.outline && this.variable.value.domain.length !== 2) {
           this.setError('variable', `
             <strong>Variable cannot be an Outline option</strong><br><br>
@@ -671,7 +674,7 @@ export default {
         }
         this.variable.value.size = false
       } else if (this.variable.value.type === 'continuous') {
-        this.variable.value.domain = d3.extent(this.file.value.parsed.data, d => +d[this.variable.value.id])
+        this.variable.value.domain = d3.extent(this.file.parsed.data, d => +d[this.variable.value.id])
         this.variable.value.outline = false
       }
       return true

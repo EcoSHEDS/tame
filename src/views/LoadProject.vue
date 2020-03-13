@@ -40,8 +40,8 @@ export default {
     }
   },
   mounted () {
-    this.$Amplify.API.get('tame', `/projects/${this.$route.params.id}`, {})
-      // .then(response => response.data)
+    this.$http.get(`/projects/${this.$route.params.id}`)
+      .then(response => response.data)
       .then(project => this.loadProject(project))
       .then(project => {
         this.status = 'SUCCESS'

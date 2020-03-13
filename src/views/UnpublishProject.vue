@@ -37,6 +37,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+
 export default {
   name: 'UnpublishProject',
   data () {
@@ -63,6 +64,10 @@ export default {
       this.status = 'ERROR'
       this.error = message
     },
+    getToken () {
+      return this.$Amplify.Auth.currentSession()
+        .then(session => session.getIdToken().getJwtToken())
+    },
     async confirm () {
       if (!this.project) {
         return this.setError('Unable to find project')
@@ -74,14 +79,20 @@ export default {
       this.status = 'PENDING'
       this.error = null
 
+      // get token
+      let token
       try {
-        const key = this.project.file.s3.key
+        token = await this.getToken()
+      } catch (e) {
+        return this.setError(e)
+      }
 
-        await this.$Amplify.Storage.remove(key, {
-          level: 'protected'
+      try {
+        await this.$http.delete(`/projects/${this.project.id}`, {
+          headers: {
+            Authorization: token
+          }
         })
-
-        await this.$Amplify.API.del('tame', `/projects/${this.project.id}`)
 
         this.status = 'SUCCESS'
         this.timeout = setTimeout(() => {
@@ -89,7 +100,7 @@ export default {
         }, 3000)
         this.loadProject()
       } catch (e) {
-        this.setError(e)
+        return this.setError(e)
       }
     }
   }

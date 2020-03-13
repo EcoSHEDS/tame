@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { Storage } from 'aws-amplify'
 
 import parse from '@/lib/parse'
 
@@ -35,27 +34,22 @@ export default new Vuex.Store({
     async loadProject ({ commit }, project) {
       if (!project) return commit('SET_PROJECT', null)
 
-      if (project.file.parsed) {
-        commit('SET_PROJECT', project)
-        return Promise.resolve(project)
-      }
+      // if (project.file.parsed) {
+      //   commit('SET_PROJECT', project)
+      //   return Promise.resolve(project)
+      // }
 
-      const file = await Storage.get(project.file.s3.key, {
-        level: 'protected',
-        identityId: project.file.s3.identityId
-      })
-
-      if (!file) {
+      if (!project.file) {
         return Promise.reject(new Error('Project file not found'))
       }
 
       return new Promise((resolve, reject) => {
-        parse(file)
+        parse(project.file)
           .then((results) => {
             if (results.errors.length > 0) {
               return reject(new Error(`${results.errors[0].message} (Row ${results.errors[0].row})`))
             }
-            project.file.parsed = Object.freeze(results)
+            project.dataset = Object.freeze(results)
             commit('SET_PROJECT', project)
             return resolve(project)
           })

@@ -50,9 +50,9 @@ export default {
   },
   mounted () {
     console.log('Projects:mounted')
-    this.$Amplify.API.get('tame', '/projects', {})
-      .then(data => {
-        this.projects = data
+    this.$http.get('/projects')
+      .then(response => {
+        this.projects = response.data
         this.status = 'ready'
       })
       .catch((err) => {

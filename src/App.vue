@@ -79,11 +79,11 @@
                   <v-icon small>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
-              <v-card-actions v-if="isOwner">
-                <v-btn :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
+              <v-card-actions v-if="isOwner || !project.id">
+                <v-btn v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
                 <v-spacer></v-spacer>
-                <v-btn v-if="!!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
-                <v-btn :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
+                <v-btn v-if="isOwner && !!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
+                <v-btn v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
               </v-card-actions>
             </v-card>
             <v-card width="550" class="mb-3" v-if="ready">
@@ -565,8 +565,8 @@ export default {
 
       if (!this.project) return
 
-      const { file, columns, variables } = this.project
-      const data = file.parsed.data
+      const { columns, variables, dataset } = this.project
+      const data = dataset.data
 
       // const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
       const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)

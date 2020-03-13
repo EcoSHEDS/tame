@@ -81,10 +81,8 @@
 <script>
 import { validationMixin } from 'vuelidate'
 import { helpers, required, minLength, maxLength } from 'vuelidate/lib/validators'
-
 import { mapGetters, mapActions } from 'vuex'
 import slugify from 'slugify'
-import uuidv4 from 'uuid/v4'
 
 const alphaNum = helpers.regex('alphaNum', /^[a-z0-9\\-]*$/)
 
@@ -145,7 +143,9 @@ export default {
   },
   watch: {
     'form.name' () {
-      this.form.id = slugify(this.form.name, { lower: true, remove: /[#$%^&{}*+~.,;()\\'"!:@\[\]]/g }) // eslint-disable-line
+      if (this.isNew) {
+        this.form.id = slugify(this.form.name, { lower: true, remove: /[#$%^&{}*+~.,;()\\'"!:@\[\]]/g }) // eslint-disable-line
+      }
     }
   },
   mounted () {
@@ -158,6 +158,10 @@ export default {
   },
   methods: {
     ...mapActions(['loadProject']),
+    getToken () {
+      return this.$Amplify.Auth.currentSession()
+        .then(session => session.getIdToken().getJwtToken())
+    },
     async submit () {
       this.serverError = null
       this.$v.form.$touch()
@@ -169,10 +173,11 @@ export default {
       this.$v.form.$reset()
       this.status = 'PENDING'
 
+      // check if project ID is available
       if (this.isNew) {
         try {
-          const existingProject = await this.$Amplify.API.get('tame', `/projects/${this.form.id}`, {})
-          if (existingProject) {
+          const response = await this.$http.get(`/projects/${this.form.id}`, {})
+          if (response) {
           // if (response.status === 200) {
             return this.setError(`Project with ID '${this.form.id}' already exists, please try a different ID`)
           }
@@ -183,67 +188,67 @@ export default {
         }
       }
 
-      let s3
-      let newFile = false
-      if (this.project.file.local) {
-        try {
-          const creds = await this.$Amplify.Auth.currentCredentials()
-          const identityId = creds.params.IdentityId
-          const bucket = process.env.VUE_APP_S3_BUCKET
-          const key = `${uuidv4()}.csv`
-          newFile = true
-          await this.$Amplify.Storage.put(key, this.project.file.local, {
-            level: 'protected',
-            contentType: 'text/csv'
-          })
-          s3 = {
-            url: `https://s3.amazonaws.com/${bucket}/protected/${identityId}/${key}`,
-            identityId,
-            key,
-            originalFilename: this.project.file.name
-          }
-        } catch (e) {
-          return this.setError(e)
-        }
-      } else {
-        s3 = this.project.file.s3
+      // get token
+      let token
+      try {
+        token = await this.getToken()
+      } catch (e) {
+        return this.setError(e)
       }
 
+      let project
       try {
         const newProject = {
           id: this.form.id,
           name: this.form.name,
           description: this.form.description,
           columns: this.project.columns,
-          variables: this.project.variables,
-          file: {
-            name: this.project.file.name,
-            size: this.project.file.size,
-            s3
-          },
-          userId: this.user.username
+          variables: this.project.variables
         }
 
         if (this.isNew) {
-          await this.$Amplify.API.post('tame', '/projects', {
-            body: newProject
-          }).then(project => this.loadProject(project))
+          console.log('post', newProject)
+          project = await this.$http.post('/projects', newProject, {
+            headers: {
+              Authorization: token
+            }
+          }).then(response => response.data)
         } else {
-          await this.$Amplify.API.put('tame', `/projects/${newProject.id}`, {
-            body: newProject
-          }).then(project => this.loadProject(project))
+          newProject.userId = this.project.userId
+          newProject.createdAt = this.project.createdAt
+          if (!this.project.file.local) {
+            // no change to dataset
+            newProject.file = this.project.file
+          }
+          project = await this.$http.put(`/projects/${newProject.id}`, newProject, {
+            headers: {
+              Authorization: token
+            }
+          }).then(response => response.data)
         }
-
-        this.status = 'SUCCESS'
       } catch (e) {
-        // delete new file from s3 since project did not save to database
-        if (newFile) {
-          await this.$Amplify.Storage.del(s3.key, {
-            level: 'protected'
-          })
-        }
         return this.setError(e)
       }
+
+      // upload dataset
+      if (this.project.file.local) {
+        try {
+          const formData = new FormData()
+          formData.append('dataset', this.project.file.local)
+          project = await this.$http.post(`/projects/${project.id}/dataset`, formData, {
+            headers: {
+              'Content-Type': 'mulitpart/form-data',
+              Authorization: token
+            }
+          }).then(response => response.data)
+        } catch (e) {
+          return this.setError(e)
+        }
+      }
+
+      this.status = 'SUCCESS'
+
+      this.loadProject(project)
     },
     setError (e) {
       this.status = 'ERROR'
