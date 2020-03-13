@@ -5,13 +5,16 @@ const { v4: uuidv4 } = require('uuid')
 const AWS = require('aws-sdk')
 const multer = require('multer')
 const multerS3 = require('multer-s3')
+const morgan = require('morgan')
 
 const db = require('./db')
 
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
+
 const app = express()
 
-const S3_BUCKET = 'tame-dev-storage'
+const S3_BUCKET = process.env.S3_BUCKET
+console.log(`s3 bucket: ${S3_BUCKET}`)
 
 const s3 = new AWS.S3()
 const upload = multer({
@@ -24,18 +27,18 @@ const upload = multer({
   })
 })
 
+app.use(morgan('tiny'))
 app.use(cors())
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
 
 function deleteS3Object (key) {
-  console.log('deleteFile:start', key)
+  console.log(`deleteS3Object(${key})`)
   return new Promise((resolve, reject) => {
     s3.deleteObject({
       Bucket: S3_BUCKET,
       Key: key
     }, (err, data) => {
-      console.log('deleteFile:done', err)
       if (err) return reject(err)
       resolve(data)
     })
@@ -71,7 +74,7 @@ function getProject (req, res, next) {
 function isOwner (req, res, next) {
   const { project, userId } = res.locals
   if (project.userId !== userId) {
-    return res.status(401).json({ error: 'Unauthorized, user must be project owner'})
+    return res.status(401).json({ error: 'Unauthorized, user must be project owner' })
   }
   next()
 }
@@ -111,6 +114,9 @@ app.post('/projects/:projectId/dataset', getProject, getUser, isOwner, upload.si
 
   if (!req.file) return res.status(400).json({ error: 'Missing file' })
 
+  console.log('uploaded file')
+  console.log(req.file)
+
   if (project.file) {
     try {
       await deleteS3Object(project.file.key)
@@ -133,13 +139,24 @@ app.post('/projects/:projectId/dataset', getProject, getUser, isOwner, upload.si
     .catch(next)
 })
 
-app.delete('/projects/:projectId', getProject, getUser, (_, res, next) => {
+app.delete('/projects/:projectId', getProject, getUser, isOwner, async (_, res, next) => {
+  const project = res.locals.project
+
+  if (project.file) {
+    try {
+      await deleteS3Object(project.file.key)
+    } catch (e) {
+      return res.status(500).json({ error: e.message || e.toString() })
+    }
+  }
+
   return db.deleteProject(res.locals.project)
     .then(() => res.json())
-    .catch(e => next(e))
+    .catch(next)
 })
 
 app.use((req, res, next) => {
+  console.log('not found')
   return res.status(404).json({
     error: 'Not Found'
   })

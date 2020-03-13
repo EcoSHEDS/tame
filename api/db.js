@@ -1,13 +1,14 @@
 const AWS = require('aws-sdk')
 
+const REGION = process.env.REGION
+const TABLE = process.env.TABLE_NAME
+
 const dynamodb = new AWS.DynamoDB({
-  region: process.env.REGION || 'us-east-1',
+  region: REGION,
   apiVersion: '2012-08-10'
 })
 
-const TABLE = process.env.TABLE_NAME
-
-console.log(`connecting to table: ${TABLE}`)
+console.log(`database table: ${TABLE} (${REGION})`)
 
 exports.getProjects = () => {
   return dynamodb.scan({
@@ -19,6 +20,7 @@ exports.getProjects = () => {
 }
 
 exports.getProjectById = (id) => {
+  console.log(`getProjectById(${id})`)
   return dynamodb.query({
     TableName: TABLE,
     KeyConditionExpression: 'id =:id',
@@ -31,9 +33,12 @@ exports.getProjectById = (id) => {
 }
 
 exports.createProject = (project) => {
+  console.log(`createProject(${project.id})`)
+
   const now = (new Date()).toISOString()
   project.createdAt = now
   project.updatedAt = now
+
   return exports.getProjectById(project.id)
     .then((existingProject) => {
       if (existingProject) {
@@ -48,8 +53,10 @@ exports.createProject = (project) => {
 }
 
 exports.updateProject = (project) => {
-  const now = (new Date()).toISOString()
-  project.updatedAt = now
+  console.log(`updateProject(${project.id})`)
+
+  project.updatedAt = (new Date()).toISOString()
+
   return dynamodb.putItem({
     TableName: TABLE,
     Item: AWS.DynamoDB.Converter.marshall(project)
@@ -58,6 +65,8 @@ exports.updateProject = (project) => {
 }
 
 exports.deleteProject = (project) => {
+  console.log(`deleteProject(${project.id})`)
+
   return dynamodb.deleteItem({
     TableName: TABLE,
     Key: {
