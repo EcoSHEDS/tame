@@ -2,6 +2,6 @@ pre, code {
   white-space: normal;
 }
 
-/* .v-application--wrap {
+.v-application--wrap {
   min-height: calc(100vh - 139px) !important;
-} */
+}

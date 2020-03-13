@@ -16,11 +16,7 @@
     <v-card-text v-else>
       <p class="body-1">
         Publishing a project will save the dataset to the TAME web server and make it publicly accessible to any user.
-      </p>
-      <p class="body-1">
         Once it is published, you can continue to make changes to the project settings or upload new versions of the dataset.
-      </p>
-      <p class="body-1">
         You can also un-publish the project at any time to remove it from the server and make it no longer accessible to other users.
       </p>
 
@@ -34,6 +30,7 @@
         label="Project Name"
         v-model="form.name"
         counter
+        class="my-4"
         :error-messages="nameErrors">
       </v-text-field>
 
@@ -43,7 +40,8 @@
         counter
         :disabled="!isNew"
         :error-messages="idErrors"
-        hint="Must contain only lowercase letters, numbers, and dashes. Will be used to assign a direct URL to this project and cannot be changed."
+        class="my-4"
+        hint="Defines the URL for this project and cannot be changed. Must contain only lowercase letters, numbers, and dashes."
         persistent-hint>
       </v-text-field>
 
@@ -53,7 +51,8 @@
         rows="3"
         counter
         :error-messages="descriptionErrors"
-        hint="Briefly describe what this dataset represents (i.e. the who, what, where, why, when and how)."
+        class="my-4"
+        hint="Briefly describe your dataset (who, what, where, why, when and how)."
         persistent-hint>
       </v-textarea>
 

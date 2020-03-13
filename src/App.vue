@@ -390,7 +390,8 @@ export default {
       ]
     },
     debug: {
-      visible: process.env.NODE_ENV === 'development',
+      // visible: process.env.NODE_ENV === 'development',
+      visible: false,
       collapse: false
     },
     counts: {

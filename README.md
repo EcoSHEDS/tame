@@ -68,7 +68,13 @@ yarn deploy
 npm run deploy
 ```
 
-# Cloud Formation Template
+### Deploy to S3
+
+```sh
+aws s3 sync dist/ s3://<BUCKET_NAME>/<BASE_URL> --delete
+```
+
+## Cloud Formation Template
 
 Create storage bucket (CHS-approval required).
 
@@ -100,15 +106,13 @@ Create auth user pool.
 aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/auth.yml --parameters file://aws/params/auth.json
 ```
 
-Copy database ARN to `aws/params/lambda.json`.
-
 Run `package` command to upload lambda source code to S3 deployment bucket and create `aws/lambda.yml` template.
 
 ```
 aws cloudformation package --template aws/lambda-local.yml --s3-bucket conte-tame-lambda-dev --s3-prefix lambda --output-template aws/lambda.yml
 ```
 
-For CHS, copy the `PermissionsBoundary` for the `LambdaExecutionRole` from `aws/lambda-local.yml` to `aws/lambda.yml`.
+For CHS, uncomment `PermissionsBoundary` for the `LambdaExecutionRole` in `aws/lambda.yml`.
 
 Create lambda.
 
@@ -116,7 +120,7 @@ Create lambda.
 aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/lambda.json --capabilities CAPABILITY_NAMED_IAM
 ```
 
-Copy lambda function ARN to `aws/params/api.json`.
+Copy User Pool ID to `aws/params/api.json`.
 
 Create API
 

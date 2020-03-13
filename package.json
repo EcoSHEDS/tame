@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "stage": "vue-cli-service build --mode staging",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame --delete",
