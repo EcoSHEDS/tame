@@ -7,8 +7,8 @@
       :zoom="zoom"
       :options="{ ...options, zoomControl: false }"
       @ready="$emit('ready', map)">
-      <l-control-zoom position="topright"></l-control-zoom>
-      <l-control-layers position="topright"></l-control-layers>
+      <l-control-zoom position="topleft"></l-control-zoom>
+      <l-control-layers position="topleft"></l-control-layers>
       <l-tile-layer
         v-for="tile in basemaps"
         :key="tile.name"
@@ -135,13 +135,8 @@ export default {
   margin-left: 20px;
 }
 
-.leaflet-control-container > .leaflet-top.leaflet-right {
-  right: 310px;
-  top: 2px;
+.leaflet-control-container > .leaflet-top.leaflet-left {
+  left: 500px;
+  top: 0px;
 }
-
-/* circle {
-  cursor: pointer !important;
-  pointer-events: visible !important;
-} */
 </style>

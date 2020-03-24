@@ -13,28 +13,28 @@
       <v-spacer></v-spacer>
       <v-tooltip bottom open-delay="300">
         <template v-slot:activator="{ on }">
-          <v-btn icon small @click="resetFilter" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+          <v-btn small icon @click="resetFilter" v-on="on">
             <v-icon small>mdi-refresh</v-icon>
           </v-btn>
         </template>
-        <span>Reset Filter</span>
+        Reset Filter
       </v-tooltip>
       <v-tooltip bottom open-delay="300">
         <template v-slot:activator="{ on }">
-          <v-btn icon small @click="hide = !hide" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
-            <v-icon small v-if="hide">mdi-menu-up</v-icon>
+          <v-btn small icon @click="hide = !hide" v-on="on">
+            <v-icon small v-if="!hide">mdi-menu-up</v-icon>
             <v-icon small v-else>mdi-menu-down</v-icon>
           </v-btn>
         </template>
-        <span>{{ hide ? 'Show' : 'Hide' }} Filter</span>
+        <span>{{ hide ? 'Show' : 'Minimize' }} Filter</span>
       </v-tooltip>
       <v-tooltip bottom open-delay="300">
         <template v-slot:activator="{ on }">
-          <v-btn icon small @click="close" height="24" width="24" class="grey darken-1 elevation-2 mr-0 ml-2" dark v-on="on">
+          <v-btn small icon @click="close" v-on="on">
             <v-icon small>mdi-close</v-icon>
           </v-btn>
         </template>
-        <span>Remove Filter</span>
+        <span>Close Filter</span>
       </v-tooltip>
     </v-toolbar>
     <v-card-text v-show="!hide">
@@ -70,23 +70,28 @@ export default {
   },
   mounted () {
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
-    const margins = { top: 0, right: 20, bottom: 16, left: 30 }
     const variable = this.variable
 
     if (variable.type === 'continuous') {
-      const interval = (variable.domain[1] - variable.domain[0]) / 30
+      const margins = { top: 0, right: 10, bottom: 16, left: 30 }
       const dim = xf.dimension(d => d[variable.id])
-      const group = dim.group(d => Math.floor(d / interval) * interval).reduceCount()
+      const l = this.variable.domain[0]
+      const u = this.variable.domain[1]
+      const n = 30
+      const interval = (u - l) / n
+      const group = dim.group(d => l + Math.floor(n * (d - l) / (u - l)) * interval).reduceCount()
 
       this.chart = dc.barChart(el)
-        .width(486)
+        .width(396)
         .height(100)
         .margins(margins)
         .dimension(dim)
         .group(group)
         .elasticY(true)
+        .colors('#5095c3')
         .transitionDelay(0)
         .x(d3.scaleLinear().domain(variable.domain))
+        .yAxisLabel('# Obs')
         .on('filtered', () => {
           // console.log(`tame-filter:on(filtered):${variable.id}`)
           const filter = this.chart.dimension().currentFilter()
@@ -99,8 +104,9 @@ export default {
           evt.$emit('filter')
         })
       this.chart.xUnits(() => 30)
-      this.chart.yAxis().ticks(4)
+      this.chart.yAxis().ticks(4, 's')
     } else if (variable.type === 'discrete') {
+      const margins = { top: 0, right: 10, bottom: 35, left: 16 }
       const dim = xf.dimension(d => d[variable.id])
       const group = dim.group().reduceCount()
       const count = variable.domain.length
@@ -109,7 +115,7 @@ export default {
       const height = margins.bottom + barHeight * count + gap * (count + 1)
 
       this.chart = dc.rowChart(el)
-        .width(486)
+        .width(396)
         .height(height)
         .margins(margins)
         .dimension(dim)
@@ -119,6 +125,7 @@ export default {
         .transitionDelay(0)
         .transitionDuration(0)
         .gap(gap)
+        .colors('#5095c3')
         .fixedBarHeight(20)
         .ordering(d => variable.domain.findIndex(v => v === d.key))
         .label(function (d) {
@@ -131,20 +138,21 @@ export default {
         .on('renderlet', (chart) => {
           chart.selectAll('g.row')
             .each(function () {
-              const barWidth = +d3.select(this).select('rect').attr('width')
-              const textEl = d3.select(this).select('text')
-              const textWidth = textEl.node().getBBox().width
-              if (barWidth < (10 + textWidth)) {
-                textEl
-                  .style('fill', 'black')
-                  .attr('transform', `translate(${barWidth - 5},0)`)
-              } else {
-                textEl
-                  .style('fill', null)
+              const label = chart.select('.axis').select('text.x-axis-label')
+              if (label.size() === 0) {
+                chart.select('.axis')
+                  .append('text')
+                  .attr('class', 'x-axis-label')
+                  .attr('text-anchor', 'middle')
+                  .attr('x', chart.width() * 0.44)
+                  .attr('y', 30)
+                  .text('# Observations')
               }
             })
         })
+      this.chart.xAxis().ticks(4, 's')
     } else if (variable.type === 'datetime') {
+      const margins = { top: 0, right: 10, bottom: 16, left: 30 }
       const dim = xf.dimension(d => d3.utcDay(d[this.project.columns.datetime]))
       const group = dim.group().reduceCount()
       const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d[this.project.columns.datetime])))
@@ -152,14 +160,16 @@ export default {
       this.filterRange = timeExtent
 
       this.chart = dc.barChart(el)
-        .width(486)
+        .width(396)
         .height(100)
         .margins(margins)
         .dimension(dim)
         .group(group)
         .elasticY(true)
+        .colors('#5095c3')
         .x(d3.scaleUtc().domain(timeExtent))
         .xUnits(d3.utcDays)
+        .yAxisLabel('# Obs')
         .round(d3.utcDay.round)
         .on('filtered', () => {
           const filter = this.chart.dimension().currentFilter()
@@ -171,8 +181,9 @@ export default {
           evt.$emit('map:render:filter')
           evt.$emit('filter')
         })
-      this.chart.xAxis().ticks(10).tickFormat(d3.utcFormat('%m/%d'))
-      this.chart.yAxis().ticks(4)
+      // this.chart.xAxis().ticks(10).tickFormat(d3.utcFormat('%m/%d'))
+      this.chart.xAxis().ticks(4)
+      this.chart.yAxis().ticks(4, 's')
     }
 
     this.chart.render()
@@ -202,10 +213,27 @@ export default {
 </script>
 
 <style>
+.dc-chart text.y-axis-label.y-label {
+  fill: hsl(0, 0%, 20%);
+  font-size: 0.8em;
+  font-family: sans-serif;
+}
 .dc-chart rect.bar {
   fill-opacity: 0.8;
 }
 .dc-chart g.axis > g.tick:not(:nth-child(2)) > line.grid-line {
   display: none;
+}
+.dc-chart g.row rect {
+  fill-opacity: 1;
+}
+.dc-chart g.row text {
+  fill: hsl(0, 0%, 10%) !important;
+  font-weight: 400;
+}
+.dc-chart text.x-axis-label {
+  fill: hsl(0, 0%, 20%);
+  font-size: 1em;
+  font-family: sans-serif;
 }
 </style>

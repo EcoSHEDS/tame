@@ -1,12 +1,12 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Welcome to the Tagged Animal Movement Explorer</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text class="body-1">
+    <v-card-text class="body-1 py-8">
       <p>
         The Tagged Animal Movement Explorer (TAME) is an interactive data visualization tool for exploring
         spatial and temporal patterns of animal movements.
@@ -24,17 +24,17 @@
       <p>
         Funding provided by the <a href="https://www.usgs.gov/centers/cdi" target="_blank">USGS Community for Data Integration (CDI)</a>
       </p>
-      <v-alert type="warning" outlined prominent class="mt-8">
-        <span class="title">TAME Is Under Active Development (Beta Version)</span><br><br>
+      <v-alert type="error" outlined prominent class="mt-8 mb-0 py-2" color="primary">
+        <div class="title">TAME is under active development (Beta Version)</div>
         All user accounts and published projects are temporary and will need to be recreated when the final version is released.
       </v-alert>
     </v-card-text>
 
     <v-divider></v-divider>
 
-    <v-card-actions class="mx-4 pb-4">
+    <v-card-actions class="mx-4">
       <v-spacer></v-spacer>
-      <v-btn to="/">close</v-btn>
+      <v-btn to="/" text>close</v-btn>
     </v-card-actions>
   </v-card>
 </template>

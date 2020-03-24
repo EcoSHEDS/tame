@@ -1,29 +1,17 @@
 <template>
   <v-app>
-    <v-app-bar app clipped-left dark absolute>
-      <v-toolbar-title class="headline">
+    <!-- USGS header -->
+    <UsgsHeader v-if="usgs"></UsgsHeader>
+
+    <TameAppBar v-if="$vuetify.breakpoint.mdAndUp"></TameAppBar>
+    <v-app-bar app dense clipped-left dark absolute :style="{'margin-top': usgs ? '72px' : '0'}" v-else>
+      <v-toolbar-title class="subheading">
         <span>Tagged Animal Movement Explorer (TAME)</span>
         <span class="text-uppercase overline ml-3">Beta</span>
       </v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn text :to="{ name: 'welcome' }" class="mx-4">
-        Welcome
-      </v-btn>
-      <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
-        My Account
-      </v-btn>
-      <v-btn text class="mx-4" v-if="user" @click="logout">
-        Log Out
-      </v-btn>
-      <v-btn text :to="{ name: 'login' }" class="mx-4" v-if="!user">
-        Log In
-      </v-btn>
-      <v-btn text :to="{ name: 'signup' }" class="mx-4" dark outlined v-if="!user">
-        Sign Up
-      </v-btn>
     </v-app-bar>
 
-    <v-content class="grey lighten-3">
+    <v-content class="grey lighten-3" v-if="$vuetify.breakpoint.mdAndUp">
       <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
         <TameMapLayer
           v-if="ready"
@@ -36,11 +24,11 @@
           @click="selectId">
         </TameMapLayer>
       </TameMap>
-      <v-container fill-height fluid>
-        <v-layout row>
-          <v-flex grow-shrink-0 class="ml-3">
-            <v-card class="mb-3" style="background:transparent" elevation="0" width="550">
-              <v-card-actions class="pl-0 pb-0">
+      <v-container fill-height fluid class="align-stretch pa-2">
+        <v-row no-gutters>
+          <v-col>
+            <v-card width="475" class="mb-3" style="background:transparent" elevation="0">
+              <v-card-actions class="pa-0 pr-2">
                 <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'newProject' }">
                   <v-icon left small>mdi-pencil</v-icon>New Project
                 </v-btn>
@@ -49,7 +37,7 @@
                 </v-btn>
               </v-card-actions>
             </v-card>
-            <v-card width="550" class="mb-3" v-if="ready">
+            <v-card width="475" class="mb-3" v-if="ready">
               <v-toolbar dark dense color="primary">
                 <h4>
                   <span v-if="ready" class="subtitle-1 font-weight-bold">
@@ -75,18 +63,18 @@
                   </span>
                 </h4>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="closeProject" class="grey lighten-2 elevation-2 mr-0" light>
+                <v-btn small icon @click="closeProject">
                   <v-icon small>mdi-close</v-icon>
                 </v-btn>
               </v-toolbar>
               <v-card-actions v-if="isOwner || !project.id">
-                <v-btn v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
+                <v-btn small rounded v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
                 <v-spacer></v-spacer>
-                <v-btn v-if="isOwner && !!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
-                <v-btn v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
+                <v-btn small rounded v-if="isOwner && !!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
+                <v-btn small rounded v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
               </v-card-actions>
             </v-card>
-            <v-card width="550" class="mb-3" v-if="ready">
+            <v-card width="475" class="mb-3" v-if="ready">
               <v-tabs
                 v-model="tabs.active"
                 background-color="primary"
@@ -102,16 +90,15 @@
                   <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
                 </v-tab>
                 <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="tabs.collapse = !tabs.collapse" class="grey lighten-2 elevation-2 mt-3 mr-4" light>
-                  <v-icon v-if="!tabs.collapse">mdi-menu-up</v-icon>
-                  <v-icon v-else>mdi-menu-down</v-icon>
+                <v-btn icon small @click="tabs.collapse = !tabs.collapse" class="align-self-center mr-1">
+                  <v-icon small v-if="!tabs.collapse">mdi-menu-up</v-icon>
+                  <v-icon small v-else>mdi-menu-down</v-icon>
                 </v-btn>
+
+                <!-- Map Variables -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card v-show="!tabs.collapse">
+                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
-                      <div class="subtitle-2">
-                        Variable Selections
-                      </div>
                       <v-autocomplete
                         v-model="color.selected"
                         label="Color By"
@@ -119,6 +106,8 @@
                         item-text="name"
                         return-object
                         clearable
+                        outlined
+                        hide-details
                         @change="selectOption"
                         :items="color.options">
                       </v-autocomplete>
@@ -129,6 +118,9 @@
                         item-text="name"
                         return-object
                         clearable
+                        outlined
+                        hide-details
+                        class="my-4"
                         @change="selectOption"
                         :items="size.options">
                       </v-autocomplete>
@@ -139,6 +131,8 @@
                         item-text="name"
                         return-object
                         clearable
+                        outlined
+                        hide-details
                         @change="selectOption"
                         :items="outline.options">
                       </v-autocomplete>
@@ -174,33 +168,61 @@
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
+
+                <!-- Selection -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
-                      <h3>Selected Individuals</h3>
+                      <div class="d-flex">
+                        <div class="subtitle-1 align-self-center">
+                          # Selected Individuals: <span class="black--text">{{ selected.ids.length }}</span>
+                        </div>
+                        <v-spacer></v-spacer>
+                        <v-tooltip right open-delay="100" max-width="400">
+                          <template v-slot:activator="{ on }">
+                            <v-btn small icon v-on="on" class="align-self-center">
+                              <v-icon>mdi-alert-circle</v-icon>
+                            </v-btn>
+                          </template>
+                          Click a point on the map to select an individual (unique tag ID),
+                          which will highlight all locations that individual was observed.
+                          Click on a selected individual to unselect it.
+                          More than one individual can be selected at a time.
+                        </v-tooltip>
+                      </div>
 
-                      <div class="my-3"># Selected Individuals: <span class="black--text">{{ selected.ids.length }}</span></div>
-
-                      <div class="my-4" >
-                        <v-btn @click="unselectAll" rounded :disabled="selected.ids.length === 0">
+                      <div class="my-4">
+                        <v-btn small @click="unselectAll" rounded :disabled="selected.ids.length === 0">
                           <v-icon small left>mdi-delete</v-icon> Unselect All
                         </v-btn>
                       </div>
 
-                      <div class="subheading my-4">
-                        <v-icon small>mdi-alert-circle-outline</v-icon>
-                        Click a point on the map to select an individual (unique tag ID), which will highlight all locations that individual was observed.
-                        Click on a selected individual to unselect it.
-                        More than one individual can be selected at a time.
-                      </div>
-
                       <v-divider class="my-3"></v-divider>
 
-                      <h3>Select By Area</h3>
+                      <div class="d-flex">
+                        <div class="subtitle-1 align-self-center">
+                          # Selection Areas: <span class="black--text">{{ draw.count }}</span>
+                        </div>
+                        <v-spacer></v-spacer>
+                        <v-tooltip right open-delay="100" max-width="400">
+                          <template v-slot:activator="{ on }">
+                            <v-btn icon small v-on="on" class="align-self-center">
+                              <v-icon>mdi-alert-circle</v-icon>
+                            </v-btn>
+                          </template>
+                          Select all individuals that were observed in a specific area by clicking <strong>Draw New Area</strong>
+                          and then click-and-drag to draw the target area on the map.
 
-                      <div class="my-3"># Selection Areas: <span class="black--text">{{ draw.count }}</span></div>
+                          Add more areas to select individuals that passed through multiple areas.
 
-                      <div class="my-4">
+                          <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals
+                          that passed through ANY of the areas.
+
+                          These selections are not affected by the crossfilters.
+                        </v-tooltip>
+                      </div>
+
+                      <div class="my-3">
                         <v-radio-group v-model="draw.operation" row hide-details label="Operation:" :disabled="draw.enabled">
                           <v-radio value="intersection">
                             <template v-slot:label>
@@ -216,30 +238,23 @@
                       </div>
 
                       <div class="my-4">
-                        <v-btn @click="toggleDraw" rounded v-if="!draw.enabled">
+                        <v-btn small rounded @click="toggleDraw" v-if="!draw.enabled">
                           <v-icon small left>mdi-selection-drag</v-icon> Draw New Area
                         </v-btn>
-                        <v-btn @click="toggleDraw" rounded v-else>
+                        <v-btn small rounded @click="toggleDraw" v-else>
                           <v-icon small left>mdi-close</v-icon> Cancel
                         </v-btn>
-                        <v-btn @click="clearDraw" rounded class="ml-3" :disabled="draw.count === 0">
+                        <v-btn small rounded @click="clearDraw" class="ml-3" :disabled="draw.count === 0">
                           <v-icon small left>mdi-delete</v-icon> Clear All
                         </v-btn>
-                      </div>
-
-                      <div class="subheading my-3">
-                        <v-icon small>mdi-alert-circle-outline</v-icon>
-                        Select all individuals that were observed in a specific area by clicking <strong>Draw New Area</strong>
-                        and then click-and-drag to draw the target area on the map.
-                        Add more areas to select individuals that passed through multiple areas.
-                        <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals that passed through ANY of the areas.
-                        These selections are not affected by the crossfilters.
                       </div>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
+
+                <!-- Filter -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 210" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <v-autocomplete
                         :items="filters.options"
@@ -247,14 +262,18 @@
                         multiple
                         dense
                         return-object
+                        outlined
                         item-value="id"
                         item-text="name"
                         chips
+                        small-chips
                         deletable-chips
                         clearable
+                        hide-details
+                        class="mb-4"
                         label="Select filter variable(s)...">
                       </v-autocomplete>
-                      <p v-if="filters.selected.length > 0" class="subheading">
+                      <p v-if="filters.selected.length === 0" class="subheading mt-2">
                         <v-icon small>mdi-alert-circle-outline</v-icon>
                         Use the dropdown above to add/remove filters.
                         Each filter shows a histogram of the observations.
@@ -267,58 +286,45 @@
                 </v-tab-item>
               </v-tabs>
             </v-card>
-          </v-flex>
+          </v-col>
           <v-spacer></v-spacer>
-          <v-flex grow-shrink-0 class="mr-0">
-            <v-card width="250" :max-height="$vuetify.breakpoint.height - 100 - 120 * debug.visible" style="overflow-y: auto" class="mb-3" v-if="ready">
-              <v-toolbar dense dark color="primary">
-                <span class="subtitle-1 font-weight-bold">Legend</span>
-                <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="legend.collapse = !legend.collapse" class="grey lighten-2 elevation-2 mr-0" light>
-                  <v-icon v-if="!legend.collapse">mdi-menu-up</v-icon>
-                  <v-icon v-else>mdi-menu-down</v-icon>
-                </v-btn>
-              </v-toolbar>
-              <v-card-text v-show="!legend.collapse">
-                <div class="grey--text text--darken-2">
-                  <h4>Filter Summary</h4>
-                  <div class="pl-2">
-                    Records:
-                    {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
-                    <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
-                  </div>
-                  <div class="pl-2">
-                    Tags:
-                    {{ counts.tags.filtered.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
-                    <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100).toFixed(0) }}%)</span>
-                  </div>
-                </div>
-                <v-divider class="my-2"></v-divider>
-                <TameLegendColor :variable="color.selected"></TameLegendColor>
-                <TameLegendSize :variable="size.selected"></TameLegendSize>
-                <TameLegendOutline :variable="outline.selected"></TameLegendOutline>
-              </v-card-text>
-            </v-card>
-            <v-card class="mb-3" v-if="debug.visible">
-              <v-toolbar dense dark color="red darken-4">
-                <strong>Debug</strong>
-                <v-spacer></v-spacer>
-                <v-btn height="24" width="24" icon @click="debug.collapse = !debug.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-                  <v-icon v-if="!debug.collapse">mdi-menu-up</v-icon>
-                  <v-icon v-else>mdi-menu-down</v-icon>
-                </v-btn>
-              </v-toolbar>
-              <v-card-text v-if="!debug.collapse" style="font-family:monospace">
-                selected.ids: {{ selected.ids.length }}
-              </v-card-text>
-            </v-card>
-          </v-flex>
-        </v-layout>
+          <v-col>
+            <TameLegend
+              :counts="counts"
+              :color-variable="color.selected"
+              :size-variable="size.selected"
+              :outline-variable="outline.selected"
+              v-if="ready"></TameLegend>
+          </v-col>
+        </v-row>
       </v-container>
-      <v-dialog v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')" class="dialog">
+      <v-dialog  scrollable v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
         <router-view></router-view>
       </v-dialog>
     </v-content>
+    <v-content v-else>
+      <v-alert type="error" class="ma-8" outlined prominent color="grey darken-1">
+        <div class="title">TAME is not designed for mobile devices.</div>
+        Please use a laptop or desktop with a larger screen size (>960px wide).
+      </v-alert>
+    </v-content>
+
+    <!-- <v-card class="mb-3" v-if="debug.visible">
+      <v-toolbar dense dark color="red darken-4">
+        <strong>Debug</strong>
+        <v-spacer></v-spacer>
+        <v-btn height="24" width="24" icon @click="debug.collapse = !debug.collapse" class="grey darken-1 elevation-2 mr-0" dark>
+          <v-icon v-if="!debug.collapse">mdi-menu-up</v-icon>
+          <v-icon v-else>mdi-menu-down</v-icon>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text v-if="!debug.collapse" style="font-family:monospace">
+        selected.ids: {{ selected.ids.length }}
+      </v-card-text>
+    </v-card> -->
+
+    <!-- USGS footer -->
+    <UsgsFooter v-if="usgs"></UsgsFooter>
   </v-app>
 </template>
 
@@ -326,27 +332,33 @@
 import * as d3 from 'd3'
 import L from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
-import { AmplifyEventBus } from 'aws-amplify-vue'
+// import { AmplifyEventBus } from 'aws-amplify-vue'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
 
+import TameAppBar from '@/components/TameAppBar'
+
 import TameMap from '@/components/TameMap'
 import TameMapLayer from '@/components/TameMapLayer'
+
 import TameFilter from '@/components/TameFilter'
-import TameLegendColor from '@/components/TameLegendColor'
-import TameLegendSize from '@/components/TameLegendSize'
-import TameLegendOutline from '@/components/TameLegendOutline'
+
+import TameLegend from '@/components/TameLegend'
+
+import UsgsHeader from '@/components/usgs/UsgsHeader'
+import UsgsFooter from '@/components/usgs/UsgsFooter'
 
 export default {
   name: 'App',
   components: {
+    UsgsHeader,
+    UsgsFooter,
+    TameAppBar,
     TameMap,
     TameMapLayer,
     TameFilter,
-    TameLegendColor,
-    TameLegendSize,
-    TameLegendOutline
+    TameLegend
   },
   data: () => ({
     showDialog: true,
@@ -354,12 +366,6 @@ export default {
     ready: false,
     error: null,
     dataset: [],
-    dialogs: {
-      edit: false
-    },
-    legend: {
-      collapse: false
-    },
     tabs: {
       active: 0,
       collapse: false
@@ -437,7 +443,7 @@ export default {
     }
   }),
   computed: {
-    ...mapGetters(['user', 'project', 'isOwner']),
+    ...mapGetters(['user', 'project', 'isOwner', 'usgs']),
     colorScale () {
       if (!this.project) return null
       let valueScale, colorScale, scale
@@ -506,16 +512,16 @@ export default {
         this.$router.push('/')
       }, 200)
     },
-    logout () {
-      this.$Amplify.Auth.signOut()
-        .then(() => {
-          return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
-        })
-        .catch((e) => {
-          console.log(e)
-          alert('Error occurred trying to log out')
-        })
-    },
+    // logout () {
+    //   this.$Amplify.Auth.signOut()
+    //     .then(() => {
+    //       return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
+    //     })
+    //     .catch((e) => {
+    //       console.log(e)
+    //       alert('Error occurred trying to log out')
+    //     })
+    // },
     selectOption () {
       console.log('selectOption')
       evt.$emit('map:render')
@@ -736,7 +742,7 @@ export default {
       return ids
     },
     selectByAreasUnion (allRows, layer) {
-      let rows = this.pointsInArea(allRows, layer)
+      const rows = this.pointsInArea(allRows, layer)
       return [...new Set(rows.map(d => d[this.project.columns.id]))]
     },
     pointsInArea (points, feature) {
@@ -803,10 +809,14 @@ export default {
 </script>
 
 <style>
-.v-dialog:not(.v-dialog--fullscreen) {
+/* .v-dialog:not(.v-dialog--fullscreen) {
   position: absolute;
-  top: 65px;
-  /* margin-top: 20px !important; */
-  max-height: calc(100vh - 100px) !important;
+  top: 0;
+} */
+.v-dialog__content.v-dialog__content--active {
+  align-items: start;
+}
+.v-dialog--scrollable > .v-card > .v-stepper {
+  overflow-y: auto;
 }
 </style>

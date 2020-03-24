@@ -7,7 +7,7 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-stepper v-model="step" vertical class="mt-0 mb-4" style="border-radius:0">
+    <v-stepper v-model="step" vertical class="elevation-0 pb-4">
       <v-stepper-step :complete="file.status === 'SUCCESS'" step="1">Load dataset file</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
@@ -26,12 +26,11 @@
               @change="loadLocalFile">
             </v-file-input>
             <div v-if="file.status === 'SUCCESS'">
-              <v-alert type="success" outlined :value="!!file.value.local">
-                <strong>Local file ({{file.value.name}}) has been successfully loaded.</strong>
+              <v-alert type="success" dense outlined :value="!!file.value.local">
+                File has been successfully loaded from your computer.
               </v-alert>
-              <v-alert type="info" outlined :value="!file.value.local">
-                <strong>Remote file ({{file.value.name}}) has been successfully loaded from the TAME server.</strong><br><br>
-                To update the dataset, select a new file from your local computer.
+              <v-alert type="info" dense outlined :value="!file.value.local">
+                To update the dataset, select a new file from your computer.
               </v-alert>
               <div class="subtitle-1 font-weight-bold">
                 Current File
@@ -47,7 +46,7 @@
             </v-alert>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="nextFile" class="ml-2" :disabled="file.status !== 'SUCCESS'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="nextFile" class="ml-2 pl-4" :disabled="file.status !== 'SUCCESS'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -130,8 +129,8 @@
             </pre>
           </v-card-text> -->
           <v-card-actions>
-            <v-btn color="default" @click="prevColumns" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="nextColumns" class="mx-4 pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="default" @click="prevColumns" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="nextColumns" class="pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -140,9 +139,6 @@
       <v-stepper-content step="3">
         <v-card>
           <v-card-text class="py-0" v-if="variables.value.length > 0">
-            <p>
-              Add additional variables to the dataset from the remaining columns.
-            </p>
             <p>
               For each additional variable, please provide a descriptive label (default is to use the column name),
               select the variable type (continuous or discrete), and specify the types of how this variable can be used in the application
@@ -242,26 +238,27 @@
             </v-alert>
           </v-card-text>
           <v-card-text v-else>
-            <v-alert type="success" outlined>
-              <strong>All done!</strong><br><br>
+            <v-alert type="success" outlined prominent>
+              <div class="title">All done!</div>
               Please click the Finish button to apply these changes.
             </v-alert>
-            <v-alert type="warning" outlined>
-              <strong>Changes will NOT automatically be saved to server.</strong><br><br>
+            <v-alert type="warning" outlined prominent>
+              <div class="title">Changes will NOT automatically be saved to server.</div>
               To save these changes to the TAME server and make them available to other users, you must re-publish the project to the server by clicking the <strong>Publish</strong> button.
             </v-alert>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="default" @click="step -= 1" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="default" @click="step -= 1" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
             <v-btn color="primary" @click="submit" :loading="finish.status === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
     </v-stepper>
 
-    <v-card-actions class="mx-4 pb-4">
+    <v-divider></v-divider>
+    <v-card-actions class="mx-4">
       <v-spacer></v-spacer>
-      <v-btn to="/">cancel</v-btn>
+      <v-btn to="/" text>close</v-btn>
     </v-card-actions>
   </v-card>
 </template>

@@ -1,28 +1,33 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Request Password Reset</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
-    <v-card-text>
+
+    <v-card-text class="pt-8">
       <v-form @submit.prevent="submit">
         <v-text-field
           v-model="email"
           :error-messages="emailErrors"
           label="Email Address"
           required
-          @input="$v.email.$touch()"
-          @blur="$v.email.$touch()"
+          hint="Enter your email address and click Submit to request a password reset."
+          persistent-hint
         ></v-text-field>
+
+        <v-alert type="success" :value="requestSent" outlined prominent class="mt-4">
+          <div class="title">Request submitted</div>
+          Check your email for the verification code, and then set a new password.
+        </v-alert>
+
         <v-text-field
           v-if="requestSent"
           v-model="code"
           :error-messages="codeErrors"
           label="Verification Code"
           required
-          @input="$v.code.$touch()"
-          @blur="$v.code.$touch()"
         ></v-text-field>
         <v-text-field
           v-if="requestSent"
@@ -31,8 +36,6 @@
           label="Password"
           required
           type="password"
-          @input="$v.password.$touch()"
-          @blur="$v.password.$touch()"
         ></v-text-field>
         <v-text-field
           v-if="requestSent"
@@ -41,34 +44,38 @@
           label="Confirm Password"
           required
           type="password"
-          @input="$v.repeatPassword.$touch()"
-          @blur="$v.repeatPassword.$touch()"
         ></v-text-field>
+        <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" class="mt-8">
+      <v-alert type="error" :value="!!serverError" outlined prominent class="mt-4">
+        <div class="title">Server Error</div>
         {{serverError}}
       </v-alert>
 
-      <v-alert type="info" outlined :value="requestSent" class="mt-8">
-        Request submitted, check your email for the verification code and set a new password.
+      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined prominent class="mt-4 mb-0">
+        <div class="title">Password has been reset</div>
+        You will be automatically transfered to the <router-link :to="{ name: 'login' }">Login screen</router-link>
+         in {{ count }} seconds...
       </v-alert>
-
-      Status: {{ submitStatus }}
     </v-card-text>
-    <v-card-actions class="mx-4 pb-4">
+
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
       <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-      <v-btn @click="clear">clear</v-btn>
+      <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
-      <v-btn :to="{ name: 'login' }">cancel</v-btn>
+      <v-btn text :to="{ name: 'login' }">cancel</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script>
 import { validationMixin } from 'vuelidate'
-import { required, minLength, email, sameAs } from 'vuelidate/lib/validators'
-import { AmplifyEventBus } from 'aws-amplify-vue'
+import { required, minLength, maxLength, email, sameAs } from 'vuelidate/lib/validators'
+
+import { passwordStrength } from '@/lib/validators'
 
 export default {
   name: 'ResetPassword',
@@ -76,7 +83,7 @@ export default {
   validations: {
     email: { required, email },
     code: { required },
-    password: { required, minLength: minLength(6) },
+    password: { required, minLength: minLength(8), maxLength: maxLength(32), passwordStrength },
     repeatPassword: { sameAsPassword: sameAs('password') }
   },
   data () {
@@ -87,11 +94,9 @@ export default {
       email: '',
       code: '',
       password: '',
-      repeatPassword: ''
-      // email: 'jeff@walkerenvres.com',
-      // code: '',
-      // password: 'walkerenvres',
-      // repeatPassword: 'walkerenvres'
+      repeatPassword: '',
+      count: 3,
+      timeout: null
     }
   },
   computed: {
@@ -112,7 +117,9 @@ export default {
       const errors = []
       if (this.submitStatus === 'READY' || !this.requestSent) return errors
       !this.$v.password.required && errors.push('Password is required')
-      !this.$v.password.minLength && errors.push('Password must be at least 6 characters')
+      !this.$v.password.minLength && errors.push('Must be at least 8 characters')
+      !this.$v.password.maxLength && errors.push('Cannot be more than 32 characters')
+      !this.$v.password.passwordStrength && errors.push('Must contain at least one lowercase letter, one uppercase letter and one number.')
       return errors
     },
     repeatPasswordErrors () {
@@ -122,10 +129,14 @@ export default {
       return errors
     }
   },
+  beforeDestroy () {
+    this.timeout && clearTimeout(this.timeout)
+  },
   methods: {
     submit () {
-      console.log('submit', this.$v)
       this.$v.$touch()
+      this.serverError = null
+
       if (!this.requestSent) {
         if (this.$v.email.$invalid) {
           this.submitStatus = 'ERROR'
@@ -133,7 +144,6 @@ export default {
           this.submitStatus = 'PENDING'
           return this.$Amplify.Auth.forgotPassword(this.email)
             .then(data => {
-              console.log('ResetPassword:submitRequest:success', data)
               this.submitStatus = 'READY'
               this.requestSent = true
               this.serverError = ''
@@ -148,15 +158,21 @@ export default {
           this.serverError = ''
           return this.$Amplify.Auth.forgotPasswordSubmit(this.email, this.code, this.password)
             .then(data => {
-              console.log('ResetPassword:submitPassword:success', data)
-              return this.$Amplify.Auth.signIn(this.email, this.password)
-                .then((data) => {
-                  AmplifyEventBus.$emit('authState', { state: 'signIn' })
-                  this.submitStatus = 'READY'
-                })
+              this.submitStatus = 'SUCCESS'
+              this.countDownTimer()
             })
             .catch(e => this.setError(e))
         }
+      }
+    },
+    countDownTimer () {
+      if (this.count > 0) {
+        this.timeout = setTimeout(() => {
+          this.count -= 1
+          this.countDownTimer()
+        }, 1000)
+      } else {
+        this.$router.push({ name: 'login' })
       }
     },
     setError (e) {
@@ -166,9 +182,12 @@ export default {
     clear () {
       this.$v.$reset()
       this.email = ''
+      this.code = ''
       this.password = ''
       this.repeatPassword = ''
+      this.requestSent = false
       this.submitStatus = 'READY'
+      this.serverError = null
     }
   }
 }

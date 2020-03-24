@@ -1,30 +1,31 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Log In</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
-    <v-card-text>
-      <v-text-field
-        v-model="email"
-        :error-messages="emailErrors"
-        label="Email Address"
-        required
-        @input="$v.email.$touch()"
-        @blur="$v.email.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="password"
-        :error-messages="passwordErrors"
-        label="Password"
-        required
-        type="password"
-        @input="$v.password.$touch()"
-        @blur="$v.password.$touch()"
-      ></v-text-field>
 
-      <v-alert type="error" :value="!!serverError" outlined class="mt-4">
+    <v-card-text class="pt-8">
+      <v-form @submit.prevent="submit">
+        <v-text-field
+          v-model="email"
+          :error-messages="emailErrors"
+          label="Email Address"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="password"
+          :error-messages="passwordErrors"
+          label="Password"
+          required
+          type="password"
+        ></v-text-field>
+        <v-btn hidden type="submit">submit</v-btn>
+      </v-form>
+
+      <v-alert type="error" :value="!!serverError" outlined prominent>
+        <div class="title">Server Error</div>
         {{serverError}}
       </v-alert>
 
@@ -32,15 +33,15 @@
         <router-link :to="{ name: 'resetPassword' }">Forgot your password?</router-link><br>
         <router-link :to="{ name: 'signup' }">Don't have an account?</router-link>
       </div>
-
-      Status: {{ submitStatus }}
     </v-card-text>
 
-    <v-card-actions class="mx-4 pb-4">
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
       <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-      <v-btn @click="clear">clear</v-btn>
+      <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
-      <v-btn @click="$router.push({ name: 'home' })">cancel</v-btn>
+      <v-btn text @click="$router.push({ name: 'home' })">close</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -84,46 +85,46 @@ export default {
   },
   methods: {
     submit () {
-      console.log('submit', this.$v)
+      this.serverError = null
+
       this.$v.$touch()
       if (this.$v.$invalid) {
         this.submitStatus = 'INVALID'
-      } else {
-        // do your submit logic here
-        this.submitStatus = 'PENDING'
-
-        this.$Amplify.Auth.signIn(this.email, this.password)
-          .then(data => {
-            if (data.challengeName === 'SMS_MFA' || data.challengeName === 'SOFTWARE_TOKEN_MFA') {
-              AmplifyEventBus.$emit('localUser', data)
-              return AmplifyEventBus.$emit('authState', { state: 'confirmSignIn' })
-            } else if (data.challengeName === 'NEW_PASSWORD_REQUIRED') {
-              AmplifyEventBus.$emit('localUser', data)
-              return AmplifyEventBus.$emit('authState', { state: 'requireNewPassword' })
-            } else if (data.challengeName === 'MFA_SETUP') {
-              AmplifyEventBus.$emit('localUser', data)
-              return AmplifyEventBus.$emit('authState', { state: 'setMfa' })
-            } else if (
-              data.challengeName === 'CUSTOM_CHALLENGE' &&
-              data.challengeParam &&
-              data.challengeParam.trigger === 'true'
-            ) {
-              AmplifyEventBus.$emit('localUser', data)
-              return AmplifyEventBus.$emit('authState', { state: 'customConfirmSignIn' })
-            } else {
-              return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'home' } })
-            }
-          })
-          .catch((e) => {
-            if (e.code && e.code === 'UserNotConfirmedException') {
-              AmplifyEventBus.$emit('localUser', { username: this.username })
-              AmplifyEventBus.$emit('authState', { state: 'confirmSignUp' })
-            } else {
-              this.setError(e)
-            }
-            this.submitStatus = 'ERROR'
-          })
+        return
       }
+
+      this.submitStatus = 'PENDING'
+      this.$Amplify.Auth.signIn(this.email, this.password)
+        .then(data => {
+          if (data.challengeName === 'SMS_MFA' || data.challengeName === 'SOFTWARE_TOKEN_MFA') {
+            AmplifyEventBus.$emit('localUser', data)
+            return AmplifyEventBus.$emit('authState', { state: 'confirmSignIn' })
+          } else if (data.challengeName === 'NEW_PASSWORD_REQUIRED') {
+            AmplifyEventBus.$emit('localUser', data)
+            return AmplifyEventBus.$emit('authState', { state: 'requireNewPassword' })
+          } else if (data.challengeName === 'MFA_SETUP') {
+            AmplifyEventBus.$emit('localUser', data)
+            return AmplifyEventBus.$emit('authState', { state: 'setMfa' })
+          } else if (
+            data.challengeName === 'CUSTOM_CHALLENGE' &&
+            data.challengeParam &&
+            data.challengeParam.trigger === 'true'
+          ) {
+            AmplifyEventBus.$emit('localUser', data)
+            return AmplifyEventBus.$emit('authState', { state: 'customConfirmSignIn' })
+          } else {
+            return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'home' } })
+          }
+        })
+        .catch((e) => {
+          if (e.code && e.code === 'UserNotConfirmedException') {
+            AmplifyEventBus.$emit('localUser', { username: this.username })
+            AmplifyEventBus.$emit('authState', { state: 'confirmSignUp' })
+          } else {
+            this.setError(e)
+          }
+          this.submitStatus = 'ERROR'
+        })
     },
     setError (e) {
       this.serverError = this.$Amplify.I18n.get(e.message || e)

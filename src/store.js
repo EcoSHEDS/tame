@@ -8,7 +8,8 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     user: null,
-    project: null
+    project: null,
+    usgs: process.env.VUE_APP_USGS === 'true'
   },
   getters: {
     user: state => state.user,
@@ -16,7 +17,8 @@ export default new Vuex.Store({
     isOwner: (state) => {
       if (!state.user || !state.project) return false
       return !state.project.id || state.project.userId === state.user.username
-    }
+    },
+    usgs: state => state.usgs
   },
   mutations: {
     SET_USER (state, user) {

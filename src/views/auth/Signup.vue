@@ -1,75 +1,74 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Sign Up</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
-    <v-card-text>
-      <v-text-field
-        v-model="name"
-        :error-messages="nameErrors"
-        label="Name"
-        required
-        @input="$v.name.$touch()"
-        @blur="$v.name.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="email"
-        :error-messages="emailErrors"
-        label="Email Address"
-        required
-        @input="$v.email.$touch()"
-        @blur="$v.email.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="affiliation"
-        label="Affiliation (optional)"
-        @input="$v.affiliation.$touch()"
-        @blur="$v.affiliation.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="password"
-        :error-messages="passwordErrors"
-        label="Password"
-        required
-        type="password"
-        @input="$v.password.$touch()"
-        @blur="$v.password.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="repeatPassword"
-        :error-messages="repeatPasswordErrors"
-        label="Confirm Password"
-        required
-        type="password"
-        @input="$v.repeatPassword.$touch()"
-        @blur="$v.repeatPassword.$touch()"
-      ></v-text-field>
 
-      <v-alert type="error" :value="!!serverError" class="mt-8">
+    <v-card-text class="pt-8">
+      <v-form @submit.prevent="submit">
+        <v-text-field
+          v-model="name"
+          :error-messages="nameErrors"
+          label="Name"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="email"
+          :error-messages="emailErrors"
+          label="Email Address"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="affiliation"
+          :error-messages="affiliationErrors"
+          label="Affiliation (optional)"
+        ></v-text-field>
+        <v-text-field
+          v-model="password"
+          :error-messages="passwordErrors"
+          label="Password"
+          required
+          type="password"
+        ></v-text-field>
+        <v-text-field
+          v-model="repeatPassword"
+          :error-messages="repeatPasswordErrors"
+          label="Confirm Password"
+          required
+          type="password"
+        ></v-text-field>
+        <v-btn hidden type="submit">submit</v-btn>
+      </v-form>
+
+      <v-alert type="error" :value="!!serverError" outlined prominent>
+        <div class="title">Server Error</div>
         {{serverError}}
       </v-alert>
 
-      <div class="mt-8">
+      <div class="mt-4">
         <router-link :to="{ name: 'login' }">Already have an account?</router-link>
       </div>
-
-      Status: {{ submitStatus }}
     </v-card-text>
-    <v-card-actions class="mx-4 pb-4">
+
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
       <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-      <v-btn @click="clear">clear</v-btn>
+      <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
-      <v-btn @click="$router.push({ name: 'home' })">cancel</v-btn>
+      <v-btn text @click="$router.push({ name: 'home' })">cancel</v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script>
 import { validationMixin } from 'vuelidate'
-import { required, minLength, email, sameAs } from 'vuelidate/lib/validators'
+import { required, minLength, maxLength, email, sameAs } from 'vuelidate/lib/validators'
 import { AmplifyEventBus } from 'aws-amplify-vue'
+
+import { passwordStrength } from '@/lib/validators'
 
 export default {
   name: 'SignUp',
@@ -77,8 +76,8 @@ export default {
   validations: {
     name: { required },
     email: { required, email },
-    affiliation: {},
-    password: { required, minLength: minLength(6) },
+    affiliation: { maxLength: maxLength(25) },
+    password: { required, minLength: minLength(8), maxLength: maxLength(32), passwordStrength },
     repeatPassword: { sameAsPassword: sameAs('password') }
   },
   data () {
@@ -90,11 +89,6 @@ export default {
       email: '',
       password: '',
       repeatPassword: ''
-      // name: 'Jeff Walker',
-      // affiliation: 'WalkerEnvRes',
-      // email: 'jeff@walkerenvres.com',
-      // password: 'walkerenvres',
-      // repeatPassword: 'walkerenvres'
     }
   },
   computed: {
@@ -111,11 +105,19 @@ export default {
       !this.$v.email.required && errors.push('E-mail is required')
       return errors
     },
+    affiliationErrors () {
+      const errors = []
+      if (this.submitStatus === 'READY') return errors
+      !this.$v.affiliation.maxLength && errors.push('Cannot be more than 50 characters')
+      return errors
+    },
     passwordErrors () {
       const errors = []
       if (this.submitStatus === 'READY') return errors
       !this.$v.password.required && errors.push('Password is required')
-      !this.$v.password.minLength && errors.push('Password must be at least 6 characters')
+      !this.$v.password.minLength && errors.push('Must be at least 8 characters')
+      !this.$v.password.maxLength && errors.push('Cannot be more than 32 characters')
+      !this.$v.password.passwordStrength && errors.push('Must contain at least one lowercase letter, one uppercase letter and one number.')
       return errors
     },
     repeatPasswordErrors () {
@@ -127,12 +129,12 @@ export default {
   },
   methods: {
     submit () {
-      console.log('submit', this.$v)
       this.$v.$touch()
+      this.serverError = null
+
       if (this.$v.$invalid) {
         this.submitStatus = 'ERROR'
       } else {
-        // do your submit logic here
         this.submitStatus = 'PENDING'
         const user = {
           username: this.email,
@@ -143,10 +145,8 @@ export default {
             'custom:affiliation': this.affiliation
           }
         }
-        console.log('signup:user', user)
         this.$Amplify.Auth.signUp(user)
           .then(data => {
-            console.log('Signup:submit:success', data)
             data.user.password = user.password
             AmplifyEventBus.$emit('localUser', data.user)
             if (data.userConfirmed === false) {

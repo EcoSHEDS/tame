@@ -22,7 +22,7 @@
       </v-alert>
     </v-card-text>
 
-    <v-card-actions class="mx-4 pb-4">
+    <v-card-actions class="mx-4">
       <v-spacer></v-spacer>
       <v-btn to="/">close</v-btn>
     </v-card-actions>
