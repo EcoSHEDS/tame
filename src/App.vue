@@ -97,7 +97,7 @@
 
                 <!-- Map Variables -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="maxHeight" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <v-autocomplete
                         v-model="color.selected"
@@ -171,7 +171,7 @@
 
                 <!-- Selection -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="maxHeight" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <div class="d-flex">
                         <div class="subtitle-1 align-self-center">
@@ -254,7 +254,7 @@
 
                 <!-- Filter -->
                 <v-tab-item :transition="false" :reverse-transition="false">
-                  <v-card :max-height="$vuetify.breakpoint.height - 410" style="overflow-y: auto" v-show="!tabs.collapse">
+                  <v-card :max-height="maxHeight" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
                       <v-autocomplete
                         :items="filters.options"
@@ -444,6 +444,9 @@ export default {
   }),
   computed: {
     ...mapGetters(['user', 'project', 'isOwner', 'usgs']),
+    maxHeight () {
+      return (this.$vuetify.breakpoint.height - 279 - (this.usgs ? 72 + 59 : 0)) + 'px'
+    },
     colorScale () {
       if (!this.project) return null
       let valueScale, colorScale, scale
