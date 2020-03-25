@@ -19,7 +19,7 @@
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
-          :selected-ids="selected.ids"
+          :selected-ids="selectedIds"
           :opacity-unselected="map.opacityUnselected"
           @click="selectId">
         </TameMapLayer>
@@ -175,7 +175,7 @@
                     <v-card-text>
                       <div class="d-flex">
                         <div class="subtitle-1 align-self-center">
-                          # Selected Individuals: <span class="black--text">{{ selected.ids.length }}</span>
+                          # Selected Individuals: <span class="black--text">{{ selectedIds.length }}</span>
                         </div>
                         <v-spacer></v-spacer>
                         <v-tooltip right open-delay="100" max-width="400">
@@ -192,7 +192,7 @@
                       </div>
 
                       <div class="my-4">
-                        <v-btn small @click="unselectAll" rounded :disabled="selected.ids.length === 0">
+                        <v-btn small @click="unselectAll" rounded :disabled="selectedIds.length === 0">
                           <v-icon small left>mdi-delete</v-icon> Unselect All
                         </v-btn>
                       </div>
@@ -298,7 +298,7 @@
           </v-col>
         </v-row>
       </v-container>
-      <v-dialog  scrollable v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
+      <v-dialog scrollable v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
         <router-view></router-view>
       </v-dialog>
     </v-content>
@@ -395,11 +395,6 @@ export default {
         }
       ]
     },
-    debug: {
-      // visible: process.env.NODE_ENV === 'development',
-      visible: false,
-      collapse: false
-    },
     counts: {
       records: {
         filtered: 0,
@@ -411,13 +406,8 @@ export default {
       }
     },
     tags: {
-      dim: null,
-      group: null
     },
-    selected: {
-      collapse: false,
-      ids: []
-    },
+    selectedIds: [],
     draw: {
       enabled: false,
       control: null,
@@ -478,7 +468,7 @@ export default {
   },
   watch: {
     '$route' (newVal) {
-      console.log('watch:$route', newVal)
+      // console.log('watch:$route', newVal)
       this.showDialog = newVal.path !== '/'
     },
     // 'color.selected' () {
@@ -499,8 +489,13 @@ export default {
   },
   mounted () {
     evt.$on('filter', this.onFilter)
-    if (this.$route.name === 'home' && !this.project) {
-      this.$router.push('/welcome')
+    if (this.$route.name === 'home') {
+      if (!this.project) {
+        this.$router.push('/welcome')
+      } else {
+        this.showDialog = false
+        this.resetProject()
+      }
     }
   },
   beforeDestroy () {
@@ -515,22 +510,13 @@ export default {
         this.$router.push('/')
       }, 200)
     },
-    // logout () {
-    //   this.$Amplify.Auth.signOut()
-    //     .then(() => {
-    //       return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
-    //     })
-    //     .catch((e) => {
-    //       console.log(e)
-    //       alert('Error occurred trying to log out')
-    //     })
-    // },
     selectOption () {
-      console.log('selectOption')
+      // instead of watching individual option selection
+      // which would trigger event 4 times when project first loaded
       evt.$emit('map:render')
     },
     clearProject () {
-      console.log('clearProject')
+      // console.log('clearProject')
       this.unselectAll()
       if (this.draw.enabled) {
         this.clearDraw()
@@ -592,46 +578,48 @@ export default {
         })
       })
 
-      // const groupByTag = d3.nest()
-      //   .key(d => d[columns.id])
-      //   .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
-      //   .entries(data)
+      const groupByTag = d3.nest()
+        .key(d => d[columns.id])
+        .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
+        .entries(data)
 
-      // const mapByIndex = new Map()
-      // groupByTag.forEach(d => {
-      //   const n = d.values.length
+      const mapByIndex = new Map()
+      groupByTag.forEach(d => {
+        const n = d.values.length
 
-      //   if (n <= 1) return
+        if (n <= 1) return
 
-      //   for (let i = 0; i < (n - 1); i++) {
-      //     const start = d.values[i]
-      //     const end = d.values[i + 1]
+        for (let i = 0; i < (n - 1); i++) {
+          const start = d.values[i]
+          const end = d.values[i + 1]
 
-      //     const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
-      //     const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
+          const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
+          const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
 
-      //     const velocity = meters / days
+          const velocity = meters / days
 
-      //     mapByIndex.set(start.$index, {
-      //       '$duration': days,
-      //       '$distance': meters,
-      //       '$velocity': velocity
-      //     })
-      //   }
+          mapByIndex.set(start.$index, {
+            $duration: days,
+            $distance: meters,
+            $velocity: velocity
+          })
+        }
 
-      //   mapByIndex.set(d.values[n - 1].$index, {
-      //     '$duration': null,
-      //     '$distance': null,
-      //     '$velocity': null
-      //   })
-      // })
+        mapByIndex.set(d.values[n - 1].$index, {
+          $duration: null,
+          $distance: null,
+          $velocity: null
+        })
+      })
 
-      // this.dataset = data.map(d => ({
-      //   ...d,
-      //   ...mapByIndex.get(d.$index)
-      // }))
+      this.dataset = Object.freeze(
+        data.map(d => ({
+          ...d,
+          ...mapByIndex.get(d.$index)
+        }))
+      )
 
-      this.dataset = Object.freeze(data)
+      // this.dataset = Object.freeze(data)
 
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
@@ -640,7 +628,8 @@ export default {
       //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
       //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
       // ]
-      // const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
+      const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
+      console.log(velocityDomain)
 
       xf.add(this.dataset)
 
@@ -656,36 +645,44 @@ export default {
       this.outline.options = variables.filter(d => d.outline)
       this.size.options = variables.filter(d => d.size)
       this.filters.options = [
+        { header: 'Primary Variables' },
         {
           id: 'datetime',
           name: 'Date',
           type: 'datetime'
         },
-        // {
-        //   id: '$velocity',
-        //   name: 'Velocity (m/day)',
-        //   type: 'continuous',
-        //   domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
-        // },
-        // {
-        //   id: '$distance',
-        //   name: 'Distance to Next Location (m)',
-        //   type: 'continuous',
-        //   domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
-        // },
-        // {
-        //   id: '$duration',
-        //   name: 'Time to Next Location (days)',
-        //   type: 'continuous',
-        //   domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
-        // },
+        {
+          id: columns.id,
+          name: 'Tag ID',
+          type: 'id'
+        },
+        { header: 'Calculated Variables' },
+        {
+          id: '$velocity',
+          name: 'Velocity (m/day)',
+          type: 'continuous',
+          domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
+        },
+        {
+          id: '$distance',
+          name: 'Distance to Next Location (m)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
+        },
+        {
+          id: '$duration',
+          name: 'Time to Next Location (days)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+        },
+        { header: 'Additional Variables' },
         ...variables.filter(d => d.filter)
       ]
 
       this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
       this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
       this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
-      this.filters.selected = [this.filters.options[0]]
+      this.filters.selected = [this.filters.options[1]]
 
       this.selectOption()
       this.ready = true
@@ -720,16 +717,16 @@ export default {
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     selectByAreas (layer) {
-      console.log('selectByAreas', layer, layer.features[0])
+      // console.log('selectByAreas', layer, layer.features[0])
       if (!layer || layer.features.length === 0) {
-        this.selected.ids = []
+        this.selectedIds = []
         return
       }
       const allRows = xf.all()
       if (this.draw.operation === 'intersection') {
-        this.selected.ids = this.selectByAreasIntersection(allRows, layer)
+        this.selectedIds = this.selectByAreasIntersection(allRows, layer)
       } else if (this.draw.operation === 'union') {
-        this.selected.ids = this.selectByAreasUnion(allRows, layer)
+        this.selectedIds = this.selectByAreasUnion(allRows, layer)
       } else {
         alert('Invalid area selection operation')
       }
@@ -737,7 +734,6 @@ export default {
     selectByAreasIntersection (allRows, layer) {
       let rows = allRows
       let ids = [...new Set(allRows.map(d => d[this.project.columns.id]))]
-      console.log(ids)
       layer.features.forEach((feature, i) => {
         rows = this.pointsInArea(allRows.filter(d => ids.includes(d[this.project.columns.id])), feature)
         ids = [...new Set(rows.map(d => d[this.project.columns.id]))]
@@ -752,19 +748,18 @@ export default {
       return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
     selectId (id) {
-      console.log('app:selectId', id, this.selected.ids.includes(id))
-      if (this.selected.ids.includes(id)) {
-        const index = this.selected.ids.findIndex(d => d === id)
+      // console.log('app:selectId', id, this.selectedIds.includes(id))
+      if (this.selectedIds.includes(id)) {
+        const index = this.selectedIds.findIndex(d => d === id)
         if (index > -1) {
-          this.selected.ids.splice(index, 1)
+          this.selectedIds.splice(index, 1)
         }
-        console.log(index, this.selected.ids)
       } else {
-        this.selected.ids.push(id)
+        this.selectedIds.push(id)
       }
     },
     unselectAll () {
-      this.selected.ids = []
+      this.selectedIds = []
       this.clearDraw()
     },
     toggleDraw () {
@@ -776,14 +771,19 @@ export default {
       this.draw.enabled = this.draw.rect.enabled()
     },
     onDraw () {
+      if (!this.draw.layer) {
+        this.draw.count = 0
+        this.draw.enabled = false
+        return
+      }
       this.draw.count = this.draw.layer.getLayers().length
       this.draw.enabled = false
-      console.log('onDraw', this.draw.layer, this.draw.layer.toGeoJSON())
+      // console.log('onDraw', this.draw.layer, this.draw.layer.toGeoJSON())
       this.selectByAreas(this.draw.layer.toGeoJSON())
     },
     clearDraw () {
       // console.log('clearDraw()')
-      this.draw.layer.eachLayer(d => this.draw.layer.removeLayer(d))
+      this.draw.layer && this.draw.layer.eachLayer(d => this.draw.layer.removeLayer(d))
       this.onDraw()
     },
     mapIsReady (map) {
@@ -799,13 +799,6 @@ export default {
       map.on('draw:deleted', ({ layer }) => {
         this.onDraw()
       })
-    },
-    deleteProject () {
-      console.log('deleteProject')
-      // this.loadProject()
-      //   .then(() => {
-      //     this.$router.push({ name: 'welcome' })
-      //   })
     }
   }
 }

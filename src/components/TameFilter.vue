@@ -1,15 +1,21 @@
 <template>
   <v-card elevation-1 class="my-2">
-    <v-toolbar dense color="grey lighten-3" flat height="32">
-      <strong>
+    <v-toolbar dense color="grey lighten-3" flat height="32" class="font-weight-bold">
+      <span>
         {{ variable.name }}
-        <span v-if="filterRange && variable.type === 'continuous'">
-          ({{ filterRange[0].toFixed(1) }} - {{ filterRange[1].toFixed(1) }})
+        <span v-if="variable.type === 'id' && (idFilter.selected.length > 0)">
+          ({{ idFilter.selected.length }} ID<span v-if="idFilter.selected.length > 1">s</span>)
         </span>
-        <span v-else-if="filterRange && variable.type === 'datetime'">
+        <span v-else-if="variable.type === 'continuous' && filterRange.length > 0">
+          ({{ filterRange[0] | formatValue }} - {{ filterRange[1] | formatValue }})
+        </span>
+        <span v-else-if="variable.type === 'discrete' && filterRange.length > 0">
+          ({{ filterRange.length }} value<span v-if="filterRange.length > 1">s</span>)
+        </span>
+        <span v-else-if="variable.type === 'datetime' && filterRange.length > 0">
           ({{ filterRange[0] | moment('add', '1 day') | moment('MM/DD/YYYY') }} - {{ filterRange[1] | moment('MM/DD/YYYY') }})
         </span>
-      </strong>
+      </span>
       <v-spacer></v-spacer>
       <v-tooltip bottom open-delay="300">
         <template v-slot:activator="{ on }">
@@ -38,6 +44,24 @@
       </v-tooltip>
     </v-toolbar>
     <v-card-text v-show="!hide">
+      <div v-if="variable.type === 'id'">
+        <v-autocomplete
+          :items="idFilter.options"
+          v-model="idFilter.selected"
+          multiple
+          dense
+          outlined
+          item-value="id"
+          item-text="id"
+          chips
+          small-chips
+          deletable-chips
+          clearable
+          hide-details
+          @change="onIdFilter"
+          label="Select tag ID(s)...">
+        </v-autocomplete>
+      </div>
       <div class="tame-filter-chart"></div>
     </v-card-text>
   </v-card>
@@ -51,6 +75,8 @@ import evt from '@/events'
 import { xf } from '@/crossfilter'
 import { mapGetters } from 'vuex'
 
+const valueFormatter = d3.format(',.3r')
+
 export default {
   name: 'TameFilter',
   props: {
@@ -62,18 +88,34 @@ export default {
   data () {
     return {
       hide: false,
-      filterRange: null
+      filterRange: [],
+      idFilter: {
+        options: [],
+        selected: []
+      }
     }
   },
   computed: {
     ...mapGetters(['project'])
   },
+  filters: {
+    formatValue (v) {
+      return valueFormatter(v)
+    }
+  },
   mounted () {
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
+    if (variable.type === 'id') {
+      this.idFilter.dim = xf.dimension(d => d[this.project.columns.id])
+      this.idFilter.group = this.idFilter.dim.group().reduceCount()
+      this.idFilter.options = this.idFilter.group.all().map(d => ({ id: d.key }))
+      return
+    }
+
     if (variable.type === 'continuous') {
-      const margins = { top: 0, right: 10, bottom: 16, left: 30 }
+      const margins = { top: 0, right: 10, bottom: 18, left: 30 }
       const dim = xf.dimension(d => d[variable.id])
       const l = this.variable.domain[0]
       const u = this.variable.domain[1]
@@ -98,7 +140,7 @@ export default {
           if (filter) {
             this.filterRange = [filter[0], filter[1]]
           } else {
-            this.filterRange = undefined
+            this.filterRange = []
           }
           evt.$emit('map:render:filter')
           evt.$emit('filter')
@@ -132,6 +174,7 @@ export default {
           return d.key
         })
         .on('filtered', () => {
+          this.filterRange = this.chart.filters()
           evt.$emit('map:render:filter')
           evt.$emit('filter')
         })
@@ -185,16 +228,18 @@ export default {
       this.chart.xAxis().ticks(4)
       this.chart.yAxis().ticks(4, 's')
     }
-
     this.chart.render()
   },
   beforeDestroy () {
     if (this.chart) {
       this.chart.dimension().dispose()
       dc.chartRegistry.deregister(this.chart)
-      dc.renderAll()
+    } else if (this.variable.type === 'id') {
+      this.idFilter.dim.dispose()
     }
+    dc.renderAll()
     evt.$emit('map:render:filter')
+    evt.$emit('filter')
   },
   methods: {
     render () {
@@ -202,11 +247,27 @@ export default {
     },
     resetFilter () {
       // console.log('tame-filter:resetFilter')
-      this.chart && this.chart.filterAll()
+      if (this.variable.type === 'id') {
+        this.idFilter.selected = []
+        this.onIdFilter()
+      } else {
+        this.chart && this.chart.filterAll()
+      }
       dc.redrawAll()
     },
     close () {
       this.$emit('close')
+    },
+    onIdFilter () {
+      console.log('onIdFilter')
+      if (this.idFilter.selected.length === 0) {
+        this.idFilter.dim.filterAll()
+      } else {
+        this.idFilter.dim.filter(d => this.idFilter.selected.includes(d))
+      }
+      evt.$emit('map:render:filter')
+      evt.$emit('filter')
+      dc.redrawAll()
     }
   }
 }
