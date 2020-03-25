@@ -43,6 +43,8 @@ export default {
   data () {
     return {
       container: null,
+      dim: null,
+      group: null,
       tip: d3Tip()
         .attr('class', 'd3-tip')
         .direction('e')
@@ -73,7 +75,6 @@ export default {
   },
   mounted () {
     // console.log('tame-map-layer:mounted')
-    // evt.$on('map:zoom', this.resize)
     evt.$on('map:render', this.render)
     evt.$on('map:render:filter', this.renderFiltered)
 
@@ -81,29 +82,29 @@ export default {
       <strong>Tag ID: ${d[this.project.columns.id]}</strong><br>
       Latitude: ${d[this.project.columns.latitude].toFixed(4)}<br>
       Longitude: ${d[this.project.columns.longitude].toFixed(4)}<br>
-      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}
+      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
+      Time to Next: ${isNaN(d.$duration) ? 'N/A' : d.$duration.toFixed(2)} days<br>
+      Distance to Next: ${isNaN(d.$distance) ? 'N/A' : d.$distance.toFixed(1)} m<br>
+      Velocity to Next: ${isNaN(d.$velocity) ? 'N/A' : d.$velocity.toFixed(1)} m/day<br>
+      Bearing to Next: ${isNaN(d.$bearing) ? 'N/A' : d.$bearing.toFixed(0)} degrees<br>
     `)
 
     this.container = this.svg.select('g')
     this.container.call(this.tip)
-    // this.resize()
 
     if (this.data) {
-      // this.resize()
       this.fitBounds()
       this.render()
     }
   },
   beforeDestroy () {
     // console.log('tame-map-layer:beforeDestroy')
-    // evt.$off('map:zoom', this.resize)
     evt.$off('map:render', this.render)
     evt.$off('map:render:filter', this.renderFiltered)
     this.tip.destroy()
   },
   watch: {
     data () {
-      // this.resize()
       this.fitBounds()
     },
     selectedIds () {
@@ -132,7 +133,7 @@ export default {
     },
     render () {
       // if (!this.data || !this.project) return
-      // console.log('render', this.project, this.data)
+      // console.log('TameMapLayer:render')
 
       let data = this.data
       if (!this.project) {
@@ -147,10 +148,6 @@ export default {
       const vm = this
       const tip = this.tip
 
-      const line = d3.line()
-        .x(d => this.projectPoint(d)[0])
-        .y(d => this.projectPoint(d)[1])
-
       const groups = this.container
         .selectAll('g')
         .data(nestedData, d => d.key)
@@ -161,17 +158,6 @@ export default {
           update => update,
           exit => exit.remove()
         )
-
-      groups
-        .selectAll('path')
-        .data(d => [d.values])
-        .join(
-          enter => enter.append('path'),
-          update => update,
-          exit => exit.remove()
-        )
-        .attr('d', line)
-        .classed('hidden', true)
 
       groups.selectAll('circle')
         .data(d => d.values, d => d.$index)
@@ -192,13 +178,6 @@ export default {
             .attr('cy', d => point[1])
         })
         .on('click', function (d) {
-          // console.log('click', this.selectedIds, d[this.project.columns.id])
-          // let id
-          // if (vm.selectedIds.includes(d[this.project.columns.id])) {
-          //   id = null
-          // } else {
-          //   id = d[this.project.columns.id]
-          // }
           !vm.disableClick && vm.$emit('click', d[vm.project.columns.id])
           this.parentNode.parentNode.appendChild(this.parentNode) // move to front
         })
@@ -218,17 +197,36 @@ export default {
           tip.hide(d, this)
         })
 
-      this.renderSelected()
       this.renderFiltered()
     },
+    renderPaths () {
+      // console.log('TameMapLayer:renderPaths')
+      const line = d3.line()
+        .x(d => this.projectPoint(d)[0])
+        .y(d => this.projectPoint(d)[1])
+
+      const groups = this.container.selectAll('g')
+
+      groups.selectAll('path')
+        .data(d => [d.values.filter(v => xf.isElementFiltered(v.$index))])
+        .join(
+          enter => enter.append('path'),
+          update => update,
+          exit => exit.remove()
+        )
+        .attr('d', line)
+        .classed('hidden', true)
+    },
     renderFiltered () {
-      // console.log('tame-map-layer:renderFiltered')
+      // console.log('TameMapLayer:renderFiltered')
       this.container
         .selectAll('circle')
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
+      this.renderPaths()
+      this.renderSelected()
     },
     renderSelected () {
-      // console.log('tame-map-layer:renderSelected()', this.selectedIds)
+      // console.log('TameMapLayer:renderSelected', this.selectedIds)
       if (this.selectedIds.length > 0) {
         const selectedIds = this.selectedIds
         this.container

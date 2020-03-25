@@ -7,13 +7,13 @@
           ({{ idFilter.selected.length }} ID<span v-if="idFilter.selected.length > 1">s</span>)
         </span>
         <span v-else-if="variable.type === 'continuous' && filterRange.length > 0">
-          ({{ filterRange[0] | formatValue }} - {{ filterRange[1] | formatValue }})
+          ({{ filterRange[0] | formatValue }} to {{ filterRange[1] | formatValue }})
         </span>
         <span v-else-if="variable.type === 'discrete' && filterRange.length > 0">
           ({{ filterRange.length }} value<span v-if="filterRange.length > 1">s</span>)
         </span>
         <span v-else-if="variable.type === 'datetime' && filterRange.length > 0">
-          ({{ filterRange[0] | moment('add', '1 day') | moment('MM/DD/YYYY') }} - {{ filterRange[1] | moment('MM/DD/YYYY') }})
+          ({{ filterRange[0] | moment('add', '1 day') | moment('MM/DD/YYYY') }} to {{ filterRange[1] | moment('MM/DD/YYYY') }})
         </span>
       </span>
       <v-spacer></v-spacer>
@@ -104,6 +104,7 @@ export default {
     }
   },
   mounted () {
+    console.log('TameFilter:mounted', this.variable.id)
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
@@ -121,7 +122,7 @@ export default {
       const u = this.variable.domain[1]
       const n = 30
       const interval = (u - l) / n
-      const group = dim.group(d => l + Math.floor(n * (d - l) / (u - l)) * interval).reduceCount()
+      const group = dim.group(d => l + Math.floor((d - l) / interval) * interval).reduceCount()
 
       this.chart = dc.barChart(el)
         .width(396)

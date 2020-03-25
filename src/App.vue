@@ -181,7 +181,7 @@
                         <v-tooltip right open-delay="100" max-width="400">
                           <template v-slot:activator="{ on }">
                             <v-btn small icon v-on="on" class="align-self-center">
-                              <v-icon>mdi-alert-circle</v-icon>
+                              <v-icon>mdi-alert-circle-outline</v-icon>
                             </v-btn>
                           </template>
                           Click a point on the map to select an individual (unique tag ID),
@@ -207,7 +207,7 @@
                         <v-tooltip right open-delay="100" max-width="400">
                           <template v-slot:activator="{ on }">
                             <v-btn icon small v-on="on" class="align-self-center">
-                              <v-icon>mdi-alert-circle</v-icon>
+                              <v-icon>mdi-alert-circle-outline</v-icon>
                             </v-btn>
                           </template>
                           Select all individuals that were observed in a specific area by clicking <strong>Draw New Area</strong>
@@ -223,6 +223,18 @@
                       </div>
 
                       <div class="my-3">
+                        <v-btn small rounded @click="toggleDraw" v-if="!draw.enabled">
+                          <v-icon small left>mdi-selection-drag</v-icon> Draw New Area
+                        </v-btn>
+                        <v-btn small rounded @click="toggleDraw" v-else>
+                          <v-icon small left>mdi-close</v-icon> Cancel
+                        </v-btn>
+                        <v-btn small rounded @click="clearDraw" class="ml-3" :disabled="draw.count === 0">
+                          <v-icon small left>mdi-delete</v-icon> Clear All
+                        </v-btn>
+                      </div>
+
+                      <div class="my-3">
                         <v-radio-group v-model="draw.operation" row hide-details label="Operation:" :disabled="draw.enabled">
                           <v-radio value="intersection">
                             <template v-slot:label>
@@ -235,18 +247,6 @@
                             </template>
                           </v-radio>
                         </v-radio-group>
-                      </div>
-
-                      <div class="my-4">
-                        <v-btn small rounded @click="toggleDraw" v-if="!draw.enabled">
-                          <v-icon small left>mdi-selection-drag</v-icon> Draw New Area
-                        </v-btn>
-                        <v-btn small rounded @click="toggleDraw" v-else>
-                          <v-icon small left>mdi-close</v-icon> Cancel
-                        </v-btn>
-                        <v-btn small rounded @click="clearDraw" class="ml-3" :disabled="draw.count === 0">
-                          <v-icon small left>mdi-delete</v-icon> Clear All
-                        </v-btn>
                       </div>
                     </v-card-text>
                   </v-card>
@@ -321,6 +321,7 @@ import { mapGetters, mapActions } from 'vuex'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
+import calculateBearing from '@/lib/bearing'
 
 import UsgsHeader from '@/components/usgs/UsgsHeader'
 import UsgsFooter from '@/components/usgs/UsgsFooter'
@@ -468,18 +469,8 @@ export default {
   },
   watch: {
     '$route' (newVal) {
-      // console.log('watch:$route', newVal)
       this.showDialog = newVal.path !== '/'
     },
-    // 'color.selected' () {
-    //   evt.$emit('map:render')
-    // },
-    // 'outline.selected' () {
-    //   evt.$emit('map:render')
-    // },
-    // 'size.selected' () {
-    //   evt.$emit('map:render')
-    // },
     'draw.operation' () {
       this.onDraw()
     },
@@ -587,7 +578,15 @@ export default {
       groupByTag.forEach(d => {
         const n = d.values.length
 
-        if (n <= 1) return
+        if (n <= 1) {
+          mapByIndex.set(d.values[0].$index, {
+            $duration: -Infinity,
+            $distance: -Infinity,
+            $velocity: -Infinity,
+            $bearing: -Infinity
+          })
+          return
+        }
 
         for (let i = 0; i < (n - 1); i++) {
           const start = d.values[i]
@@ -595,20 +594,26 @@ export default {
 
           const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
           const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
+          const bearing = calculateBearing(
+            [start[columns.latitude], start[columns.longitude]],
+            [end[columns.latitude], end[columns.longitude]]
+          )
 
-          const velocity = meters / days
+          const velocity = days > 0 ? meters / days : -Infinity
 
           mapByIndex.set(start.$index, {
             $duration: days,
             $distance: meters,
-            $velocity: velocity
+            $velocity: velocity,
+            $bearing: bearing
           })
         }
 
         mapByIndex.set(d.values[n - 1].$index, {
-          $duration: null,
-          $distance: null,
-          $velocity: null
+          $duration: -Infinity,
+          $distance: -Infinity,
+          $velocity: -Infinity,
+          $bearing: -Infinity
         })
       })
 
@@ -618,18 +623,8 @@ export default {
           ...mapByIndex.get(d.$index)
         }))
       )
-
-      // this.dataset = Object.freeze(data)
-
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
-
-      // const velocityDomain = [
-      //   d3.quantile(this.dataset, 0.05, d => d.$velocity),
-      //   d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)
-      // ]
-      const velocityDomain = [0, d3.quantile(this.dataset.filter(d => isFinite(d.$velocity)), 0.9, d => d.$velocity)]
-      console.log(velocityDomain)
 
       xf.add(this.dataset)
 
@@ -661,7 +656,7 @@ export default {
           id: '$velocity',
           name: 'Velocity (m/day)',
           type: 'continuous',
-          domain: [Math.floor(velocityDomain[0]), Math.ceil(velocityDomain[1])]
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$velocity))]
         },
         {
           id: '$distance',
@@ -674,6 +669,12 @@ export default {
           name: 'Time to Next Location (days)',
           type: 'continuous',
           domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+        },
+        {
+          id: '$bearing',
+          name: 'Bearing to Next Location (deg)',
+          type: 'continuous',
+          domain: [0, 360]
         },
         { header: 'Additional Variables' },
         ...variables.filter(d => d.filter)
@@ -805,10 +806,6 @@ export default {
 </script>
 
 <style>
-/* .v-dialog:not(.v-dialog--fullscreen) {
-  position: absolute;
-  top: 0;
-} */
 .v-dialog__content.v-dialog__content--active {
   align-items: start;
 }
