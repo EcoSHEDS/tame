@@ -309,20 +309,6 @@
       </v-alert>
     </v-content>
 
-    <!-- <v-card class="mb-3" v-if="debug.visible">
-      <v-toolbar dense dark color="red darken-4">
-        <strong>Debug</strong>
-        <v-spacer></v-spacer>
-        <v-btn height="24" width="24" icon @click="debug.collapse = !debug.collapse" class="grey darken-1 elevation-2 mr-0" dark>
-          <v-icon v-if="!debug.collapse">mdi-menu-up</v-icon>
-          <v-icon v-else>mdi-menu-down</v-icon>
-        </v-btn>
-      </v-toolbar>
-      <v-card-text v-if="!debug.collapse" style="font-family:monospace">
-        selected.ids: {{ selected.ids.length }}
-      </v-card-text>
-    </v-card> -->
-
     <!-- USGS footer -->
     <UsgsFooter v-if="usgs"></UsgsFooter>
   </v-app>
@@ -332,22 +318,18 @@
 import * as d3 from 'd3'
 import L from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
-// import { AmplifyEventBus } from 'aws-amplify-vue'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
 
-import TameAppBar from '@/components/TameAppBar'
-
-import TameMap from '@/components/TameMap'
-import TameMapLayer from '@/components/TameMapLayer'
-
-import TameFilter from '@/components/TameFilter'
-
-import TameLegend from '@/components/TameLegend'
-
 import UsgsHeader from '@/components/usgs/UsgsHeader'
 import UsgsFooter from '@/components/usgs/UsgsFooter'
+
+import TameAppBar from '@/components/TameAppBar'
+import TameMap from '@/components/TameMap'
+import TameMapLayer from '@/components/TameMapLayer'
+import TameFilter from '@/components/TameFilter'
+import TameLegend from '@/components/TameLegend'
 
 export default {
   name: 'App',
@@ -386,6 +368,12 @@ export default {
           visible: false,
           url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        },
+        {
+          name: 'USGS Topo Maps',
+          visible: false,
+          url: 'http://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
+          attribution: '<a href="http://www.doi.gov">U.S. Department of the Interior</a> | <a href="http://www.usgs.gov">U.S. Geological Survey</a> | <a href="http://www.usgs.gov/laws/policies_notices.html">Policies</a>'
         },
         {
           name: 'No Basemap',
