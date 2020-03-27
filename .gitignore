@@ -44,3 +44,5 @@ amplify.log
 # use package command to build from lambda-local.yml
 aws/lambda.yml
 aws/params
+
+r/csv
