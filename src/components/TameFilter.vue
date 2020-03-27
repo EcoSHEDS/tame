@@ -104,7 +104,7 @@ export default {
     }
   },
   mounted () {
-    console.log('TameFilter:mounted', this.variable.id)
+    // console.log('TameFilter:mounted', this.variable.id)
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
@@ -116,7 +116,7 @@ export default {
     }
 
     if (variable.type === 'continuous') {
-      const margins = { top: 0, right: 10, bottom: 18, left: 30 }
+      const margins = { top: 4, right: 10, bottom: 18, left: 30 }
       const dim = xf.dimension(d => d[variable.id])
       const l = this.variable.domain[0]
       const u = this.variable.domain[1]
@@ -136,6 +136,7 @@ export default {
         .x(d3.scaleLinear().domain(variable.domain))
         .yAxisLabel('# Obs')
         .on('filtered', () => {
+          // console.log('continuous:filtered')
           // console.log(`tame-filter:on(filtered):${variable.id}`)
           const filter = this.chart.dimension().currentFilter()
           if (filter) {
@@ -175,6 +176,7 @@ export default {
           return d.key
         })
         .on('filtered', () => {
+          // console.log('discrete:filtered')
           this.filterRange = this.chart.filters()
           evt.$emit('map:render:filter')
           evt.$emit('filter')
@@ -196,12 +198,15 @@ export default {
         })
       this.chart.xAxis().ticks(4, 's')
     } else if (variable.type === 'datetime') {
-      const margins = { top: 0, right: 10, bottom: 16, left: 30 }
-      const dim = xf.dimension(d => d3.utcDay(d[this.project.columns.datetime]))
+      const margins = { top: 4, right: 10, bottom: 16, left: 30 }
+      const dim = xf.dimension(d => d3.utcWeek(d[this.project.columns.datetime]))
       const group = dim.group().reduceCount()
-      const timeExtent = d3.extent(xf.all().map(d => d3.utcDay(d[this.project.columns.datetime])))
+      const timeExtent = d3.extent(xf.all().map(d => d3.utcWeek(d[this.project.columns.datetime])))
       timeExtent[1] = this.$moment(timeExtent[1]).add(1, 'day').toDate()
-      this.filterRange = timeExtent
+      this.filterRange = [
+        d3.utcWeek.floor(timeExtent[0]),
+        d3.utcWeek.ceil(timeExtent[1])
+      ]
 
       this.chart = dc.barChart(el)
         .width(396)
@@ -211,8 +216,11 @@ export default {
         .group(group)
         .elasticY(true)
         .colors('#5095c3')
-        .x(d3.scaleUtc().domain(timeExtent))
-        .xUnits(d3.utcDays)
+        .x(d3.scaleUtc().domain([
+          d3.utcWeek.floor(timeExtent[0]),
+          d3.utcWeek.ceil(timeExtent[1])
+        ]))
+        .xUnits(d3.utcWeeks)
         .yAxisLabel('# Obs')
         .round(d3.utcDay.round)
         .on('filtered', () => {
@@ -225,7 +233,6 @@ export default {
           evt.$emit('map:render:filter')
           evt.$emit('filter')
         })
-      // this.chart.xAxis().ticks(10).tickFormat(d3.utcFormat('%m/%d'))
       this.chart.xAxis().ticks(4)
       this.chart.yAxis().ticks(4, 's')
     }
@@ -260,7 +267,7 @@ export default {
       this.$emit('close')
     },
     onIdFilter () {
-      console.log('onIdFilter')
+      // console.log('onIdFilter')
       if (this.idFilter.selected.length === 0) {
         this.idFilter.dim.filterAll()
       } else {

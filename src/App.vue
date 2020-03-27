@@ -13,16 +13,25 @@
 
     <v-content class="grey lighten-3" v-if="$vuetify.breakpoint.mdAndUp">
       <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
-        <TameMapLayer
+        <!-- <TameMapLayer
           v-if="ready"
           :data="dataset"
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
           :selected-ids="selectedIds"
-          :opacity-unselected="map.opacityUnselected"
+          :opacity-unselected="map.transparency"
           @click="selectId">
-        </TameMapLayer>
+        </TameMapLayer> -->
+        <TameMapLayerCanvas
+          v-if="ready"
+          :getColor="getColor"
+          :getOutline="getOutline"
+          :getSize="getSize"
+          :selected-ids="selectedIds"
+          :transparency="map.transparency"
+          @click="selectId">
+          </TameMapLayerCanvas>
       </TameMap>
       <v-container fill-height fluid class="align-stretch pa-2">
         <v-row no-gutters>
@@ -43,7 +52,7 @@
                   <span v-if="ready" class="subtitle-1 font-weight-bold">
                     <v-icon left v-if="!project.id">mdi-paperclip</v-icon>
                     <v-icon left v-else>mdi-database</v-icon>
-                    {{ project ? project.name : 'None' | truncate(50) }}
+                    {{ project ? project.name : 'None' | truncate(40) }}
                   </span>
                   <span v-else-if="loading">
                     <v-progress-circular
@@ -147,19 +156,19 @@
                       <v-row>
                         <v-col cols="5" class="pb-0">
                           <div class="body-1 grey--text text--darken-2 pt-1">
-                            Unselected Opacity
+                            Transparency
                           </div>
                         </v-col>
                         <v-col cols="7" class="pb-0">
                           <v-slider
-                            v-model="map.opacityUnselected"
+                            v-model="map.transparency"
                             hide-details
                             :min="0"
                             :max="1"
                             :step="0.01">
                             <template v-slot:append>
                               <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
-                                {{map.opacityUnselected}}
+                                {{map.transparency}}
                               </div>
                             </template>
                           </v-slider>
@@ -328,7 +337,8 @@ import UsgsFooter from '@/components/usgs/UsgsFooter'
 
 import TameAppBar from '@/components/TameAppBar'
 import TameMap from '@/components/TameMap'
-import TameMapLayer from '@/components/TameMapLayer'
+// import TameMapLayer from '@/components/TameMapLayer'
+import TameMapLayerCanvas from '@/components/TameMapLayerCanvas'
 import TameFilter from '@/components/TameFilter'
 import TameLegend from '@/components/TameLegend'
 
@@ -339,7 +349,7 @@ export default {
     UsgsFooter,
     TameAppBar,
     TameMap,
-    TameMapLayer,
+    TameMapLayerCanvas,
     TameFilter,
     TameLegend
   },
@@ -348,7 +358,6 @@ export default {
     loading: false,
     ready: false,
     error: null,
-    dataset: [],
     tabs: {
       active: 0,
       collapse: false
@@ -356,7 +365,7 @@ export default {
     map: {
       center: [35, -92.8],
       zoom: 5,
-      opacityUnselected: 0.3,
+      transparency: 0.8,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -463,7 +472,7 @@ export default {
       if (!this.project) return null
       return d3.scaleLinear()
         .domain(this.size.selected.domain)
-        .range([0.1, 1])
+        .range([0.5, 1])
         .clamp(true)
     }
   },
@@ -522,7 +531,6 @@ export default {
         this.tags.dim = null
       }
       xf.remove(d => true)
-      this.dataset = []
       this.color.selected = null
       this.color.options = []
       this.size.selected = null
@@ -617,7 +625,7 @@ export default {
         })
       })
 
-      this.dataset = Object.freeze(
+      const fullDataset = Object.freeze(
         data.map(d => ({
           ...d,
           ...mapByIndex.get(d.$index)
@@ -626,7 +634,7 @@ export default {
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
 
-      xf.add(this.dataset)
+      xf.add(fullDataset)
 
       this.color.options = [
         {
@@ -656,19 +664,19 @@ export default {
           id: '$velocity',
           name: 'Velocity (m/day)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$velocity))]
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$velocity))]
         },
         {
           id: '$distance',
           name: 'Distance to Next Location (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))]
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$distance))]
         },
         {
           id: '$duration',
           name: 'Time to Next Location (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$duration))]
         },
         {
           id: '$bearing',
@@ -711,6 +719,7 @@ export default {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
     },
     onFilter () {
+      // console.log('app:onFilter')
       this.counts.records.filtered = xf.allFiltered().length
       this.counts.records.total = xf.size()
 

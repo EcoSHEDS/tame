@@ -43,8 +43,6 @@ export default {
   data () {
     return {
       container: null,
-      dim: null,
-      group: null,
       tip: d3Tip()
         .attr('class', 'd3-tip')
         .direction('e')
@@ -109,7 +107,8 @@ export default {
     },
     selectedIds () {
       // console.log('tame-map-layer:watch(selectedIds)', this.selectedIds)
-      this.renderSelected()
+      // this.renderSelected()
+      this.renderFiltered()
     },
     opacityUnselected () {
       this.renderOpacity()
@@ -183,6 +182,8 @@ export default {
         })
         .on('mouseenter', function (d) {
           this.parentNode.parentNode.appendChild(this.parentNode)
+          d3.select(this)
+            .attr('r', d => vm.zoomLevel * vm.getSize(d) * 2)
           d3.select(this.parentNode)
             .classed('highlight', true)
             .select('path')
@@ -190,6 +191,8 @@ export default {
           tip.show(d, this)
         })
         .on('mouseout', function (d) {
+          d3.select(this)
+            .attr('r', d => vm.zoomLevel * vm.getSize(d))
           d3.select(this.parentNode)
             .classed('highlight', false)
             .select('path')
@@ -222,6 +225,7 @@ export default {
       this.container
         .selectAll('circle')
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
+
       this.renderPaths()
       this.renderSelected()
     },
@@ -279,24 +283,35 @@ g.group path {
 g.group path.hidden {
   display: none;
 }
+
 g.group.highlight {
   opacity: 1;
+}
+g.group.highlight:not(.selected) {
+  opacity: 0.75;
 }
 g.group.highlight path {
   stroke: white;
   stroke-width: 5px;
 }
+
 g.group.selected {
   opacity: 1;
-}
-/* g.group.unselected {
-  opacity: 0.3;
-} */
-g.group.highlight:not(.selected) {
-  opacity: 0.75;
 }
 g.group.selected path {
   stroke: orangered;
   stroke-width: 5px;
+}
+
+.d3-tip {
+  line-height: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #000;
+  border-radius: 2px;
+  pointer-events: none;
+  font-family: sans-serif;
+  z-index: 1000;
+  margin-left: 20px;
 }
 </style>

@@ -22,9 +22,11 @@
       </v-alert>
     </v-card-text>
 
+    <v-divider></v-divider>
+
     <v-card-actions class="mx-4">
       <v-spacer></v-spacer>
-      <v-btn to="/">close</v-btn>
+      <v-btn to="/" text>close</v-btn>
     </v-card-actions>
   </v-card>
 </template>

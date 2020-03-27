@@ -25,8 +25,8 @@
 
 <script>
 import { LMap, LTileLayer, LControlZoom, LControlLayers } from 'vue2-leaflet'
-import L from 'leaflet'
-import * as d3 from 'd3'
+// import L from 'leaflet'
+// import * as d3 from 'd3'
 
 import evt from '@/events'
 
@@ -91,15 +91,15 @@ export default {
       evt.$emit('map:render')
     })
 
-    const svgLayer = L.svg()
-    this.map.addLayer(svgLayer)
+    // const svgLayer = L.svg()
+    // this.map.addLayer(svgLayer)
 
-    this.svg = d3.select(svgLayer.getPane()).select('svg')
-      .classed('leaflet-zoom-animated', false)
-      .classed('leaflet-zoom-hide', true)
-      .classed('map', true)
-      .attr('pointer-events', null)
-      .style('z-index', 201)
+    // this.svg = d3.select(svgLayer.getPane()).select('svg')
+    //   .classed('leaflet-zoom-animated', false)
+    //   .classed('leaflet-zoom-hide', true)
+    //   .classed('map', true)
+    //   .attr('pointer-events', null)
+    //   .style('z-index', 201)
 
     this.ready = true
   },
@@ -121,18 +121,6 @@ export default {
 .tame-map circle {
   cursor: pointer !important;
   pointer-events: visible !important;
-}
-
-.d3-tip {
-  line-height: 1;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.5);
-  color: #000;
-  border-radius: 2px;
-  pointer-events: none;
-  font-family: sans-serif;
-  z-index: 1000;
-  margin-left: 20px;
 }
 
 .leaflet-control-container > .leaflet-top.leaflet-left {
