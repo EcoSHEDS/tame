@@ -30,6 +30,11 @@
           :getSize="getSize"
           :selected-ids="selectedIds"
           :transparency="map.transparency"
+          :jitter-x="map.jitter.x"
+          :jitter-y="map.jitter.y"
+          :hover-arrows="map.hoverArrows"
+          :hover-color="map.hoverColor"
+          :all-lines="map.allLines"
           @click="selectId">
           </TameMapLayerCanvas>
       </TameMap>
@@ -150,16 +155,16 @@
                     <v-divider></v-divider>
 
                     <v-card-text>
-                      <div class="subtitle-2">
+                      <div class="subtitle-1">
                         Display Settings
                       </div>
-                      <v-row>
+                      <v-row no-gutters class="my-2">
                         <v-col cols="5" class="pb-0">
-                          <div class="body-1 grey--text text--darken-2 pt-1">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
                             Transparency
                           </div>
                         </v-col>
-                        <v-col cols="7" class="pb-0">
+                        <v-col cols="6" class="pb-0">
                           <v-slider
                             v-model="map.transparency"
                             hide-details
@@ -172,6 +177,170 @@
                               </div>
                             </template>
                           </v-slider>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            Adjust the transparency of observation points (circles), excluding those that are selected or hovered over.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="5" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Horizontal Jitter
+                          </div>
+                        </v-col>
+                        <v-col cols="6" class="pb-0">
+                          <v-slider
+                            v-model="map.jitter.x"
+                            hide-details
+                            :min="0"
+                            :max="1"
+                            :step="0.01">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.jitter.x}}
+                              </div>
+                            </template>
+                          </v-slider>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            Add horizontal jitter (random variation) to observation locations (circles). Useful when there is a lot of overlap.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="5" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Vertical Jitter
+                          </div>
+                        </v-col>
+                        <v-col cols="6" class="pb-0">
+                          <v-slider
+                            v-model="map.jitter.y"
+                            hide-details
+                            :min="0"
+                            :max="1"
+                            :step="0.01">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.jitter.y}}
+                              </div>
+                            </template>
+                          </v-slider>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            Add vertical jitter (random variation) to observation locations (circles). Useful when there is a lot of overlap.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="7" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Show Arrows on Hover
+                          </div>
+                        </v-col>
+                        <v-col cols="4" class="pb-0">
+                          <v-switch
+                            v-model="map.hoverArrows"
+                            hide-details
+                            class="float-right mt-0">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.hoverArrows ? 'On' : 'Off'}}
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            When the mouse is hovered over an observed location (circle),
+                            add arrowheads to the lines that connect each pair
+                            of observations to indicate direction of movement.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="7" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Color <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> Lines on Hover
+                          </div>
+                        </v-col>
+                        <v-col cols="4" class="pb-0">
+                          <v-switch
+                            v-model="map.hoverColor"
+                            hide-details
+                            class="mt-0 float-right">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.hoverColor ? 'On' : 'Off'}}
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            When the mouse is hovered over an observed location (circle),
+                            the movement lines connecting observations before that point will be colored
+                            <span class="font-weight-medium" style="color:deepskyblue">BLUE</span>,
+                            and afterwards <span class="font-weight-medium" style="color:orangered">RED</span>.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="7" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Show All Movement Lines
+                          </div>
+                        </v-col>
+                        <v-col cols="4" class="pb-0">
+                          <v-switch
+                            v-model="map.allLines"
+                            hide-details
+                            class="mt-0 float-right">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.allLines ? 'On' : 'Off'}}
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle</v-icon>
+                              </v-btn>
+                            </template>
+                            Show movement lines connecting each pair of observations for all tags, not just those that are selected or hovered.
+                          </v-tooltip>
                         </v-col>
                       </v-row>
                     </v-card-text>
@@ -366,6 +535,12 @@ export default {
       center: [35, -92.8],
       zoom: 5,
       transparency: 0.8,
+      jitter: {
+        x: 0.1,
+        y: 0.1
+      },
+      hoverArrows: true,
+      hoverColor: true,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -374,10 +549,10 @@ export default {
           attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
         },
         {
-          name: 'OpenStreetMap',
+          name: 'USGS Imagery',
           visible: false,
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+          attribution: '<a href="http://www.doi.gov">U.S. Department of the Interior</a> | <a href="http://www.usgs.gov">U.S. Geological Survey</a> | <a href="http://www.usgs.gov/laws/policies_notices.html">Policies</a>'
         },
         {
           name: 'USGS Topo',
@@ -392,10 +567,10 @@ export default {
           attribution: '<a href="http://www.doi.gov">U.S. Department of the Interior</a> | <a href="http://www.usgs.gov">U.S. Geological Survey</a> | <a href="http://www.usgs.gov/laws/policies_notices.html">Policies</a>'
         },
         {
-          name: 'USGS Imagery',
+          name: 'OpenStreetMap',
           visible: false,
-          url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
-          attribution: '<a href="http://www.doi.gov">U.S. Department of the Interior</a> | <a href="http://www.usgs.gov">U.S. Geological Survey</a> | <a href="http://www.usgs.gov/laws/policies_notices.html">Policies</a>'
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         },
         {
           name: 'No Basemap',
