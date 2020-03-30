@@ -32,6 +32,12 @@
               <v-alert type="info" dense outlined :value="!file.value.local">
                 To update the dataset, select a new file from your computer.
               </v-alert>
+              <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000">
+                <div class="font-weight-bold">Large File Detected</div>
+                Files with more than 10,000 rows may cause the application to run more slowly depending on the speed of your computer.
+                For optimal performance, reduce the file size by including fewer individuals, limiting the overall time period, or aggregating
+                time steps (e.g. hourly to daily timesteps).
+              </v-alert>
               <div class="subtitle-1 font-weight-bold">
                 Current File
               </div>
@@ -461,6 +467,14 @@ export default {
             return this.setError('file', `
               <strong>Failed to load file (${localFile.name})</strong><br><br>
               ${results.errors[0].message} (Row ${results.errors[0].row})
+            `)
+          }
+          if (results.data.length > 50000) {
+            return this.setError('file', `
+              <strong>File Too Large (${localFile.name})</strong><br>
+              Files cannot have more than 50,000 rows or the application may become unresponsive or crash.<br>
+              Reduce the file size by including fewer individuals, limiting the overall time period, or aggregating
+                time steps (e.g. hourly to daily timesteps).
             `)
           }
           if (!results.meta.fields.every(d => d.length > 0)) {
