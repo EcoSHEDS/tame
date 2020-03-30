@@ -19,7 +19,7 @@
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
-          :selected-ids="selectedIds"
+          :selected-ids="selection.selected"
           :opacity-unselected="map.transparency"
           @click="selectId">
         </TameMapLayer> -->
@@ -28,7 +28,7 @@
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
-          :selected-ids="selectedIds"
+          :selected-ids="selection.selected"
           :transparency="map.transparency"
           :jitter-x="map.jitter.x"
           :jitter-y="map.jitter.y"
@@ -351,31 +351,49 @@
                 <v-tab-item :transition="false" :reverse-transition="false">
                   <v-card :max-height="maxHeight" style="overflow-y: auto" v-show="!tabs.collapse">
                     <v-card-text>
-                      <div class="d-flex">
-                        <div class="subtitle-1 align-self-center">
-                          # Selected Individuals: <span class="black--text">{{ selectedIds.length }}</span>
-                        </div>
-                        <v-spacer></v-spacer>
-                        <v-tooltip right open-delay="100" max-width="400">
-                          <template v-slot:activator="{ on }">
-                            <v-btn small icon v-on="on" class="align-self-center">
-                              <v-icon>mdi-alert-circle-outline</v-icon>
-                            </v-btn>
-                          </template>
-                          Click a point on the map to select an individual (unique tag ID),
-                          which will highlight all locations that individual was observed.
-                          Click on a selected individual to unselect it.
-                          More than one individual can be selected at a time.
-                        </v-tooltip>
-                      </div>
+                      <v-row no-gutters>
+                        <v-col cols="10">
+                          <div class="subtitle-1 font-weight-medium mb-2">
+                            Selected Individuals
+                          </div>
+                        </v-col>
+                        <v-col cols="2">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="float-right">
+                                <v-icon>mdi-alert-circle-outline</v-icon>
+                              </v-btn>
+                            </template>
+                            Click an observed location (circle) on the map or choose an ID from the dropdown menu to
+                            select an individual with a unique tag ID, which will highlight all locations where that individual was observed.<br>
+                            Click on a selected individual again or uncheck it in the dropdown menu to unselect it.<br>
+                            More than one individual can be selected at a time.
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
+                      <v-autocomplete
+                        :items="selection.options"
+                        v-model="selection.selected"
+                        multiple
+                        dense
+                        outlined
+                        item-value="id"
+                        item-text="id"
+                        clearable
+                        hide-details
+                        label="Select tag ID(s)...">
+                        <template v-slot:selection="{ item, index }">
+                          <v-chip close small v-if="index < 10" @click:close="selectId(item.id)">
+                            <span>{{ item.id }}</span>
+                          </v-chip>
+                          <span
+                            v-if="index === 10"
+                            class="grey--text caption"
+                          >(+{{ selection.selected.length - 1 }} others)</span>
+                        </template>
+                      </v-autocomplete>
 
-                      <div class="my-4">
-                        <v-btn small @click="unselectAll" rounded :disabled="selectedIds.length === 0">
-                          <v-icon small left>mdi-delete</v-icon> Unselect All
-                        </v-btn>
-                      </div>
-
-                      <v-divider class="my-3"></v-divider>
+                      <v-divider class="my-4"></v-divider>
 
                       <div class="d-flex">
                         <div class="subtitle-1 align-self-center">
@@ -592,7 +610,10 @@ export default {
     },
     tags: {
     },
-    selectedIds: [],
+    selection: {
+      options: [],
+      selected: []
+    },
     draw: {
       enabled: false,
       control: null,
@@ -706,6 +727,8 @@ export default {
         this.tags.dim = null
       }
       xf.remove(d => true)
+      this.selection.options = []
+      this.selection.selected = []
       this.color.selected = null
       this.color.options = []
       this.size.selected = null
@@ -811,6 +834,8 @@ export default {
 
       xf.add(fullDataset)
 
+      this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
+
       this.color.options = [
         {
           id: columns.id,
@@ -904,14 +929,14 @@ export default {
     selectByAreas (layer) {
       // console.log('selectByAreas', layer, layer.features[0])
       if (!layer || layer.features.length === 0) {
-        this.selectedIds = []
+        this.selection.selected = []
         return
       }
       const allRows = xf.all()
       if (this.draw.operation === 'intersection') {
-        this.selectedIds = this.selectByAreasIntersection(allRows, layer)
+        this.selection.selected = this.selectByAreasIntersection(allRows, layer)
       } else if (this.draw.operation === 'union') {
-        this.selectedIds = this.selectByAreasUnion(allRows, layer)
+        this.selection.selected = this.selectByAreasUnion(allRows, layer)
       } else {
         alert('Invalid area selection operation')
       }
@@ -933,18 +958,18 @@ export default {
       return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
     selectId (id) {
-      // console.log('app:selectId', id, this.selectedIds.includes(id))
-      if (this.selectedIds.includes(id)) {
-        const index = this.selectedIds.findIndex(d => d === id)
+      console.log('app:selectId', id, this.selection.selected.includes(id))
+      if (this.selection.selected.includes(id)) {
+        const index = this.selection.selected.findIndex(d => d === id)
         if (index > -1) {
-          this.selectedIds.splice(index, 1)
+          this.selection.selected.splice(index, 1)
         }
       } else {
-        this.selectedIds.push(id)
+        this.selection.selected.push(id)
       }
     },
     unselectAll () {
-      this.selectedIds = []
+      this.selection.selected = []
       this.clearDraw()
     },
     toggleDraw () {
