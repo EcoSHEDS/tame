@@ -556,8 +556,8 @@ export default {
       zoom: 5,
       transparency: 0.8,
       jitter: {
-        x: 0.1,
-        y: 0.1
+        x: 0,
+        y: 0
       },
       hoverArrows: true,
       hoverColor: true,
