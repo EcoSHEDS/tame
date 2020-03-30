@@ -198,14 +198,36 @@ export default {
         })
       this.chart.xAxis().ticks(4, 's')
     } else if (variable.type === 'datetime') {
-      const margins = { top: 4, right: 10, bottom: 16, left: 30 }
-      const dim = xf.dimension(d => d3.utcWeek(d[this.project.columns.datetime]))
-      const group = dim.group().reduceCount()
-      const timeExtent = d3.extent(xf.all().map(d => d3.utcWeek(d[this.project.columns.datetime])))
-      timeExtent[1] = this.$moment(timeExtent[1]).add(1, 'day').toDate()
+      const margins = { top: 4, right: 10, bottom: 18, left: 30 }
+
+      const timeExtent = d3.extent(xf.all().map(d => d[this.project.columns.datetime]))
+
+      const start = this.$moment(timeExtent[0])
+      const end = this.$moment(timeExtent[1])
+      const durationDays = this.$moment.duration(end.diff(start)).as('days')
+
+      let interval = d3.utcMonth
+      let xUnits = d3.utcMonths
+      let label = 'Month'
+
+      if (durationDays < 120) {
+        interval = d3.utcDay
+        xUnits = d3.utcDays
+        label = 'Day'
+      } else if (durationDays < (365 * 1.5)) {
+        interval = d3.utcWeek
+        xUnits = d3.utcWeeks
+        label = 'Week'
+      }
+
+      const timeExtentInterval = timeExtent.map(interval)
+
+      const dim = xf.dimension(d => d[this.project.columns.datetime])
+      const group = dim.group(interval).reduceCount()
+
       this.filterRange = [
-        d3.utcWeek.floor(timeExtent[0]),
-        d3.utcWeek.ceil(timeExtent[1])
+        interval.floor(timeExtentInterval[0]),
+        interval.ceil(timeExtentInterval[1])
       ]
 
       this.chart = dc.barChart(el)
@@ -217,12 +239,12 @@ export default {
         .elasticY(true)
         .colors('#5095c3')
         .x(d3.scaleUtc().domain([
-          d3.utcWeek.floor(timeExtent[0]),
-          d3.utcWeek.ceil(timeExtent[1])
+          interval.floor(timeExtentInterval[0]),
+          interval.offset(interval.ceil(timeExtentInterval[1]), 1)
         ]))
-        .xUnits(d3.utcWeeks)
-        .yAxisLabel('# Obs')
-        .round(d3.utcDay.round)
+        .xUnits(xUnits)
+        .yAxisLabel(`# Obs per ${label}`)
+        // .round(d3.utcDay.round)
         .on('filtered', () => {
           const filter = this.chart.dimension().currentFilter()
           if (filter) {

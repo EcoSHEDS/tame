@@ -190,7 +190,7 @@ export default {
 
       const xy = d3.mouse(this)
       const color = vm.picker.context.getImageData(xy[0], xy[1], 1, 1).data
-      console.log('hover', color)
+
       let d
       if (color[3] > 0) {
         d = pickerMap.get(color.slice(0, 3).toString())
