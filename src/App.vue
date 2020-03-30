@@ -25,6 +25,7 @@
         </TameMapLayer> -->
         <TameMapLayerCanvas
           v-if="ready"
+          :dataset="dataset"
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
@@ -389,7 +390,7 @@
                           <span
                             v-if="index === 10"
                             class="grey--text caption"
-                          >(+{{ selection.selected.length - 1 }} others)</span>
+                          >(+{{ selection.selected.length - 1 }} more)</span>
                         </template>
                       </v-autocomplete>
 
@@ -545,6 +546,7 @@ export default {
     loading: false,
     ready: false,
     error: null,
+    dataset: [],
     tabs: {
       active: 0,
       collapse: false
@@ -749,12 +751,12 @@ export default {
         })
     },
     resetProject () {
-      console.log('resetProject', this.project)
+      // console.log('resetProject', this.project)
       this.clearProject()
       this.$nextTick(this.initProject)
     },
     initProject () {
-      console.log('initProject', this.project)
+      // console.log('initProject', this.project)
 
       if (!this.project) return
 
@@ -833,6 +835,7 @@ export default {
       this.tags.group = this.tags.dim.group().reduceCount()
 
       xf.add(fullDataset)
+      this.dataset = fullDataset
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
@@ -958,7 +961,7 @@ export default {
       return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
     selectId (id) {
-      console.log('app:selectId', id, this.selection.selected.includes(id))
+      // console.log('app:selectId', id, this.selection.selected.includes(id))
       if (this.selection.selected.includes(id)) {
         const index = this.selection.selected.findIndex(d => d === id)
         if (index > -1) {

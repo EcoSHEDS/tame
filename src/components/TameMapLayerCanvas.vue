@@ -13,6 +13,10 @@ const jitterIdMap = new Map()
 export default {
   name: 'TameMapLayerCanvas',
   props: {
+    dataset: {
+      type: Array,
+      required: true
+    },
     getColor: {
       type: Function,
       required: false,
@@ -80,26 +84,6 @@ export default {
   },
   computed: {
     ...mapGetters(['project']),
-    dataset () {
-      pickerMap.clear()
-      jitterIdMap.clear()
-
-      if (!this.project || !this.project.dataset || this.project.dataset.data.length === 0) return []
-      const dataset = this.project.dataset.data
-
-      // picker color lookup
-      dataset.forEach(d => {
-        pickerMap.set(this.getPickerColor(d.$index).toString(), d)
-      })
-
-      // jitter by ID
-      const ids = new Set(dataset.map(d => d[this.project.columns.id]))
-      ids.forEach(id => {
-        jitterIdMap.set(id, { x: Math.random(), y: Math.random() })
-      })
-
-      return dataset
-    },
     map () {
       return this.$parent.map
     },
@@ -117,8 +101,27 @@ export default {
       const latExtent = d3.extent(this.dataset.map(d => d[this.project.columns.latitude]))
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
     },
+    mappedDataset () {
+      pickerMap.clear()
+      jitterIdMap.clear()
+
+      if (this.dataset.length === 0) return
+
+      // picker color lookup
+      this.dataset.forEach(d => {
+        pickerMap.set(this.getPickerColor(d.$index).toString(), d)
+      })
+
+      // jitter by ID
+      const ids = new Set(this.dataset.map(d => d[this.project.columns.id]))
+      ids.forEach(id => {
+        jitterIdMap.set(id, { x: Math.random(), y: Math.random() })
+      })
+
+      return this.dataset
+    },
     jitterValues () {
-      const n = this.dataset.length
+      const n = this.mappedDataset.length
       const bbox = this.boundingBox
 
       if (n === 0 || !bbox) return []
@@ -134,7 +137,7 @@ export default {
       //   x: Math.round((Math.random() - 0.5) * dMax),
       //   y: Math.round((Math.random() - 0.5) * dMax)
       // }))
-      return this.dataset.map(d => ({
+      return this.mappedDataset.map(d => ({
         x: Math.round((jitterIdMap.get(d[this.project.columns.id]).x - 0.5) * dMax),
         y: Math.round((jitterIdMap.get(d[this.project.columns.id]).y - 0.5) * dMax)
       }))
@@ -187,7 +190,7 @@ export default {
 
       const xy = d3.mouse(this)
       const color = vm.picker.context.getImageData(xy[0], xy[1], 1, 1).data
-
+      console.log('hover', color)
       let d
       if (color[3] > 0) {
         d = pickerMap.get(color.slice(0, 3).toString())
@@ -288,8 +291,8 @@ export default {
             update => update,
             exit => exit.remove()
           )
-          .attr('cx', point.x + jitter.x * this.jitterX)
-          .attr('cy', point.y + jitter.y * this.jitterY)
+          .attr('cx', point.x + jitter.x * Math.pow(this.jitterX, 2))
+          .attr('cy', point.y + jitter.y * Math.pow(this.jitterY, 2))
           .attr('r', 0)
           .style('opacity', 0)
           .style('pointer-events', 'none')
@@ -373,7 +376,7 @@ export default {
         const pickerColor = this.getPickerColor(d.$index)
         this.picker.context.fillStyle = `rgb(${pickerColor})`
         this.picker.context.beginPath()
-        this.picker.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+        this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
         this.picker.context.fill()
       })
     },
@@ -462,7 +465,7 @@ export default {
           const pickerColor = this.getPickerColor(d.$index)
           this.picker.context.fillStyle = `rgb(${pickerColor})`
           this.picker.context.beginPath()
-          this.picker.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+          this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
           this.picker.context.fill()
         })
 
@@ -483,7 +486,7 @@ export default {
           const pickerColor = this.getPickerColor(d.$index)
           this.picker.context.fillStyle = `rgb(${pickerColor})`
           this.picker.context.beginPath()
-          this.picker.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+          this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
           this.picker.context.fill()
         })
     },
