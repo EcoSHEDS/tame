@@ -3,6 +3,7 @@ import { mapGetters } from 'vuex'
 import * as d3 from 'd3'
 import d3Tip from 'd3-tip'
 import * as L from 'leaflet'
+import pad from 'pad'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
@@ -144,17 +145,76 @@ export default {
     }
   },
   mounted () {
-    const formatter = d3.format(',.3r')
-    this.tip.html(d => `
-      <strong>Tag ID: ${d[this.project.columns.id]}</strong><br>
-      Latitude: ${d[this.project.columns.latitude].toFixed(4)}<br>
-      Longitude: ${d[this.project.columns.longitude].toFixed(4)}<br>
-      Date/Time: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
-      Time to Next: ${isNaN(d.$duration) || !isFinite(d.$duration) ? 'N/A' : formatter(d.$duration) + ' days'}<br>
-      Distance to Next: ${isNaN(d.$distance) || !isFinite(d.$distance) ? 'N/A' : formatter(d.$distance) + ' m'}<br>
-      Velocity to Next: ${isNaN(d.$velocity) || !isFinite(d.$velocity) ? 'N/A' : formatter(d.$velocity) + ' m/day'}<br>
-      Bearing to Next: ${isNaN(d.$bearing) || !isFinite(d.$bearing) ? 'N/A' : d.$bearing.toFixed(0) + ' degrees'}<br>
-    `)
+    const formatDuration = (x) => {
+      const formatter = d3.format(',.2r')
+      if (isNaN(x) || !isFinite(x)) return 'None (Last Point)'
+      const duration = this.$moment.duration(x, 'days')
+      if (x < (1 / 24)) {
+        return formatter(duration.as('minutes')) + ' minutes'
+      } else if (x < 1) {
+        return formatter(duration.as('hours')) + ' hours'
+      } else {
+        return formatter(duration.as('days')) + ' days'
+      }
+    }
+    const formatDistance = (x) => {
+      const formatter = d3.format(',.2r')
+      if (isNaN(x) || !isFinite(x)) return 'None (Last Point)'
+      if (x < 1) {
+        return formatter(x * 100) + ' cm'
+      } else if (x > 1000) {
+        return formatter(x / 1000) + ' km'
+      } else {
+        return formatter(x) + ' m'
+      }
+    }
+    const formatVelocity = (x) => {
+      if (isNaN(x) || !isFinite(x)) return 'None (Last Point)'
+      return formatDistance(x) + '/day'
+    }
+    const formatBearing = (x) => {
+      if (isNaN(x) || !isFinite(x)) return 'None (Last Point)'
+      let direction
+      if (x < (1 / 16) * 360) {
+        direction = 'N'
+      } else if (x < (3 / 16) * 360) {
+        direction = 'NE'
+      } else if (x < (5 / 16) * 360) {
+        direction = 'E'
+      } else if (x < (7 / 16) * 360) {
+        direction = 'SE'
+      } else if (x < (9 / 16) * 360) {
+        direction = 'S'
+      } else if (x < (11 / 16) * 360) {
+        direction = 'SW'
+      } else if (x < (13 / 16) * 360) {
+        direction = 'W'
+      } else if (x < (15 / 16) * 360) {
+        direction = 'NW'
+      } else {
+        direction = 'N'
+      }
+      return `${x.toFixed(0)} degrees (${direction})`
+    }
+
+    this.tip.html(d => {
+      return `
+        <strong>${pad(10, 'Tag ID', '&nbsp;')}: ${d[this.project.columns.id]}</strong><br>
+        ${pad(10, 'Location', '&nbsp;')}: ${d[this.project.columns.latitude].toFixed(4)}, ${d[this.project.columns.longitude].toFixed(4)}<br>
+        ${pad(10, 'Timestamp', '&nbsp;')}: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
+
+        <br><strong>Total Observed Movement</strong><br>
+        ${pad(10, '# Obs', '&nbsp;')}: ${d.$total_n.toFixed(0)}<br>
+        ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$total_duration)}<br>
+        ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$total_distance)}<br>
+
+        <br><strong>Movement To Next Location</strong><br>
+        ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$duration)}<br>
+        ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$distance)}<br>
+        ${pad(10, 'Velocity', '&nbsp;')}: ${formatVelocity(d.$velocity)}<br>
+        ${pad(10, 'Bearing', '&nbsp;')}: ${formatBearing(d.$bearing)}<br>
+      `
+    })
 
     const size = this.map.getSize()
     const originProp = L.DomUtil.testProp(['transformOrigin', 'WebkitTransformOrigin', 'msTransformOrigin'])
@@ -336,7 +396,6 @@ export default {
       if (!this.project) return
 
       const data = xf.allFiltered()
-      this.base.context.lineWidth = 0.5
 
       if (this.allLines) {
         const line = d3.line()
@@ -361,13 +420,14 @@ export default {
         })
       }
 
+      this.base.context.lineWidth = 1
       data.forEach((d, i) => {
         const point = this.projectCanvasPoint(d)
 
         const r = this.getSize(d) * 10
 
-        this.base.context.fillStyle = d3.color(this.getColor(d)).formatRgb()
-        this.base.context.strokeStyle = d3.color('white').formatRgb()
+        this.base.context.fillStyle = this.getFillColor(d).formatRgb()
+        this.base.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
         this.base.context.beginPath()
         this.base.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
         this.base.context.fill()
@@ -379,6 +439,14 @@ export default {
         this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
         this.picker.context.fill()
       })
+    },
+    getFillColor (d) {
+      let color = d3.color(this.getColor(d))
+      if (color === null) {
+        color = d3.color('white')
+        color.opacity = 0
+      }
+      return color
     },
     renderOverlay () {
       // console.log('renderOverlay')
@@ -450,13 +518,13 @@ export default {
 
       // selected points
       this.overlay.context.lineWidth = 2
-      this.overlay.context.strokeStyle = d3.color('white').formatRgb()
       selectedPoints
         .forEach((d) => {
           const point = this.projectCanvasPoint(d)
           const r = this.getSize(d) * 10
 
-          this.overlay.context.fillStyle = d3.color(this.getColor(d)).formatRgb()
+          this.overlay.context.fillStyle = this.getFillColor(d).formatRgb()
+          this.overlay.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
           this.overlay.context.beginPath()
           this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
           this.overlay.context.fill()
@@ -471,13 +539,13 @@ export default {
 
       // hover points
       this.overlay.context.lineWidth = 2
-      this.overlay.context.strokeStyle = d3.color('white').formatRgb()
       hoverPoints
         .forEach((d) => {
           const point = this.projectCanvasPoint(d)
           const r = this.getSize(d) * 10
 
-          this.overlay.context.fillStyle = d3.color(this.getColor(d)).formatRgb()
+          this.overlay.context.fillStyle = this.getFillColor(d).formatRgb()
+          this.overlay.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
           this.overlay.context.beginPath()
           this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
           this.overlay.context.fill()
@@ -559,11 +627,11 @@ canvas {
 .d3-tip {
   line-height: 1;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.75);
   color: #000;
-  border-radius: 2px;
+  border-radius: 4px;
   pointer-events: none;
-  font-family: sans-serif;
+  font-family: 'Roboto Mono', monospace;
   z-index: 1000;
   margin-left: 20px;
 }

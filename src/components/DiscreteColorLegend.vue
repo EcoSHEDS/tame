@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="tame-discrete-color-legend">
     <div ref="svgContainer"></div>
     <div class="subheading ml-3 mb-4" v-if="variable.domain.length > maxCount">
       ... and {{ variable.domain.length - 10 }} more
@@ -9,16 +9,11 @@
 
 <script>
 import * as d3 from 'd3'
+import { mapGetters } from 'vuex'
 
 export default {
-  name: 'TameLegendColorDiscrete',
+  name: 'DiscreteColorLegend',
   components: {
-  },
-  props: {
-    variable: {
-      type: Object,
-      required: true
-    }
   },
   data () {
     return {
@@ -33,31 +28,26 @@ export default {
         right: 20,
         top: 0,
         bottom: 0
-      },
-      colorScheme: 'Viridis'
+      }
     }
   },
   computed: {
+    ...mapGetters({
+      scale: 'colorScale',
+      variable: 'colorVariable'
+    }),
     domain () {
       return this.variable ? this.variable.domain.slice(0, this.maxCount) : []
     },
     height () {
       return this.domain.length * (this.itemRadius * 2 + this.itemPadding) + this.margins.top + this.margins.bottom - 10
-    },
-    colorScale () {
-      // console.log('tame-legend-color-discrete:colorScale', this.variable)
-      let scale
-      if (this.variable && this.variable.type === 'discrete') {
-        scale = d3.scaleOrdinal(d3.schemeCategory10)
-          .domain(this.domain)
-      } else {
-        scale = (x) => '#AAAAAA'
-      }
-      return scale
     }
   },
   watch: {
     variable () {
+      this.render()
+    },
+    scale () {
       this.render()
     }
   },
@@ -69,13 +59,8 @@ export default {
   },
   methods: {
     render () {
-      // console.log('tame-legend-color-discrete:render()', this.variable)
+      console.log('DiscreteColorLegend:render()')
       this.clear()
-      this.renderColor()
-    },
-    renderColor () {
-      if (!(this.variable && this.variable.type === 'discrete')) return
-      // console.log('tame-legend-color-discrete:renderColor()', this.variable)
 
       this.svg = d3.select(this.$refs.svgContainer)
         .append('svg')
@@ -97,7 +82,7 @@ export default {
         .attr('cy', (d, i) => this.itemRadius + (this.itemRadius * 2 + this.itemPadding) * i)
         .attr('r', this.itemRadius)
         .attr('fill', (d) => {
-          return this.colorScale(d)
+          return this.scale(d)
         })
 
       items.append('text')
@@ -107,7 +92,6 @@ export default {
         .text(d => d)
     },
     clear () {
-      // console.log('tame-legend-color-discrete:clear()', this.svg)
       this.svg && this.svg.remove()
     }
   }

@@ -5,7 +5,7 @@
 <script>
 import * as d3 from 'd3'
 
-import { colorSchemes } from '@/constants'
+import { generateColorScale } from '@/lib/colors'
 
 export default {
   name: 'ColorBar',
@@ -17,14 +17,16 @@ export default {
     scheme: {
       type: String,
       required: false,
-      default: 'Viridis',
-      validator (value) {
-        return colorSchemes.includes(value)
-      }
+      default: 'Viridis'
     },
     invert: {
       type: Boolean,
       default: false
+    },
+    type: {
+      type: String,
+      default: 'continuous',
+      required: true
     },
     width: {
       type: Number,
@@ -33,10 +35,6 @@ export default {
     height: {
       type: Number,
       default: 30
-    },
-    variable: {
-      type: Object,
-      required: true
     }
   },
   data () {
@@ -45,30 +43,9 @@ export default {
     }
   },
   computed: {
-    colorScheme () {
-      return this.scheme
-    },
-    colorInvert () {
-      return this.invert
-    },
-    valueScale () {
-      console.log('tame-color-bar:valueScale', this.variable)
-      const domain = this.variable ? this.variable.domain : [0, 1]
-      return d3.scaleLinear()
-        .domain(domain)
-        .range([0, 1])
-        .clamp(true)
-    },
     colorScale () {
-      console.log('tame-color-bar:colorScale', this.variable)
-      let scale
-      if (this.variable && this.variable.type === 'continuous') {
-        scale = d3.scaleSequential(d3[`interpolate${this.colorScheme}`])
-      } else {
-        alert('Error! Color bar variable is missing or invalid (must be continuous)')
-        scale = (x) => '#AAAAAA'
-      }
-      return scale
+      // console.log('TameColorBar:colorScale', this.type, this.scheme, this.invert)
+      return generateColorScale(this.type, this.scheme, this.invert)
     }
   },
   mounted () {
@@ -79,13 +56,26 @@ export default {
     this.render()
   },
   watch: {
-    colorScale () {
+    type () {
+      this.render()
+    },
+    scheme () {
+      this.render()
+    },
+    invert () {
       this.render()
     }
   },
   methods: {
     render () {
       this.clear()
+      if (this.type === 'continuous') {
+        this.renderContinuous()
+      } else {
+        this.renderDiscrete()
+      }
+    },
+    renderContinuous () {
       const defs = this.svg.append('defs')
 
       const linearGradient = defs.append('linearGradient')
@@ -100,7 +90,6 @@ export default {
       this.svg.append('rect')
         .attr('width', this.width)
         .attr('height', this.height)
-        // .attr('x', this.margins.left)
         .style('fill', `url(#linear-gradient-${this.id}`)
 
       const delta = 0.2
@@ -113,6 +102,19 @@ export default {
         .append('stop')
         .attr('offset', d => d)
         .attr('stop-color', d => this.colorScale(d))
+    },
+    renderDiscrete () {
+      const n = 9
+      const values = d3.range(n)
+
+      this.svg.selectAll('rect')
+        .data(values, d => d)
+        .enter()
+        .append('rect')
+        .attr('width', this.width / n)
+        .attr('height', this.height)
+        .attr('x', (d) => d * this.width / n)
+        .attr('fill', this.colorScale)
     },
     clear () {
       this.svg.select('defs').remove()

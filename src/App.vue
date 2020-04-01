@@ -116,15 +116,16 @@
                     <v-card-text>
                       <v-autocomplete
                         v-model="color.selected"
+                        :items="color.options"
                         label="Color By"
                         item-value="id"
                         item-text="name"
                         return-object
                         clearable
                         outlined
+                        dense
                         hide-details
-                        @change="selectOption"
-                        :items="color.options">
+                        @change="changeColor">
                       </v-autocomplete>
                       <v-autocomplete
                         v-model="size.selected"
@@ -134,12 +135,14 @@
                         return-object
                         clearable
                         outlined
+                        dense
                         hide-details
-                        class="my-4"
+                        class="mt-4"
                         @change="selectOption"
                         :items="size.options">
                       </v-autocomplete>
                       <v-autocomplete
+                        v-if="outline.options.length > 0"
                         v-model="outline.selected"
                         label="Outline By"
                         item-value="id"
@@ -147,7 +150,9 @@
                         return-object
                         clearable
                         outlined
+                        dense
                         hide-details
+                        class="mt-4"
                         @change="selectOption"
                         :items="outline.options">
                       </v-autocomplete>
@@ -183,7 +188,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             Adjust the transparency of observation points (circles), excluding those that are selected or hovered over.
@@ -214,7 +219,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             Add horizontal jitter (random variation) to observation locations (circles). Useful when there is a lot of overlap.
@@ -245,7 +250,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             Add vertical jitter (random variation) to observation locations (circles). Useful when there is a lot of overlap.
@@ -255,7 +260,7 @@
                       <v-row no-gutters class="my-2">
                         <v-col cols="7" class="pb-0">
                           <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Show Arrows on Hover
+                            Show Movement Arrows on Hover
                           </div>
                         </v-col>
                         <v-col cols="4" class="pb-0">
@@ -274,7 +279,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             When the mouse is hovered over an observed location (circle),
@@ -286,7 +291,7 @@
                       <v-row no-gutters class="my-2">
                         <v-col cols="7" class="pb-0">
                           <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Color <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> Lines on Hover
+                            Color <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> Movement on Hover
                           </div>
                         </v-col>
                         <v-col cols="4" class="pb-0">
@@ -305,7 +310,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             When the mouse is hovered over an observed location (circle),
@@ -337,7 +342,7 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
                             Show movement lines connecting each pair of observations for all tags, not just those that are selected or hovered.
@@ -452,7 +457,7 @@
                 <!-- Filter -->
                 <v-tab-item :transition="false" :reverse-transition="false">
                   <v-card :max-height="maxHeight" style="overflow-y: auto" v-show="!tabs.collapse">
-                    <v-card-text>
+                    <v-card-text class="mb-0 pb-0">
                       <v-autocomplete
                         :items="filters.options"
                         v-model="filters.selected"
@@ -477,6 +482,11 @@
                         Click and drag on a histogram to filter the dataset.
                         Only observations that meet ALL filter criteria are shown on the map.
                       </p>
+                    </v-card-text>
+
+                    <v-divider class="my-0 py-0" v-if="filters.selected.length > 0"></v-divider>
+
+                    <v-card-text class="mt-0 py-0" v-if="filters.selected.length > 0">
                       <TameFilter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></TameFilter>
                     </v-card-text>
                   </v-card>
@@ -529,6 +539,8 @@ import TameMap from '@/components/TameMap'
 import TameMapLayerCanvas from '@/components/TameMapLayerCanvas'
 import TameFilter from '@/components/TameFilter'
 import TameLegend from '@/components/TameLegend'
+
+window.d3 = d3
 
 export default {
   name: 'App',
@@ -641,26 +653,34 @@ export default {
     }
   }),
   computed: {
-    ...mapGetters(['user', 'project', 'isOwner', 'usgs']),
+    ...mapGetters(['user', 'project', 'isOwner', 'usgs', 'colorScale']),
     maxHeight () {
       return (this.$vuetify.breakpoint.height - 279 - (this.usgs ? 72 + 59 : 0)) + 'px'
     },
-    colorScale () {
-      if (!this.project) return null
-      let valueScale, colorScale, scale
-      if (this.color.selected && this.color.selected.type === 'continuous') {
-        valueScale = d3.scaleLinear()
-          .domain(this.color.selected.domain)
-          .range([0, 1])
-          .clamp(true)
-        colorScale = d3.scaleSequential(d3.interpolateViridis)
-        scale = (x) => colorScale(valueScale(x))
-      } else {
-        scale = d3.scaleOrdinal(d3.schemeCategory10)
-          .domain(this.color.selected.domain)
-      }
-      return scale
+    colorValueScale () {
+      // maps raw value to [0, 1] for input to colorScale
+      if (!this.color.selected || !this.color.selected.type === 'continuous') return d => d
+      return d3.scaleLinear()
+        .domain(this.color.selected.domain)
+        .range([0, 1])
+        .clamp(true)
     },
+    // colorScale () {
+    //   if (!this.project) return null
+    //   let valueScale, colorScale, scale
+    //   if (this.color.selected && this.color.selected.type === 'continuous') {
+    //     valueScale = d3.scaleLinear()
+    //       .domain(this.color.selected.domain)
+    //       .range([0, 1])
+    //       .clamp(true)
+    //     colorScale = d3.scaleSequential(d3.interpolateViridis)
+    //     scale = (x) => colorScale(valueScale(x))
+    //   } else {
+    //     scale = d3.scaleOrdinal(d3.schemeCategory10)
+    //       .domain(this.color.selected.domain)
+    //   }
+    //   return scale
+    // },
     outlineScale () {
       if (!this.project) return null
       return d3.scaleOrdinal(['orangered', 'white'])
@@ -683,6 +703,9 @@ export default {
     },
     project () {
       this.resetProject()
+    },
+    colorScale () {
+      evt.$emit('map:render')
     }
   },
   mounted () {
@@ -701,12 +724,19 @@ export default {
     evt.$off('filter', this.onFilter)
   },
   methods: {
-    ...mapActions(['loadProject']),
+    ...mapActions(['loadProject', 'setColorVariable']),
     closeDialog () {
       this.showDialog = false
       setTimeout(() => {
         this.$router.push('/')
       }, 200)
+    },
+    changeColor (variable) {
+      if (this.color.selected !== variable) {
+        this.color.selected = variable
+      }
+      this.setColorVariable(this.color.selected)
+      this.selectOption()
     },
     selectOption () {
       // instead of watching individual option selection
@@ -763,12 +793,10 @@ export default {
       const { columns, variables, dataset } = this.project
       const data = dataset.data
 
-      // const timeParser = d3.utcParse('%Y-%m-%dT%H:%M:%SZ')
       const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
 
       data.forEach((row, index) => {
         row.$index = index
-        // row[columns.datetime] = timeParser(row[columns.datetime])
         row[columns.datetime] = new Date(row[columns.datetime])
         row[columns.latitude] = +row[columns.latitude]
         row[columns.longitude] = +row[columns.longitude]
@@ -786,15 +814,7 @@ export default {
       groupByTag.forEach(d => {
         const n = d.values.length
 
-        if (n <= 1) {
-          mapByIndex.set(d.values[0].$index, {
-            $duration: -Infinity,
-            $distance: -Infinity,
-            $velocity: -Infinity,
-            $bearing: -Infinity
-          })
-          return
-        }
+        const calculatedValues = {}
 
         for (let i = 0; i < (n - 1); i++) {
           const start = d.values[i]
@@ -809,19 +829,41 @@ export default {
 
           const velocity = days > 0 ? meters / days : -Infinity
 
-          mapByIndex.set(start.$index, {
+          calculatedValues[start.$index] = {
             $duration: days,
             $distance: meters,
             $velocity: velocity,
             $bearing: bearing
-          })
+          }
         }
 
-        mapByIndex.set(d.values[n - 1].$index, {
+        calculatedValues[d.values[n - 1].$index] = {
           $duration: -Infinity,
           $distance: -Infinity,
           $velocity: -Infinity,
           $bearing: -Infinity
+        }
+
+        const summary = d.values.reduce((p, v) => {
+          const distance = calculatedValues[v.$index].$distance
+          const duration = calculatedValues[v.$index].$duration
+          p.count += 1
+          p.distance += isFinite(distance) ? distance : 0
+          p.duration += isFinite(duration) ? duration : 0
+          return p
+        }, {
+          count: 0,
+          distance: 0,
+          duration: 0
+        })
+
+        d.values.forEach(d => {
+          mapByIndex.set(d.$index, {
+            ...calculatedValues[d.$index],
+            $total_n: summary.count,
+            $total_distance: summary.distance,
+            $total_duration: summary.duration
+          })
         })
       })
 
@@ -839,35 +881,24 @@ export default {
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
-      this.color.options = [
+      const calculatedVariables = [
         {
-          id: columns.id,
-          name: 'Individual ID',
-          type: 'discrete',
-          domain: [...new Set(data.map(d => d[columns.id]))].sort(d3.ascending)
-        },
-        ...variables.filter(d => d.color)
-      ]
-      this.outline.options = variables.filter(d => d.outline)
-      this.size.options = variables.filter(d => d.size)
-      this.filters.options = [
-        { header: 'Primary Variables' },
-        {
-          id: 'datetime',
-          name: 'Date',
-          type: 'datetime'
-        },
-        {
-          id: columns.id,
-          name: 'Tag ID',
-          type: 'id'
-        },
-        { header: 'Calculated Variables' },
-        {
-          id: '$velocity',
-          name: 'Velocity (m/day)',
+          id: '$total_n',
+          name: 'Total # of Observations',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$velocity))]
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_n))]
+        },
+        {
+          id: '$total_distance',
+          name: 'Total Distance (m)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_distance))]
+        },
+        {
+          id: '$total_duration',
+          name: 'Total Time (days)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_duration))]
         },
         {
           id: '$distance',
@@ -882,19 +913,92 @@ export default {
           domain: [0, Math.ceil(d3.max(fullDataset, d => d.$duration))]
         },
         {
+          id: '$velocity',
+          name: 'Velocity to Next Location (m/day)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$velocity))]
+        },
+        {
           id: '$bearing',
-          name: 'Bearing to Next Location (deg)',
+          name: 'Bearing to Next Location (degrees from N)',
           type: 'continuous',
           domain: [0, 360]
-        },
-        { header: 'Additional Variables' },
-        ...variables.filter(d => d.filter)
+        }
       ]
 
-      this.color.selected = this.color.options.length > 0 ? this.color.options[0] : null
-      this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
-      this.size.selected = this.size.options.length > 0 ? this.size.options[0] : null
-      this.filters.selected = [this.filters.options[1]]
+      const uniqueIds = [...new Set(data.map(d => d[columns.id]))].sort(d3.ascending)
+      this.color.options = [
+        { header: 'Primary Variables' },
+        {
+          id: columns.id,
+          name: 'Individual Tag ID',
+          type: 'discrete',
+          domain: uniqueIds
+        },
+        { header: 'Calculated Variables' },
+        ...calculatedVariables
+      ]
+      const colorVariables = variables.filter(d => d.color)
+      if (colorVariables.length > 0) {
+        this.color.options = [
+          ...this.color.options,
+          { header: 'Dataset Variables' },
+          ...colorVariables
+        ]
+      }
+
+      this.size.options = [
+        { header: 'Calculated Variables' },
+        ...calculatedVariables
+      ]
+      const sizeVariables = variables.filter(d => d.size)
+      if (sizeVariables.length > 0) {
+        this.size.options = [
+          ...this.size.options,
+          { header: 'Dataset Variables' },
+          ...sizeVariables
+        ]
+      }
+
+      const outlineVariables = variables.filter(d => d.outline)
+      if (outlineVariables.length > 0) {
+        this.outline.options = [
+          { header: 'Dataset Variables' },
+          ...outlineVariables
+        ]
+      } else {
+        this.outline.options = []
+      }
+
+      this.filters.options = [
+        { header: 'Primary Variables' },
+        {
+          id: columns.id,
+          name: 'Individual Tag ID',
+          type: 'id'
+        },
+        {
+          id: 'datetime',
+          name: 'Date',
+          type: 'datetime'
+        },
+        { header: 'Calculated Variables' },
+        ...calculatedVariables
+      ]
+      if (variables.some(d => d.filter)) {
+        this.filters.options = [
+          ...this.filters.options,
+          { header: 'Dataset Variables' },
+          ...variables.filter(d => d.filter)
+        ]
+      }
+
+      // this.color.selected = this.color.options[1]
+      this.changeColor(this.color.options[1])
+      // this.size.selected = this.size.options[1]
+      // this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
+
+      this.filters.selected = [this.filters.options[1], this.filters.options[2]]
 
       this.selectOption()
       this.ready = true
@@ -904,7 +1008,10 @@ export default {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
         return '#888888'
       }
-      return this.colorScale(d[this.color.selected.id])
+      if (this.color.selected.type === 'continuous' && !isFinite(d[this.color.selected.id])) {
+        return null
+      }
+      return this.colorScale(this.colorValueScale(d[this.color.selected.id]))
     },
     getOutline (d) {
       if (!d || !this.outline.selected || d[this.outline.selected.id] === null) {

@@ -25,7 +25,7 @@
         </div>
       </div>
       <v-divider class="my-2"></v-divider>
-      <TameLegendColor :variable="colorVariable"></TameLegendColor>
+      <ColorLegend :variable="colorVariable"></ColorLegend>
       <TameLegendSize :variable="sizeVariable"></TameLegendSize>
       <TameLegendOutline :variable="outlineVariable"></TameLegendOutline>
     </v-card-text>
@@ -33,16 +33,17 @@
 </template>
 
 <script>
-import TameLegendColor from '@/components/TameLegendColor'
+import { mapGetters } from 'vuex'
+
+import ColorLegend from '@/components/ColorLegend'
 import TameLegendSize from '@/components/TameLegendSize'
 import TameLegendOutline from '@/components/TameLegendOutline'
-import { mapGetters } from 'vuex'
 
 export default {
   name: 'TameLegend',
   props: ['counts', 'colorVariable', 'sizeVariable', 'outlineVariable'],
   components: {
-    TameLegendColor,
+    ColorLegend,
     TameLegendSize,
     TameLegendOutline
   },
@@ -54,7 +55,7 @@ export default {
   computed: {
     ...mapGetters(['usgs']),
     maxHeight () {
-      return (this.$vuetify.breakpoint.height - 120 - (this.usgs ? 72 + 59 : 0)) + 'px'
+      return (this.$vuetify.breakpoint.height - 120 - (this.usgs ? 68 + 59 : 0)) + 'px'
     }
   }
 }

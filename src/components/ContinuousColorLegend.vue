@@ -1,21 +1,14 @@
 <template>
-  <div class="tame-legend-color-continuous">
+  <div class="tame-continuous-color-legend">
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3'
+import { mapGetters } from 'vuex'
 
 export default {
-  name: 'TameLegendColorContinuous',
-  components: {
-  },
-  props: {
-    variable: {
-      type: Object,
-      required: true
-    }
-  },
+  name: 'ContinuousColorLegend',
   data () {
     return {
       id: 'legend-color',
@@ -28,27 +21,23 @@ export default {
         right: 20,
         top: 10,
         bottom: 10
-      },
-      colorScheme: 'Viridis'
+      }
     }
   },
   computed: {
+    ...mapGetters({
+      scale: 'colorScale',
+      variable: 'colorVariable'
+    }),
     height () {
       return this.barHeight + this.margins.top + this.margins.bottom
-    },
-    colorScale () {
-      console.log('tame-legend-color-continuous:colorScale', this.variable)
-      let scale
-      if (this.variable && this.variable.type === 'continuous') {
-        scale = d3.scaleSequential(d3[`interpolate${this.colorScheme}`])
-      } else {
-        scale = (x) => '#AAAAAA'
-      }
-      return scale
     }
   },
   watch: {
     variable () {
+      this.render()
+    },
+    scale () {
       this.render()
     }
   },
@@ -60,14 +49,12 @@ export default {
   },
   methods: {
     render () {
-      console.log('tame-legend-color-continuous:render()', this.variable)
       this.clear()
       this.renderColor()
       this.renderAxis()
     },
     renderColor () {
       if (!(this.variable && this.variable.type === 'continuous')) return
-      console.log('tame-legend-color-continuous:renderColor()', this.variable)
 
       this.svg = d3.select(this.$el)
         .append('svg')
@@ -105,11 +92,10 @@ export default {
         .enter()
         .append('stop')
         .attr('offset', d => d)
-        .attr('stop-color', d => this.colorScale(d))
+        .attr('stop-color', d => this.scale(d))
     },
     renderAxis () {
       if (!(this.variable && this.variable.type === 'continuous')) return
-      console.log('tame-legend-color-continuous:renderAxis()', this.variable)
 
       const container = this.svg.select('g')
 
@@ -127,7 +113,6 @@ export default {
         .call(axis)
     },
     clear () {
-      console.log('tame-legend-color-continuous:clear()', this.svg)
       this.svg && this.svg.remove()
     }
   }
@@ -135,7 +120,7 @@ export default {
 </script>
 
 <style>
-.tame-legend-color-continuous g.tick > text {
+.tame-continuous-color-legend g.tick > text {
   fill: black;
   font-size: larger;
 }

@@ -1,5 +1,5 @@
 <template>
-  <v-card elevation-1 class="my-2">
+  <v-card elevation-1 class="my-4">
     <v-toolbar dense color="grey lighten-3" flat height="32" class="font-weight-bold">
       <span>
         {{ variable.name }}
@@ -133,7 +133,7 @@ export default {
         .elasticY(true)
         .colors('#5095c3')
         .transitionDelay(0)
-        .x(d3.scaleLinear().domain(variable.domain))
+        .x(d3.scaleLinear().domain([l, u + interval]))
         .yAxisLabel('# Obs')
         .on('filtered', () => {
           // console.log('continuous:filtered')

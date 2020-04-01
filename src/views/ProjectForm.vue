@@ -278,7 +278,7 @@ import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
 
-const alphaNum = helpers.regex('alphaNum', /^[a-zA-Z0-9\-_. \\(\\)]*$/)
+const alphaNum = helpers.regex('alphaNum', /^[a-zA-Z0-9\-_./ \\(\\)]*$/)
 
 export default {
   name: 'ProjectForm',
@@ -377,7 +377,7 @@ export default {
       const errors = []
       if (this.variable.status === 'READY') return errors
       !this.$v.variable.value.name.required && errors.push('Name is required.')
-      !this.$v.variable.value.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation.')
+      !this.$v.variable.value.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation ( \\-_./()).')
       !this.$v.variable.value.name.minLength && errors.push('Name must be at least 2 characters.')
       !this.$v.variable.value.name.maxLength && errors.push('Name cannot be more than 25 characters.')
       return errors
