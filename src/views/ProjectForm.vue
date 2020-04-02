@@ -604,7 +604,6 @@ export default {
         .items(Joi.string().min(1).required())
         .validate(values)
       if (error) {
-
         console.log(error)
         window.e = error
         return this.setError('columns', `<strong>Invalid Value in Individual Tag ID Column</strong><br><br>${error.message || error}`)

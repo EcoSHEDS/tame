@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
     "deploy": "yarn build && rsync -av dist/* jeff@ecosheds.org:/conte/www/dev/tame --delete",
     "api": "cd api && npm start",
@@ -40,9 +41,12 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.9.0",
     "@vue/cli-plugin-eslint": "^4.2.3",
+    "@vue/cli-plugin-unit-mocha": "^4.2.3",
     "@vue/cli-service": "^3.9.0",
     "@vue/eslint-config-standard": "^5.1.2",
+    "@vue/test-utils": "1.0.0-beta.31",
     "babel-eslint": "^10.0.3",
+    "chai": "^4.1.2",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-node": "^11.0.0",

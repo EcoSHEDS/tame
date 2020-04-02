@@ -22,5 +22,17 @@ module.exports = {
   'extends': [
     'plugin:vue/essential',
     '@vue/standard'
+  ],
+
+  overrides: [
+    {
+      files: [
+        '**/__tests__/*.{j,t}s?(x)',
+        '**/tests/unit/**/*.spec.{j,t}s?(x)'
+      ],
+      env: {
+        mocha: true
+      }
+    }
   ]
 }
