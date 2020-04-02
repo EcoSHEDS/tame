@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     render () {
-      console.log('DiscreteColorLegend:render()')
+      // console.log('DiscreteColorLegend:render()')
       this.clear()
 
       this.svg = d3.select(this.$refs.svgContainer)

@@ -1,36 +1,47 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Publish Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text v-if="!user">
-      <p>You must have an account to publish a project.</p>
-      <p>Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link>.</p>
+    <v-card-text v-if="!user" class="pt-4 pb-0">
+      <v-alert type="error" outlined prominent>
+        <div class="title">Not Logged In</div>
+        <p>You must be logged in to publish a project.</p>
+        <p>Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.</p>
+      </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="!project">
-      <p>No project could be found.</p>
+    <v-card-text v-else-if="!project" class="pt-4">
+      <v-alert type="error" outlined prominent>
+        <div class="title">Project Not Found</div>
+        <p>An existing project could not be found.</p>
+        <p>Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</p>
+      </v-alert>
     </v-card-text>
-    <v-card-text v-else>
-      <p class="body-1">
-        Publishing a project will save the dataset to the TAME web server and make it publicly accessible to any user.
-        Once it is published, you can continue to make changes to the project settings or upload new versions of the dataset.
-        You can also un-publish the project at any time to remove it from the server and make it no longer accessible to other users.
-      </p>
-
-      <v-divider></v-divider>
-
-      <p class="subtitle mt-4">
-        Please fill out the following form, and click Submit to publish this project.
-      </p>
+    <v-card-text v-else class="pt-4">
+      <v-alert type="info" outlined prominent class="mb-8">
+        <p>
+          Publishing a project will save the dataset to the TAME web server and make it publicly accessible to any user from the
+          <strong>Load Project</strong> screen.
+        </p>
+        <p>
+          Once it is published, you can continue to make changes to the project by uploading new versions of the dataset or changing the variable settings.
+        </p>
+        <p class="mb-0">
+          You will also be able to <strong>Unpublish</strong> the project at any time to remove it from the server.
+        </p>
+      </v-alert>
 
       <v-text-field
         label="Project Name"
         v-model="form.name"
         counter
+        outlined
         class="my-4"
+        hint="Provide a brief name for the project (e.g., location and species)"
+        persistent-hint
         :error-messages="nameErrors">
       </v-text-field>
 
@@ -38,6 +49,7 @@
         label="Project ID"
         v-model="form.id"
         counter
+        outlined
         :disabled="!isNew"
         :error-messages="idErrors"
         class="my-4"
@@ -50,9 +62,10 @@
         v-model="form.description"
         rows="3"
         counter
+        outlined
         :error-messages="descriptionErrors"
-        class="my-4"
-        hint="Briefly describe your dataset (who, what, where, why, when and how)."
+        class="mt-4"
+        hint="Describe your dataset (who, what, where, why, when and how)."
         persistent-hint>
       </v-textarea>
 
@@ -60,19 +73,32 @@
         {{serverError}}
       </v-alert>
 
-      <v-alert type="success" v-if="status === 'SUCCESS'" outlined class="mt-4">
-        <strong>Success! Your project has been published.</strong><br><br>
-        You can find it on the <router-link :to="{ name: 'listProjects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
-        <pre class="grey--text text--darken-2">
-          <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
-        </pre>
+      <v-alert type="success" v-if="status === 'SUCCESS'" outlined prominent class="mt-4">
+        <div class="title">Success! Your project has been published.</div>
+        <br>
+        <div>
+          You can find it on the <router-link :to="{ name: 'listProjects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
+          <pre class="grey--text text--darken-2 ml-4">
+            <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
+          </pre>
+        </div>
       </v-alert>
     </v-card-text>
 
-    <v-card-actions class="mx-4 pb-4">
-      <v-btn @click="submit" color="primary" class="mr-4" :loading="status === 'PENDING'" :disabled="!user || !project || status === 'SUCCESS'">submit</v-btn>
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
+      <v-btn
+        v-if="!!user && !!project"
+        @click="submit"
+        color="primary"
+        class="mr-4"
+        :loading="status === 'PENDING'"
+        :disabled="!user || !project || status === 'SUCCESS'">
+        submit
+      </v-btn>
       <v-spacer></v-spacer>
-      <v-btn to="/">close</v-btn>
+      <v-btn text to="/">close</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -206,7 +232,7 @@ export default {
         }
 
         if (this.isNew) {
-          console.log('post', newProject)
+          // console.log('post', newProject)
           project = await this.$http.post('/projects', newProject, {
             headers: {
               Authorization: token

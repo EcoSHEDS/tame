@@ -1,36 +1,84 @@
 <template>
   <v-card>
     <v-toolbar color="primary" dark class="mb-0">
-      <span class="title" v-if="isNew">Create New Project</span>
+      <span class="title" v-if="isNew">Create a New Project</span>
       <span class="title" v-else>Edit Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
     <v-stepper v-model="step" vertical class="elevation-0 pb-4">
-      <v-stepper-step :complete="file.status === 'SUCCESS'" step="1">Load dataset file</v-stepper-step>
+      <v-stepper-step :complete="file.status === 'SUCCESS'" step="1">Load dataset file ({{file.status}})</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
-          <v-card-text class="py-0">
+          <v-card-text class="py-0 body-2">
+            <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
-              The dataset file must be in comma-separated values (CSV) format and contain at least four columns for the tag/individual ID, date/time, latitude, and longitude.
+              TAME is designed to visualize the movement of tagged individuals over space and time.
             </p>
+            <p>
+              The dataset can be provided as a simple table where each row corresponds to the observed location of one individual
+              at a specific point in time, and each column corresponds to a variable specifying some attribute
+              about that observation or individual.
+            </p>
+            <p>
+              The dataset must be provided in comma-separated values (CSV) format
+              (see <a href="https://support.office.com/en-us/article/import-or-export-text-txt-or-csv-files-5250ac4c-663c-47ce-937b-339e391393ba" target="_blank">How to Export to a CSV File from Excel</a>).
+              and contain these four columns (note that columns names can vary):
+            </p>
+            <ul class="mb-4">
+              <li>
+                <span class="font-weight-medium">Individual Tag ID</span>: unique IDs assigned to each individual.
+              </li>
+              <li>
+                <span class="font-weight-medium">Timestamp</span>: date and time when the individual was observed. Both the date and
+                time must be combined in a single column and use ISO format (YYYY-MM-DD HH:mm) (see
+                <a href="https://www.myonlinetraininghub.com/excel-date-and-time-formatting" target="_blank">Excel Date and Time Formatting</a>,
+                use a custom format type of "yyyy-mm-dd hh:mm" before exporting to a CSV). Time portion may be omitted if the timeseries uses
+                daily time steps.
+              </li>
+              <li>
+                <span class="font-weight-medium">Latitude</span>: latitude in decimal degrees (e.g., 42.43294).
+              </li>
+              <li>
+                <span class="font-weight-medium">Longitude</span>: longitude in decimal degrees (e.g., -72.59322). Values must be negative when west of the central Meridian (e.g. U.S.A.).
+              </li>
+            </ul>
+            <p>
+              In addition to these four columns, the dataset may contain any number of additional variables (e.g. sex, length, cohort)
+              that can be used for assigning the color/size/outline of each observation point and/or for filtering the dataset.
+            </p>
+
             <v-file-input
               ref="fileInput"
               v-model="file.input"
               label="Select the dataset file"
               outlined
-              class="mt-8"
+              class="mb-4 mt-8"
               prepend-inner-icon="$file"
-              prepend-icon=""
+              prepend-icon
+              hide-details
               @change="loadLocalFile">
             </v-file-input>
             <div v-if="file.status === 'SUCCESS'">
-              <v-alert type="success" dense outlined :value="!!file.value.local">
-                File has been successfully loaded from your computer.
+              <v-alert type="success" dense outlined :value="!!file.value">
+                <div class="font-weight-bold" v-if="!!file.value.local">
+                  File Successfully Loaded from Your Computer
+                </div>
+                <div class="font-weight-bold" v-else-if="!file.value.local">
+                  File Successfully Loaded from the Server
+                </div>
+                <div class="mt-4 font-family-mono">
+                  Filename: <strong>{{ file.value.name }}</strong><br>
+                  &nbsp;&nbsp;# Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
+                  &nbsp;Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
+                </div>
               </v-alert>
-              <v-alert type="info" dense outlined :value="!file.value.local">
-                To update the dataset, select a new file from your computer.
+              <v-alert type="info" dense outlined :value="!!file.value && !file.value.local">
+                <div class="font-weight-bold">
+                  To update the dataset, use the input box above to load a new file from your computer, and then proceed
+                  through the remaining steps.
+                </div>
               </v-alert>
               <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000">
                 <div class="font-weight-bold">Large File Detected</div>
@@ -38,14 +86,6 @@
                 For optimal performance, reduce the file size by including fewer individuals, limiting the overall time period, or aggregating
                 time steps (e.g. hourly to daily timesteps).
               </v-alert>
-              <div class="subtitle-1 font-weight-bold">
-                Current File
-              </div>
-              <div class="ml-4 mb-4">
-                Filename: <strong>{{ file.value.name }}</strong><br>
-                # Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
-                Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
-              </div>
             </div>
             <v-alert type="error" outlined :value="file.status === 'ERROR'">
               <span v-html="file.error"></span>
@@ -57,35 +97,40 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="columns.status === 'SUCCESS'" step="2">Define primary variables</v-stepper-step>
+      <v-stepper-step :rules="[() => columns.status !== 'ERROR']" :complete="columns.status === 'SUCCESS'" step="2">Select primary variables ({{columns.status}})</v-stepper-step>
       <v-stepper-content step="2">
         <v-card>
           <v-card-text class="py-0" v-if="file.value">
+            <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
-              Select the column names for the primary variables (ID, datetime, latitude, longitude).
+              Select the column name for each of the four primary variables.
             </p>
 
-            <v-row>
+            <v-row class="mt-8">
               <v-col>
                 <v-select
                   :items="file.parsed.meta.fields"
                   v-model="columns.value.id"
-                  label="Select individual (tag) ID column"
+                  label="Select individual/tag ID column"
                   outlined
                   required
-                  :error-messages="columnsIdErrors">
+                  hint="Defines which observations are associated with each individual."
+                  persistent-hint
+                  :error-messages="columnsIdErrors"
+                  @change="validateColumns">
                 </v-select>
               </v-col>
               <v-col>
                 <v-select
                   :items="file.parsed.meta.fields"
                   v-model="columns.value.datetime"
-                  label="Select date/time column"
+                  label="Select timestamp column"
                   outlined
                   required
                   hint="Timestamps must be in ISO format (e.g., YYYY-MM-DD HH:mm)."
                   persistent-hint
-                  :error-messages="columnsDatetimeErrors">
+                  :error-messages="columnsDatetimeErrors"
+                  @change="validateColumns">
                 </v-select>
               </v-col>
             </v-row>
@@ -94,24 +139,26 @@
                 <v-select
                   :items="file.parsed.meta.fields"
                   v-model="columns.value.latitude"
-                  label="Select latitude variable"
+                  label="Select latitude column"
                   outlined
                   required
                   hint="Latitude must be in decimal degrees."
                   persistent-hint
-                  :error-messages="columnsLatitudeErrors">
+                  :error-messages="columnsLatitudeErrors"
+                  @change="validateColumns">
                 </v-select>
               </v-col>
               <v-col>
                 <v-select
                   :items="file.parsed.meta.fields"
                   v-model="columns.value.longitude"
-                  label="Select longitude variable"
+                  label="Select longitude column"
                   outlined
                   required
                   hint="Longitude must be in decimal degrees. Values should be negative for U.S.A."
                   persistent-hint
-                  :error-messages="columnsLongitudeErrors">
+                  :error-messages="columnsLongitudeErrors"
+                  @change="validateColumns">
                 </v-select>
               </v-col>
             </v-row>
@@ -121,36 +168,37 @@
           </v-card-text>
           <v-card-text v-else>
             <v-alert type="error" outlined>
-              <strong>File not found</strong><br><br>
-              Please return to previous step.
+              <div class="title">File Not Found</div>
+              Please return to previous step to load a file.
             </v-alert>
           </v-card-text>
-          <!-- <v-card-text>
-            <pre>
-              status: {{ columns.status }}
-              error: {{ columns.error || 'none' }}
-              $invalid: {{ $v.columns.value.$invalid }}
-              $dirty: {{ $v.columns.value.$dirty }}
-              values: {{ columns.value }}
-            </pre>
-          </v-card-text> -->
           <v-card-actions>
-            <v-btn color="default" @click="prevColumns" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn text color="default" @click="prevColumns" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
             <v-btn color="primary" @click="nextColumns" class="pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="variables.status === 'SUCCESS'" step="3">Define additional variables</v-stepper-step>
+      <v-stepper-step :complete="variables.status === 'SUCCESS'" step="3">Configure additional variables ({{variables.status}})</v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
           <v-card-text class="py-0" v-if="variables.value.length > 0">
+            <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
-              For each additional variable, please provide a descriptive label (default is to use the column name),
-              select the variable type (continuous or discrete), and specify the types of how this variable can be used in the application
-              (e.g. as a crossfilter or for assigning colors to the observed locations on the map).
+              For each additional variable, provide a brief label,
+              select the type (continuous or discrete), and specify which options can be used with this variable
+              (e.g. for generating crossfilter histograms or for assigning colors to the observed locations).
             </p>
-            <v-row>
+            <p>
+              Initially, the form will include all additional variables in the dataset. However,
+              you may exclude a specific variable by selecting it from the list and checking the "Exclude Variable" option.
+            </p>
+            <p>
+              The form will use the column name as the default label, and make an educated guess about the type of each variable.
+              Only continuous variables can be used for the Size option, and only discrete variables with two unique values
+              can be used for the Outline option.
+            </p>
+            <v-row class="mt-8">
               <v-col md="4" class="mr-2">
                 <div>Column Names</div>
                 <v-list>
@@ -220,20 +268,23 @@
               </v-col>
             </v-row>
           </v-card-text>
-          <v-card-text v-else>
-            <p>Dataset does not contain any additional variables, please continue.</p>
+          <v-card-text v-else class="py-0">
+            <v-alert type="info" outlined dense>
+              <div class="font-weight-bold">Additional Variables Not Found</div>
+              Dataset file does not contain any additional variables. Please continue to the final step.
+            </v-alert>
           </v-card-text>
           <v-alert type="error" :value="variables.status === 'ERROR' && variables.error" class="mt-8" outlined>
             <span v-html="variables.error"></span>
           </v-alert>
           <v-card-actions class="mt-4">
-            <v-btn color="default" @click="prevVariables" class="mx-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="nextVariables" class="mx-4 pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn text color="default" @click="prevVariables" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="nextVariables" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="4">Finish</v-stepper-step>
+      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="4">Finish ({{finish.status}})</v-stepper-step>
       <v-stepper-content step="4">
         <v-card>
           <v-card-text v-if="!(project && project.id)">
@@ -243,18 +294,19 @@
               You can also <strong>Publish</strong> your project to save it to the TAME server and make it available to other users.
             </v-alert>
           </v-card-text>
-          <v-card-text v-else>
-            <v-alert type="success" outlined prominent>
-              <div class="title">All done!</div>
+          <v-card-text v-else class="pb-0">
+            <v-alert type="success" outlined>
+              <div class="font-weight-bold">All done!</div>
               Please click the Finish button to apply these changes.
             </v-alert>
-            <v-alert type="warning" outlined prominent>
-              <div class="title">Changes will NOT automatically be saved to server.</div>
-              To save these changes to the TAME server and make them available to other users, you must re-publish the project to the server by clicking the <strong>Publish</strong> button.
+            <v-alert type="warning" outlined>
+              <div class="font-weight-bold">Changes will NOT be automatically saved to server</div>
+              After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
+              in order to save these changes to the server.
             </v-alert>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="default" @click="step -= 1" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn text color="default" @click="step -= 1" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
             <v-btn color="primary" @click="submit" :loading="finish.status === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
@@ -262,7 +314,9 @@
     </v-stepper>
 
     <v-divider></v-divider>
-    <v-card-actions class="mx-4">
+
+    <v-card-actions class="mx-4 py-4">
+      <v-btn @click="submit" :loading="finish.status === 'PENDING'" color="primary" v-if="!isNew">Save Changes</v-btn>
       <v-spacer></v-spacer>
       <v-btn to="/" text>close</v-btn>
     </v-card-actions>
@@ -348,7 +402,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['project', 'user']),
+    ...mapGetters(['user', 'project']),
     columnsIdErrors () {
       const errors = []
       if (this.columns.status === 'READY') return errors
@@ -398,14 +452,25 @@ export default {
     this.isNew = this.$route.meta.isNew
 
     if (!this.isNew) {
-      this.file.value = this.project.file
-      this.file.parsed = this.project.dataset
+      if (!this.project) {
+        // view was opened without a project loaded (e.g. direct url)
+        this.isNew = true
+        return this.$router.push({ name: 'newProject' })
+      }
+      const project = JSON.parse(JSON.stringify(this.project))
+      if (this.project.file.local) {
+        project.file.local = this.project.file.local
+      }
+      this.file.value = project.file
+      this.file.parsed = project.dataset
       this.file.status = 'SUCCESS'
-      // this.columns.value = JSON.parse(JSON.stringify(this.project.columns))
-      // this.variables.value = JSON.parse(JSON.stringify(this.project.variables))
-      this.columns.value = this.project.columns
-      this.variables.value = this.project.variables
+      this.columns.value = project.columns
+      this.columns.status = 'SUCCESS'
+      this.variables.value = project.variables
+      this.variables.status = 'SUCCESS'
+      this.finish.status = 'SUCCESS'
     } else {
+      // clear currently loaded project when creating a new project
       this.loadProject()
     }
   },
@@ -413,7 +478,7 @@ export default {
     ...mapActions(['loadProject']),
     submit () {
       this.finish.status = 'PENDING'
-      const project = {
+      let project = {
         name: this.file.value.name,
         columns: this.columns.value,
         variables: this.variables.value.filter(d => !d.skip),
@@ -421,12 +486,10 @@ export default {
       }
 
       if (this.project && this.project.id) {
-        project.id = this.project.id
-        project.name = this.project.name
-        project.description = this.project.description
-        project.createdAt = this.project.createdAt
-        project.updatedAt = this.project.updatedAt
-        project.userId = this.project.userId
+        project = {
+          ...this.project,
+          ...project
+        }
       }
 
       return this.loadProject(project)
@@ -438,7 +501,13 @@ export default {
     setError (step, e) {
       this[step].status = 'ERROR'
       this[step].error = e ? (e.message || e) : null
+      return false
     },
+    setReady (step) {
+      this[step].status = 'READY'
+      this[step].error = null
+    },
+    // Step 1: File
     loadLocalFile () {
       if (!this.file.input) return
 
@@ -454,7 +523,7 @@ export default {
         this.$refs.fileInput.blur()
 
         return this.setError('file', `
-          <strong>Failed to load file (${localFile.name})</strong><br><br>
+          <div class="font-weight-bold">Failed to load file (${localFile.name})</div><br>
           File must be a comma-separated value (CSV) file with extension '.csv'.
         `)
       }
@@ -493,6 +562,7 @@ export default {
           this.file.parsed = results
           this.file.status = 'SUCCESS'
           this.resetColumns()
+          this.resetVariables()
         })
         .catch((e) => {
           this.setError('file', e)
@@ -503,19 +573,15 @@ export default {
         this.step += 1
       }
     },
-    prevStep () {
-      this.step -= 1
-    },
+    // Step 2: Columns
     resetColumns () {
-      this.columns.status = 'READY'
-      this.columns.error = null
-
-      if (!this.file.value) {
+      if (!this.file.value || !this.file.parsed) {
+        this.columns.status = 'READY'
         this.columns.value.id = null
         this.columns.value.datetime = null
         this.columns.value.latitude = null
         this.columns.value.longitude = null
-      } else {
+      } else if (this.columns.status !== 'READY') {
         const fields = this.file.parsed.meta.fields
         if (!fields.includes(this.columns.value.id)) {
           this.columns.value.id = null
@@ -529,60 +595,80 @@ export default {
         if (!fields.includes(this.columns.value.longitude)) {
           this.columns.value.longitude = null
         }
+
+        this.validateColumns()
       }
     },
-    prevColumns () {
-      if (this.columns.status !== 'SUCCESS') {
-        this.columns.status = 'READY'
-        this.columns.error = null
+    validateIdColumn (values) {
+      const { error } = Joi.array()
+        .items(Joi.string().min(1).required())
+        .validate(values)
+      if (error) {
+
+        console.log(error)
+        window.e = error
+        return this.setError('columns', `<strong>Invalid Value in Individual Tag ID Column</strong><br><br>${error.message || error}`)
       }
+      return true
+    },
+    validateColumns () {
+      console.log('validateColumns')
+
+      // skip validation if project is new and form has never been submitted
+      if (this.columns.status === 'READY') return true
+
+      if (!this.file.parsed) {
+        return this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+      }
+
+      // check that form is valid
+      this.$v.columns.value.$touch()
+      if (this.$v.columns.value.$invalid) {
+        return this.setError('columns')
+      }
+
+      // validate each column
+      const c = this.columns.value
+      const data = this.file.parsed.data.map(d => ({
+        id: d[c.id],
+        datetime: d[c.datetime],
+        latitude: +d[c.latitude],
+        longitude: +d[c.longitude]
+      }))
+
+      // if (!this.validateIdColumn(data.map(d => d.id))) {
+      //   return
+      // }
+      const rowSchema = Joi.object({
+        id: Joi.string().required(),
+        datetime: Joi.date().iso().required(),
+        latitude: Joi.number().required().min(-90).max(90),
+        longitude: Joi.number().required().min(-180).max(180)
+      })
+      const schema = Joi.array().items(rowSchema).required()
+
+      const { error } = schema.validate(data)
+
+      if (error) {
+        console.log(error)
+        return this.setError('columns', `<strong>Failed to validate primary columns</strong><br><br>${error.message || error}`)
+      }
+
+      this.columns.status = 'SUCCESS'
+      this.resetVariables()
+      return true
+    },
+    prevColumns () {
       this.step -= 1
     },
     nextColumns () {
-      this.$v.columns.value.$touch()
-      if (this.$v.columns.value.$invalid) {
-        this.setError('columns')
-        return
-      }
-
       this.columns.status = 'PENDING'
-
       this.validateColumns()
-        .then((result) => {
-          this.columns.status = 'SUCCESS'
-          this.step += 1
-          this.resetVariables()
-        })
-        .catch((e) => {
-          this.setError('columns', `<strong>Failed to validate primary columns</strong><br><br>${e.message || e}`)
-        })
-    },
-    validateColumns () {
-      if (!this.file.parsed) {
-        this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+      if (this.columns.status === 'SUCCESS') {
+        this.step += 1
       }
-      const c = this.columns.value
-      const rowSchema = Joi.object({
-        [c.id]: Joi.string().required(),
-        [c.datetime]: Joi.date().iso().required(),
-        [c.latitude]: Joi.number().required().min(-90).max(90),
-        [c.longitude]: Joi.number().required().min(-180).max(180)
-      })
-      const schema = Joi.array().items(rowSchema).required()
-      const data = this.file.parsed.data.map(d => ({
-        [c.id]: d[c.id],
-        [c.datetime]: d[c.datetime],
-        [c.latitude]: +d[c.latitude],
-        [c.longitude]: +d[c.longitude]
-      }))
-      return new Promise((resolve, reject) => {
-        const { error, value } = schema.validate(data)
-        if (error) {
-          return reject(error)
-        }
-        resolve(value)
-      })
     },
+    // Step 3: Variables
     resetVariables () {
       this.variables.status = 'READY'
       this.variables.error = null
@@ -650,6 +736,7 @@ export default {
       this.variables.status = 'SUCCESS'
       this.step += 1
     },
+    // Step 3a: Variable
     selectVariable (index) {
       if (this.variableIndex !== index) {
         this.variableIndex = index

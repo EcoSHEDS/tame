@@ -50,10 +50,7 @@ export default {
   methods: {
     render () {
       this.clear()
-      this.renderColor()
-      this.renderAxis()
-    },
-    renderColor () {
+
       if (!(this.variable && this.variable.type === 'continuous')) return
 
       this.svg = d3.select(this.$el)
@@ -93,11 +90,6 @@ export default {
         .append('stop')
         .attr('offset', d => d)
         .attr('stop-color', d => this.scale(d))
-    },
-    renderAxis () {
-      if (!(this.variable && this.variable.type === 'continuous')) return
-
-      const container = this.svg.select('g')
 
       container.append('g')
         .attr('class', 'legend-axis')

@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-toolbar color="primary" dark>
-      <span class="title">Published Projects</span>
+      <span class="title">Load a Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
@@ -14,16 +14,22 @@
         <div class="title">Failed to load project list from server.</div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="status === 'ready' && projects.length > 0">
-      <v-card class="mt-8 mb-4" v-for="project in projects" :key="project.id">
-        <v-card-title primary-title>
-          {{ project.name }}
-        </v-card-title>
-        <v-card-text>
-          <p class="body-2">{{ project.description }}</p>
-          <v-btn color="primary" :to="`/project/${ project.id }`">Launch Project</v-btn>
-        </v-card-text>
-      </v-card>
+    <v-card-text v-else-if="status === 'ready' && projects.length > 0" class="py-4 px-6">
+      <v-row>
+        <v-col cols="12" lg="6" xl="4" v-for="project in projects" :key="project.id">
+          <v-card class="fill-height d-flex flex-column">
+            <v-card-title primary-title>
+              <span class="text-truncate">{{ project.name }}</span>
+            </v-card-title>
+            <v-card-text class="flex pb-0">
+              <p class="body-2">{{ project.description }}</p>
+            </v-card-text>
+            <v-card-actions class="pa-4">
+              <v-btn large color="primary" class="px-6" :to="`/project/${ project.id }`">Load Project <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
     </v-card-text>
     <v-card-text v-else class="py-8">
       <v-alert type="error" outlined prominent color="primary">
@@ -49,7 +55,7 @@ export default {
     }
   },
   mounted () {
-    console.log('Projects:mounted')
+    // console.log('Projects:mounted')
     this.$http.get('/projects')
       .then(response => {
         this.projects = response.data

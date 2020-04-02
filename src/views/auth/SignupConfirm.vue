@@ -88,7 +88,7 @@ export default {
   },
   methods: {
     submit () {
-      console.log('submit', this.$v)
+      // console.log('submit', this.$v)
       this.$v.$touch()
       if (this.$v.$invalid) {
         this.submitStatus = 'ERROR'
@@ -97,7 +97,7 @@ export default {
         this.$Amplify.Auth.confirmSignUp(this.email, this.code)
           .then(data => {
             // AmplifyEventBus.$emit('localUser', data.user)
-            console.log('SignupConfirm:submit:success', data)
+            // console.log('SignupConfirm:submit:success', data)
             if (data.userConfirmed === false) {
               return AmplifyEventBus.$emit('authState', { state: 'confirmSignUp' })
             } else if (this.$parent.user && this.$parent.user.username && this.$parent.user.password) {
@@ -124,7 +124,7 @@ export default {
       }
     },
     setError (e) {
-      console.log('SignupConfirm:submit:error', e)
+      // console.log('SignupConfirm:submit:error', e)
       this.submitStatus = 'ERROR'
       this.serverError = this.$Amplify.I18n.get(e.message || e)
     },

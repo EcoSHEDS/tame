@@ -76,7 +76,10 @@ const router = new Router({
     {
       path: '/projects',
       name: 'listProjects',
-      component: ListProjects
+      component: ListProjects,
+      meta: {
+        width: 1200
+      }
     },
     {
       path: '/new',
@@ -113,7 +116,10 @@ const router = new Router({
     {
       path: '/project/:id',
       name: 'loadProject',
-      component: LoadProject
+      component: LoadProject,
+      meta: {
+        width: 600
+      }
     },
     {
       path: '/auth',
@@ -187,8 +193,11 @@ const router = new Router({
   ]
 })
 
-router.beforeEach((to, from, next) => {
-  console.log(`routing ${from.path} -> ${to.path}`)
-  next()
-})
+if (process.env.NODE_ENV === 'development') {
+  router.beforeEach((to, from, next) => {
+    console.log(`router: ${from.path} -> ${to.path}`)
+    next()
+  })
+}
+
 export default router

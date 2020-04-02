@@ -11,18 +11,8 @@
       </v-toolbar-title>
     </v-app-bar>
 
-    <v-content class="grey lighten-3" v-if="$vuetify.breakpoint.mdAndUp">
+    <v-content v-if="$vuetify.breakpoint.mdAndUp">
       <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
-        <!-- <TameMapLayer
-          v-if="ready"
-          :data="dataset"
-          :getColor="getColor"
-          :getOutline="getOutline"
-          :getSize="getSize"
-          :selected-ids="selection.selected"
-          :opacity-unselected="map.transparency"
-          @click="selectId">
-        </TameMapLayer> -->
         <TameMapLayerCanvas
           v-if="ready"
           :dataset="dataset"
@@ -359,7 +349,7 @@
                     <v-card-text>
                       <v-row no-gutters>
                         <v-col cols="10">
-                          <div class="subtitle-1 font-weight-medium mb-2">
+                          <div class="subtitle-1 mb-2">
                             Selected Individuals
                           </div>
                         </v-col>
@@ -659,7 +649,7 @@ export default {
     },
     colorValueScale () {
       // maps raw value to [0, 1] for input to colorScale
-      if (!this.color.selected || !this.color.selected.type === 'continuous') return d => d
+      if (!this.color.selected || this.color.selected.type !== 'continuous') return (d) => d
       return d3.scaleLinear()
         .domain(this.color.selected.domain)
         .range([0, 1])

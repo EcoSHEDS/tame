@@ -127,4 +127,8 @@ export default {
   left: 500px;
   top: 0px;
 }
+.leaflet-container {
+  /* background: #272727 !important; */
+  background: #444 !important;
+}
 </style>

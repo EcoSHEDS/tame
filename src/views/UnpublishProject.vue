@@ -9,14 +9,14 @@
     <v-card-text class="body-1">
       <v-alert type="error" outlined prominent>
         <span class="title">Warning! This operation cannot be undone.</span>
+        <p>
+          When a project is unpublished, it will no longer be available to other users (including yourself)
+          and the dataset will be deleted from the server.
+        </p>
+        <p>
+          If you wish to continue, please click the confirm button below to unpublish your project.
+        </p>
       </v-alert>
-      <p>
-        If you unpublish this project, the dataset to be deleted from the server and the project
-        will no longer be available to other users (including yourself).
-      </p>
-      <p>
-        If you wish to continue, please click the confirm button below to unpublish your project.
-      </p>
 
       <v-alert type="error" outlined :value="status === 'ERROR'">
         <span v-html="error"></span>
@@ -27,10 +27,12 @@
       </v-alert>
     </v-card-text>
 
-    <v-card-actions class="mx-4 pb-4">
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
       <v-btn color="error" @click="confirm" :loading="status === 'PENDING'" :disabled="status === 'SUCCESS'">confirm</v-btn>
       <v-spacer></v-spacer>
-      <v-btn to="/">close</v-btn>
+      <v-btn to="/" text>cancel</v-btn>
     </v-card-actions>
   </v-card>
 </template>

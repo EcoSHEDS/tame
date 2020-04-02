@@ -10,7 +10,7 @@ if (process.env.NODE_ENV === 'development') {
     'map:zoom',
     'zoom'
   ]
-  events.forEach(e => evt.$on(e, () => console.log(e)))
+  events.forEach(e => evt.$on(e, () => console.log(`event: ${e}`)))
 }
 
 export default evt

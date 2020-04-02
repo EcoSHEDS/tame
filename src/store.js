@@ -38,7 +38,6 @@ export default new Vuex.Store({
     colorContinuous: state => state.colorContinuous,
     colorDiscrete: state => state.colorDiscrete,
     colorScale: state => {
-      console.log('store:colorScale')
       if (!state.colorVariable) {
         return () => '#AAAAAA'
       } else if (state.colorVariable.type === 'continuous') {

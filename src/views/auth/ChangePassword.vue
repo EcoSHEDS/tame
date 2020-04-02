@@ -115,7 +115,7 @@ export default {
   },
   methods: {
     submit () {
-      console.log('submit', this.$v)
+      // console.log('submit', this.$v)
       this.$v.$touch()
       if (this.$v.$invalid) {
         this.submitStatus = 'INVALID'

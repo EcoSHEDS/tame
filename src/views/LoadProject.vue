@@ -6,9 +6,9 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text v-if="status === 'LOADING'">
-      <v-progress-circular :size="32" :width="5" indeterminate color="primary"></v-progress-circular>
-      <span class="headline ml-4" style="vertical-align:middle">Loading Project...</span>
+    <v-card-text v-if="status === 'LOADING'" class="text-center">
+      <v-progress-circular :size="64" :width="5" indeterminate color="primary"></v-progress-circular>
+      <span class="display-2 ml-8" style="vertical-align:middle">Loading...</span>
     </v-card-text>
     <v-card-text v-else-if="status === 'ERROR'">
       <v-alert type="error" outlined>
