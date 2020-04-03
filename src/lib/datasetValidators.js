@@ -22,8 +22,8 @@ export function validateDatasetColumns (rows, columns) {
   const rowSchema = Joi.object({
     [columns.id]: Joi.string().required(),
     [columns.datetime]: Joi.date().iso().required(),
-    [columns.latitude]: Joi.number().min(-90).max(90).required(),
-    [columns.longitude]: Joi.number().min(-180).max(180).required()
+    [columns.latitude]: Joi.number().min(-90).max(90).unsafe().required(),
+    [columns.longitude]: Joi.number().min(-180).max(180).unsafe().required()
   })
   const schema = Joi.array().items(rowSchema).min(1).required()
 
