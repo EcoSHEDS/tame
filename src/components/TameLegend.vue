@@ -14,7 +14,7 @@
       <div class="grey--text text--darken-2">
         <h4>Filter Summary</h4>
         <div class="pl-2">
-          Records:
+          Obs.:
           {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
           <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
         </div>

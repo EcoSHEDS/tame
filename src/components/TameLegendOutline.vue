@@ -1,7 +1,10 @@
 <template>
   <div>
-    <div class="my-2 font-weight-bold grey--text text--darken-2">
-      Outline: <span v-if="variable">{{ variable.name }}</span><span v-else>None</span>
+    <div class="my-2 font-weight-bold grey--text text--darken-2" style="height:28px">
+      <div class="pt-1">
+        Outline: <span v-if="variable">{{ variable.name }}</span><span v-else>None</span>
+      </div>
+      <v-spacer></v-spacer>
     </div>
   </div>
 </template>

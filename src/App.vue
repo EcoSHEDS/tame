@@ -132,7 +132,6 @@
                         :items="size.options">
                       </v-autocomplete>
                       <v-autocomplete
-                        v-if="outline.options.length > 0"
                         v-model="outline.selected"
                         label="Outline By"
                         item-value="id"

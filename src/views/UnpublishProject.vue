@@ -7,14 +7,14 @@
     </v-toolbar>
 
     <v-card-text class="body-1">
-      <v-alert type="error" outlined prominent>
-        <span class="title">Warning! This operation cannot be undone.</span>
-        <p>
+      <v-alert type="error" outlined dense>
+        <div class="font-weight-bold">Warning! This operation cannot be undone.</div>
+        <p class="mt-4">
           When a project is unpublished, it will no longer be available to other users (including yourself)
           and the dataset will be deleted from the server.
         </p>
-        <p>
-          If you wish to continue, please click the confirm button below to unpublish your project.
+        <p class="mb-0">
+          If you wish to continue, please click the <span class="font-weight-bold">Confirm</span> button below to unpublish your project.
         </p>
       </v-alert>
 

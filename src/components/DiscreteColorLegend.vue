@@ -1,8 +1,8 @@
 <template>
   <div class="tame-discrete-color-legend">
     <div ref="svgContainer"></div>
-    <div class="subheading ml-3 mb-4" v-if="variable.domain.length > maxCount">
-      ... and {{ variable.domain.length - 10 }} more
+    <div class="subheading ml-3 mb-0" v-if="variable.domain.length > maxCount">
+      ... and {{ (variable.domain.length - 10).toLocaleString() }} more
     </div>
   </div>
 </template>

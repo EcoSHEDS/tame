@@ -8,7 +8,7 @@
     </v-toolbar>
 
     <v-stepper v-model="step" vertical class="elevation-0 pb-4">
-      <v-stepper-step :complete="file.status === 'SUCCESS'" step="1">Load dataset file ({{file.status}})</v-stepper-step>
+      <v-stepper-step :rules="[() => file.status !== 'ERROR']" :complete="file.status === 'SUCCESS'" step="1">Load dataset file</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
           <v-card-text class="py-0 body-2">
@@ -52,7 +52,7 @@
             <v-file-input
               ref="fileInput"
               v-model="file.input"
-              label="Select the dataset file"
+              label="Select a file..."
               outlined
               class="mb-4 mt-8"
               prepend-inner-icon="$file"
@@ -68,18 +68,21 @@
                 <div class="font-weight-bold" v-else-if="!file.value.local">
                   File Successfully Loaded from the Server
                 </div>
-                <div class="mt-4 font-family-mono">
+                <div class="my-4 font-family-mono">
                   Filename: <strong>{{ file.value.name }}</strong><br>
                   &nbsp;&nbsp;# Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
                   &nbsp;Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
                 </div>
+                <div>
+                  To replace the dataset with a new version, select another file on your computer using the input box above.
+                </div>
               </v-alert>
-              <v-alert type="info" dense outlined :value="!!file.value && !file.value.local">
+              <!-- <v-alert type="info" dense outlined :value="!!file.value && !file.value.local">
                 <div class="font-weight-bold">
                   To update the dataset, use the input box above to load a new file from your computer, and then proceed
                   through the remaining steps.
                 </div>
-              </v-alert>
+              </v-alert> -->
               <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000">
                 <div class="font-weight-bold">Large File Detected</div>
                 Files with more than 10,000 rows may cause the application to run more slowly depending on the speed of your computer.
@@ -87,7 +90,7 @@
                 time steps (e.g. hourly to daily timesteps).
               </v-alert>
             </div>
-            <v-alert type="error" outlined :value="file.status === 'ERROR'">
+            <v-alert type="error" dense outlined :value="file.status === 'ERROR'">
               <span v-html="file.error"></span>
             </v-alert>
           </v-card-text>
@@ -97,7 +100,7 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :rules="[() => columns.status !== 'ERROR']" :complete="columns.status === 'SUCCESS'" step="2">Select primary variables ({{columns.status}})</v-stepper-step>
+      <v-stepper-step :rules="[() => columns.status !== 'ERROR']" :complete="columns.status === 'SUCCESS'" step="2">Select primary variables</v-stepper-step>
       <v-stepper-content step="2">
         <v-card>
           <v-card-text class="py-0" v-if="file.value">
@@ -106,7 +109,7 @@
               Select the column name for each of the four primary variables.
             </p>
 
-            <v-row class="mt-8">
+            <v-row class="mt-4">
               <v-col>
                 <v-select
                   :items="file.parsed.meta.fields"
@@ -162,12 +165,12 @@
                 </v-select>
               </v-col>
             </v-row>
-            <v-alert type="error" outlined :value="columns.status === 'ERROR' && !!columns.error">
+            <v-alert type="error" dense outlined :value="columns.status === 'ERROR' && !!columns.error">
               <span v-html="columns.error"></span>
             </v-alert>
           </v-card-text>
           <v-card-text v-else>
-            <v-alert type="error" outlined>
+            <v-alert type="error" dense outlined>
               <div class="title">File Not Found</div>
               Please return to previous step to load a file.
             </v-alert>
@@ -179,19 +182,19 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="variables.status === 'SUCCESS'" step="3">Configure additional variables ({{variables.status}})</v-stepper-step>
+      <v-stepper-step :rules="[() => variables.status !== 'ERROR']" :complete="variables.status === 'SUCCESS'" step="3">Configure additional variables</v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
           <v-card-text class="py-0" v-if="variables.value.length > 0">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
-              For each additional variable, provide a brief label,
-              select the type (continuous or discrete), and specify which options can be used with this variable
+              For each additional variable, provide a brief label, select the type (continuous or discrete),
+              and specify which options can be used with this variable
               (e.g. for generating crossfilter histograms or for assigning colors to the observed locations).
             </p>
             <p>
-              Initially, the form will include all additional variables in the dataset. However,
-              you may exclude a specific variable by selecting it from the list and checking the "Exclude Variable" option.
+              By default, the form will include all additional variables. To exclude a specific variable,
+              selecting it from the list and check the "Exclude Variable" option.
             </p>
             <p>
               The form will use the column name as the default label, and make an educated guess about the type of each variable.
@@ -203,7 +206,7 @@
                 <div>Column Names</div>
                 <v-list>
                   <v-list-item-group v-model="variableIndex" color="primary">
-                    <v-list-item v-for="variable in variables.value" :key="'variable-' + variable.id">
+                    <v-list-item v-for="(variable, i) in variables.value" :key="'variable-' + i">
                       <v-list-item-content>
                         <v-list-item-title>
                           <v-icon left v-if="variable.skip" color="default">mdi-checkbox-blank-circle-outline</v-icon>
@@ -226,9 +229,9 @@
                   required
                   outlined
                   :error-messages="variableNameErrors"
-                  @input="$v.variable.value.name.$touch()"
-                  @blur="$v.variable.value.name.$touch()"
-                ></v-text-field>
+                  :disabled="variable.value.skip"
+                  @change="validateVariable(variable.value)">
+                </v-text-field>
                 <v-select
                   :items="variableTypeOptions"
                   item-value="value"
@@ -237,29 +240,53 @@
                   label="Type of variable"
                   outlined
                   required
-                  :error-messages="variableTypeErrors"
-                  @input="$v.variable.value.type.$touch()"
-                  @blur="$v.variable.value.type.$touch()"
-                ></v-select>
-                <div>Include this variable in the following options:</div>
-                <v-row>
-                  <v-col class="pt-0">
-                    <v-checkbox hide-details label="Crossfilter" v-model="variable.value.filter"></v-checkbox>
-                    <v-checkbox hide-details label="Color" v-model="variable.value.color"></v-checkbox>
-                  </v-col>
-                  <v-col class="pt-0">
-                    <v-checkbox hide-details label="Size" :disabled="variable.value.type === 'discrete'" v-model="variable.value.size"></v-checkbox>
-                    <v-checkbox hide-details label="Outline" :disabled="variable.value.type === 'continuous'" v-model="variable.value.outline"></v-checkbox>
-                  </v-col>
-                </v-row>
-                <v-alert type="error" :value="variable.status == 'ERROR' && !!variable.error" class="mt-4" outlined>
-                  <span v-html="variable.error"></span>
+                  :disabled="variable.value.skip"
+                  @change="validateVariable(variable.value)">
+                </v-select>
+                <div>Include this variable as an option for:</div>
+                <div class="ml-4">
+                  <v-checkbox
+                    hide-details
+                    :disabled="variable.value.skip"
+                    class="mt-0"
+                    label="Color Variable"
+                    v-model="variable.value.color"
+                    @change="validateVariable(variable.value)"></v-checkbox>
+                  <v-checkbox
+                    hide-details
+                    :disabled="variable.value.skip || variable.value.type === 'discrete'"
+                    class="mt-0"
+                    :label="`Size Variable ${variable.value.type === 'discrete' ? '(Continuous Variables Only)' : ''}`"
+                    v-model="variable.value.size"
+                    @change="validateVariable(variable.value)"></v-checkbox>
+                  <v-checkbox
+                    hide-details
+                    :disabled="variable.value.skip || variable.value.type === 'continuous'"
+                    class="mt-0"
+                    :label="`Outline Variable ${variable.value.type === 'continuous' ? '(Discrete Variables Only)' : ''}`"
+                    v-model="variable.value.outline"
+                    @change="validateVariable(variable.value)"></v-checkbox>
+                  <v-checkbox
+                    hide-details
+                    :disabled="variable.value.skip"
+                    class="mt-0"
+                    label="Crossfilter"
+                    v-model="variable.value.filter"
+                    @change="validateVariable(variable.value)"></v-checkbox>
+                </div>
+                <div class="mt-4">Exclude this variable from the dataset:</div>
+                <div class="ml-4">
+                  <v-checkbox
+                    v-model="variable.value.skip"
+                    label="Exclude Variable"
+                    color="error"
+                    hide-details
+                    class="mt-0"
+                    @change="validateVariable(variable.value)"></v-checkbox>
+                </div>
+                <v-alert type="error" outlined dense :value="!variable.value.valid && !!variable.value.error" class="mt-4 mb-0">
+                  <span v-html="variable.value.error"></span>
                 </v-alert>
-                <v-card-actions class="px-0 mt-4">
-                  <v-btn color="success" @click="addVariable()"><v-icon left>mdi-plus-circle-outline</v-icon> Add Variable</v-btn>
-                  <v-spacer></v-spacer>
-                  <v-btn color="default" @click="skipVariable()"><v-icon left>mdi-minus-circle-outline</v-icon>Exclude Variable</v-btn>
-                </v-card-actions>
               </v-col>
               <v-col md="7" class="ml-2" v-else>
                 <v-alert type="info" prominent outlined icon="mdi-chevron-left">
@@ -274,7 +301,7 @@
               Dataset file does not contain any additional variables. Please continue to the final step.
             </v-alert>
           </v-card-text>
-          <v-alert type="error" :value="variables.status === 'ERROR' && variables.error" class="mt-8" outlined>
+          <v-alert outlined dense type="error" :value="variables.status === 'ERROR' && !!variables.error" class="mt-8">
             <span v-html="variables.error"></span>
           </v-alert>
           <v-card-actions class="mt-4">
@@ -284,22 +311,22 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="4">Finish ({{finish.status}})</v-stepper-step>
+      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="4">Finish</v-stepper-step>
       <v-stepper-content step="4">
         <v-card>
           <v-card-text v-if="!(project && project.id)">
-            <v-alert type="success" outlined>
+            <v-alert type="success" outlined dense>
               <strong>All done!</strong><br><br>
               You can change any of these options or load a new version of the dataset by clicking the <strong>Edit Project</strong> button.<br><br>
               You can also <strong>Publish</strong> your project to save it to the TAME server and make it available to other users.
             </v-alert>
           </v-card-text>
           <v-card-text v-else class="pb-0">
-            <v-alert type="success" outlined>
+            <v-alert type="success" outlined dense>
               <div class="font-weight-bold">All done!</div>
               Please click the Finish button to apply these changes.
             </v-alert>
-            <v-alert type="warning" outlined>
+            <v-alert type="warning" outlined dense>
               <div class="font-weight-bold">Changes will NOT be automatically saved to server</div>
               After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
               in order to save these changes to the server.
@@ -316,7 +343,12 @@
     <v-divider></v-divider>
 
     <v-card-actions class="mx-4 py-4">
-      <v-btn @click="submit" :loading="finish.status === 'PENDING'" color="primary" v-if="!isNew">Save Changes</v-btn>
+      <v-btn
+        :disabled="file.status !== 'SUCCESS' || columns.status !== 'SUCCESS' || variables.status !== 'SUCCESS'"
+        @click="submit"
+        :loading="finish.status === 'PENDING'"
+        color="primary"
+        v-if="!isNew">Save Changes</v-btn>
       <v-spacer></v-spacer>
       <v-btn to="/" text>close</v-btn>
     </v-card-actions>
@@ -325,14 +357,12 @@
 
 <script>
 import { validationMixin } from 'vuelidate'
-import { helpers, required, minLength, maxLength } from 'vuelidate/lib/validators'
+import { required, minLength, maxLength } from 'vuelidate/lib/validators'
 import { mapGetters, mapActions } from 'vuex'
-import Joi from '@hapi/joi'
 import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
-
-const alphaNum = helpers.regex('alphaNum', /^[a-zA-Z0-9\-_./ \\(\\)]*$/)
+import { validateDatasetColumns } from '@/lib/datasetValidators'
 
 export default {
   name: 'ProjectForm',
@@ -348,7 +378,7 @@ export default {
     },
     variable: {
       value: {
-        name: { required, alphaNum, minLength: minLength(2), maxLength: maxLength(25) },
+        name: { required, minLength: minLength(1), maxLength: maxLength(25) },
         type: { required }
       }
     }
@@ -391,8 +421,8 @@ export default {
         value: []
       },
       variable: {
-        status: 'READY',
-        error: null,
+        // status: 'READY',
+        // error: null,
         value: null
       },
       finish: {
@@ -429,23 +459,15 @@ export default {
     },
     variableNameErrors () {
       const errors = []
-      if (this.variable.status === 'READY') return errors
-      !this.$v.variable.value.name.required && errors.push('Name is required.')
-      !this.$v.variable.value.name.alphaNum && errors.push('Name can only contain letters, numbers, spaces, or basic punctuation ( \\-_./()).')
-      !this.$v.variable.value.name.minLength && errors.push('Name must be at least 2 characters.')
-      !this.$v.variable.value.name.maxLength && errors.push('Name cannot be more than 25 characters.')
-      return errors
-    },
-    variableTypeErrors () {
-      const errors = []
-      if (this.variable.status === 'READY') return errors
-      !this.$v.variable.value.type.required && errors.push('Type must be assigned.')
+      !this.$v.variable.value.name.required && errors.push('Label is required.')
+      !this.$v.variable.value.name.minLength && errors.push('Label must be at least 1 character.')
+      !this.$v.variable.value.name.maxLength && errors.push('Label cannot be more than 25 characters.')
       return errors
     }
   },
   watch: {
     variableIndex (newIndex, oldIndex) {
-      this.selectVariable(newIndex)
+      this.selectVariableIndex(newIndex)
     }
   },
   created () {
@@ -562,7 +584,6 @@ export default {
           this.file.parsed = results
           this.file.status = 'SUCCESS'
           this.resetColumns()
-          this.resetVariables()
         })
         .catch((e) => {
           this.setError('file', e)
@@ -575,87 +596,82 @@ export default {
     },
     // Step 2: Columns
     resetColumns () {
-      if (!this.file.value || !this.file.parsed) {
+      if (this.columns.status === 'READY') return
+
+      if (!this.file.parsed) {
         this.columns.status = 'READY'
+        this.columns.error = null
+
         this.columns.value.id = null
         this.columns.value.datetime = null
         this.columns.value.latitude = null
         this.columns.value.longitude = null
-      } else if (this.columns.status !== 'READY') {
-        const fields = this.file.parsed.meta.fields
-        if (!fields.includes(this.columns.value.id)) {
-          this.columns.value.id = null
-        }
-        if (!fields.includes(this.columns.value.datetime)) {
-          this.columns.value.datetime = null
-        }
-        if (!fields.includes(this.columns.value.latitude)) {
-          this.columns.value.latitude = null
-        }
-        if (!fields.includes(this.columns.value.longitude)) {
-          this.columns.value.longitude = null
-        }
+        return
+      }
 
-        this.validateColumns()
+      const fields = this.file.parsed.meta.fields
+      if (!fields.includes(this.columns.value.id)) {
+        this.columns.value.id = null
       }
-    },
-    validateIdColumn (values) {
-      const { error } = Joi.array()
-        .items(Joi.string().min(1).required())
-        .validate(values)
-      if (error) {
-        console.log(error)
-        window.e = error
-        return this.setError('columns', `<strong>Invalid Value in Individual Tag ID Column</strong><br><br>${error.message || error}`)
+      if (!fields.includes(this.columns.value.datetime)) {
+        this.columns.value.datetime = null
       }
-      return true
+      if (!fields.includes(this.columns.value.latitude)) {
+        this.columns.value.latitude = null
+      }
+      if (!fields.includes(this.columns.value.longitude)) {
+        this.columns.value.longitude = null
+      }
+
+      this.validateColumns()
+      this.resetVariables()
     },
     validateColumns () {
-      console.log('validateColumns')
+      // console.log('validateColumns')
 
       // skip validation if project is new and form has never been submitted
       if (this.columns.status === 'READY') return true
 
       if (!this.file.parsed) {
-        return this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+        return Promise.resolve(
+          this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+        )
       }
 
       // check that form is valid
       this.$v.columns.value.$touch()
       if (this.$v.columns.value.$invalid) {
-        return this.setError('columns')
+        return Promise.resolve(
+          this.setError('columns')
+        )
       }
 
       // validate each column
-      const c = this.columns.value
-      const data = this.file.parsed.data.map(d => ({
-        id: d[c.id],
-        datetime: d[c.datetime],
-        latitude: +d[c.latitude],
-        longitude: +d[c.longitude]
-      }))
-
-      // if (!this.validateIdColumn(data.map(d => d.id))) {
-      //   return
-      // }
-      const rowSchema = Joi.object({
-        id: Joi.string().required(),
-        datetime: Joi.date().iso().required(),
-        latitude: Joi.number().required().min(-90).max(90),
-        longitude: Joi.number().required().min(-180).max(180)
-      })
-      const schema = Joi.array().items(rowSchema).required()
-
-      const { error } = schema.validate(data)
-
-      if (error) {
-        console.log(error)
-        return this.setError('columns', `<strong>Failed to validate primary columns</strong><br><br>${error.message || error}`)
-      }
-
-      this.columns.status = 'SUCCESS'
-      this.resetVariables()
-      return true
+      return validateDatasetColumns(this.file.parsed.data, this.columns.value)
+        .then(() => {
+          this.columns.status = 'SUCCESS'
+          this.resetVariables()
+          return true
+        })
+        .catch((e) => {
+          let valueMessage = ''
+          if (e.details && e.details.length > 0) {
+            const path = e.details[0].path
+            const value = this.file.parsed.data[path[0]][path[1]]
+            valueMessage = ` (found value "${value}")`
+          }
+          return this.setError('columns', `
+            <div class="font-weight-bold">Failed to validate primary variable columns</div><br>
+            <p class="font-weight-bold">Reason: ${e.message || e}${valueMessage}</p>
+            <p>
+              Note that the location of the error is specified using the format "[ROW].COLUMN" where the ROWs start at 0.<br>
+              E.g. "[2].Latitude" indicates that the error occurred at the 3rd row in the Latitude column.
+            </p>
+            <p class="mb-0">
+              Please fix the error in the file, and return to the previous step to reload it.
+            </p>
+          `)
+        })
     },
     prevColumns () {
       this.step -= 1
@@ -663,27 +679,37 @@ export default {
     nextColumns () {
       this.columns.status = 'PENDING'
       this.validateColumns()
-      if (this.columns.status === 'SUCCESS') {
-        this.step += 1
-      }
+        .then((isValid) => {
+          if (isValid) this.step += 1
+        })
+        .catch((e) => {
+          console.log(e)
+          return this.setError('columns', `
+            <div class="font-weight-bold">Unknown Error Occurred</div>
+            ${e.message || e}
+          `)
+        })
     },
     // Step 3: Variables
     resetVariables () {
-      this.variables.status = 'READY'
-      this.variables.error = null
-      this.variable.status = 'READY'
-      this.variable.error = null
-
-      const fields = this.file.parsed.meta.fields
-        .filter(d => !Object.values(this.columns.value).includes(d))
-
-      if (fields.length === 0) {
+      if (!this.file.parsed) {
+        this.variables.status = 'READY'
+        this.variables.error = null
+        // this.variable.status = 'READY'
+        this.variable.error = null
         this.variables.value = []
-        this.variables.status = 'SUCCESS'
         return
       }
 
-      const newValue = fields.map(key => {
+      const additionalFields = this.file.parsed.meta.fields
+        .filter(d => !Object.values(this.columns.value).includes(d))
+
+      if (additionalFields.length === 0) {
+        this.variables.value = []
+        return
+      }
+
+      const newValue = additionalFields.map(key => {
         // existing variable
         const index = this.variables.value.findIndex(d => d.id === key)
         if (index >= 0) {
@@ -700,17 +726,15 @@ export default {
           color: true,
           size: false,
           outline: false,
-          valid: false,
-          skip: true
+          valid: true,
+          skip: false
         }
 
         const value = this.file.parsed.data[0][variable.id]
-        if (isNaN(+value)) {
+        if (isNaN(+value) || !isFinite(+value)) {
           variable.type = 'discrete'
         } else {
           variable.type = 'continuous'
-        }
-        if (variable.type === 'continuous') {
           variable.size = true
         }
 
@@ -718,92 +742,112 @@ export default {
       })
 
       this.variables.value = newValue
-      this.selectVariable(0)
-      this.variables.status = 'READY'
+      this.selectVariableIndex(0)
+      this.validateVariables()
+    },
+    validateVariables () {
+      if (this.variables.status === 'READY') return true
+
+      console.log('validateVariables()')
+      if (!this.file.parsed) {
+        return this.setError('variables', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+      }
+
+      return new Promise((resolve, reject) => {
+        for (let i = 0; i < this.variables.value.length; i++) {
+          const variable = this.variables.value[i]
+          this.validateVariable(variable)
+          if (!variable.valid) {
+            this.selectVariableIndex(i)
+            return resolve(this.setError('variables', `
+              <div class="font-weight-bold">"${variable.id}" is not valid</div>
+            `))
+          }
+        }
+
+        this.variables.status = 'SUCCESS'
+        return resolve(true)
+      })
     },
     prevVariables () {
-      if (this.variables.status !== 'SUCCESS') {
-        this.variables.status = 'READY'
-        this.variables.error = null
-      }
       this.step -= 1
     },
     nextVariables () {
-      if (!this.variables.value.filter(d => !d.skip).every(d => d.valid)) {
-        return this.setError('variables', 'One or more variables have not been validated. Go through the list of variables, and click the Validate button.')
-      }
-      this.variables.status = 'SUCCESS'
-      this.step += 1
+      this.variables.status = 'PENDING'
+      this.validateVariables()
+        .then((isValid) => {
+          if (isValid) this.step += 1
+        })
+        .catch((e) => {
+          console.log(e)
+          return this.setError('variables', `
+            <div class="font-weight-bold">Unknown Error Occurred</div>
+            ${e.message || e}
+          `)
+        })
     },
     // Step 3a: Variable
-    selectVariable (index) {
+    selectVariableIndex (index) {
+      console.log(`selectVariableIndex(${index})`)
+
+      this.variables.error = null
+
       if (this.variableIndex !== index) {
         this.variableIndex = index
       }
 
       this.$v.variable.value.$reset()
-      this.variable.status = 'READY'
-      this.variable.error = null
 
       if (isNaN(index)) {
         this.variable.value = null
         return
       }
 
-      this.variable.value = Object.assign({}, this.variables.value[this.variableIndex])
+      this.variable.value = this.variables.value[this.variableIndex]
     },
-    validateVariable () {
-      this.$v.variable.value.$touch()
-      if (this.$v.variable.value.$invalid) {
-        this.variable.status = 'ERROR'
-        return false
-      }
+    validateVariable (variable) {
+      console.log(`validateVariable(${variable.id})`)
 
-      if (this.variable.value.type === 'discrete') {
-        this.variable.value.domain = [...new Set(this.file.parsed.data.map(d => d[this.variable.value.id]))].sort(d3.ascending)
-        if (this.variable.value.outline && this.variable.value.domain.length !== 2) {
-          this.setError('variable', `
-            <strong>Variable cannot be an Outline option</strong><br><br>
-            A variable can only be an Outline option if it has exactly 2 unique values (found ${this.variable.value.domain.length}).
-            Unselect the Outline option and try again, or modify the dataset file and return to the beginning.
-          `)
-          return false
+      this.variables.error = null
+
+      variable.valid = true
+      variable.error = null
+
+      if (variable.skip) return
+
+      if (this.variable.value === variable) {
+        this.$v.variable.value.$touch()
+        if (this.$v.variable.value.$invalid) {
+          variable.valid = false
         }
-        this.variable.value.size = false
-      } else if (this.variable.value.type === 'continuous') {
-        this.variable.value.domain = d3.extent(this.file.parsed.data, d => +d[this.variable.value.id])
-        this.variable.value.outline = false
-      }
-      return true
-    },
-    nextVariable () {
-      if (this.variables.value.filter(d => !d.skip).every(d => d.valid)) {
-        this.variables.status = 'SUCCESS'
       }
 
-      if (this.variableIndex < this.variables.value.length - 1) {
-        this.selectVariable(this.variableIndex + 1)
-      } else {
-        this.selectVariable(0)
-      }
-    },
-    skipVariable () {
-      this.variable.value.skip = true
-      this.variables.value[this.variableIndex] = this.variable.value
-      this.nextVariable()
-    },
-    addVariable () {
-      if (!this.validateVariable()) {
-        this.variable.value.valid = false
-        return
+      if (!variable.name.trim()) {
+        variable.valid = false
       }
 
-      this.variable.value.skip = false
-      this.variable.value.valid = true
-      this.variables.value[this.variableIndex] = this.variable.value
-
-      this.nextVariable()
+      if (variable.type === 'discrete') {
+        variable.domain = [...new Set(this.file.parsed.data.map(d => d[variable.id]))].sort(d3.ascending)
+        if (variable.outline && variable.domain.length !== 2) {
+          variable.valid = false
+          variable.error = `
+            <div class="font-weight-bold">Invalid Outline Option</div>
+            A variable can only be an Outline option if it has exactly 2 unique values (found ${variable.domain.length}).<br><br>
+            Unselect the Outline option and try again, or modify the dataset file.
+          `
+        }
+        variable.size = false
+      } else if (variable.type === 'continuous') {
+        variable.domain = d3.extent(this.file.parsed.data, d => +d[variable.id])
+        variable.outline = false
+      }
     }
   }
 }
 </script>
+
+<style>
+.v-stepper__step.v-stepper__step--active.v-stepper__step--error.error--text > .v-stepper__label {
+  text-shadow: 0px 0px 0px #ff5252 !important;
+}
+</style>
