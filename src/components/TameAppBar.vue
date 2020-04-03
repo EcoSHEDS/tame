@@ -6,19 +6,19 @@
     </v-toolbar-title>
     <v-spacer></v-spacer>
     <v-btn text :to="{ name: 'welcome' }" class="mx-4">
-      Welcome
+      <v-icon small left>mdi-home</v-icon> Welcome
     </v-btn>
     <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
-      My Account
+      <v-icon small left>mdi-account</v-icon> My Account
     </v-btn>
     <v-btn text class="mx-4" v-if="user" @click="logout">
-      Log Out
+      <v-icon small left>mdi-logout</v-icon> Log Out
     </v-btn>
     <v-btn text :to="{ name: 'login' }" class="mx-4" v-if="!user">
-      Log In
+      <v-icon small left>mdi-login</v-icon> Log In
     </v-btn>
     <v-btn text :to="{ name: 'signup' }" class="mx-4" dark outlined v-if="!user">
-      Sign Up
+      <v-icon small left>mdi-pencil</v-icon> Sign Up
     </v-btn>
   </v-app-bar>
 </template>

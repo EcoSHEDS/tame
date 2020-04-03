@@ -95,26 +95,9 @@ export default {
 
       this.submitStatus = 'PENDING'
       this.$Amplify.Auth.signIn(this.email, this.password)
-        .then(data => {
-          if (data.challengeName === 'SMS_MFA' || data.challengeName === 'SOFTWARE_TOKEN_MFA') {
-            AmplifyEventBus.$emit('localUser', data)
-            return AmplifyEventBus.$emit('authState', { state: 'confirmSignIn' })
-          } else if (data.challengeName === 'NEW_PASSWORD_REQUIRED') {
-            AmplifyEventBus.$emit('localUser', data)
-            return AmplifyEventBus.$emit('authState', { state: 'requireNewPassword' })
-          } else if (data.challengeName === 'MFA_SETUP') {
-            AmplifyEventBus.$emit('localUser', data)
-            return AmplifyEventBus.$emit('authState', { state: 'setMfa' })
-          } else if (
-            data.challengeName === 'CUSTOM_CHALLENGE' &&
-            data.challengeParam &&
-            data.challengeParam.trigger === 'true'
-          ) {
-            AmplifyEventBus.$emit('localUser', data)
-            return AmplifyEventBus.$emit('authState', { state: 'customConfirmSignIn' })
-          } else {
-            return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'home' } })
-          }
+        .then(user => {
+          const redirect = this.$store.getters.project ? 'home' : 'welcome'
+          return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: redirect } })
         })
         .catch((e) => {
           if (e.code && e.code === 'UserNotConfirmedException') {

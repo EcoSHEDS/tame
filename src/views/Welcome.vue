@@ -9,7 +9,7 @@
     <v-card-text class="body-1 py-8">
       <p>
         The Tagged Animal Movement Explorer (TAME) is an interactive data visualization tool for exploring
-        spatial and temporal patterns of animal movements.
+        spatial patterns of animal movements over time.
       </p>
       <v-card-actions class="justify-space-around my-8">
         <v-btn color="success" class="px-4" x-large :to="{ name: 'newProject' }">Create New Project</v-btn>

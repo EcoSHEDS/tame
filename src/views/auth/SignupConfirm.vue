@@ -1,46 +1,50 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark class="mb-8">
+    <v-toolbar color="primary" dark>
       <span class="title">Verify Email</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
-    <v-card-text>
-      <v-text-field
-        v-model="email"
-        :error-messages="emailErrors"
-        label="Email Address"
-        required
-        @input="$v.email.$touch()"
-        @blur="$v.email.$touch()"
-      ></v-text-field>
-      <v-text-field
-        v-model="code"
-        :error-messages="codeErrors"
-        label="Verification Code"
-        required
-        @input="$v.code.$touch()"
-        @blur="$v.code.$touch()"
-      ></v-text-field>
 
-      <v-alert type="error" :value="!!serverError" class="mt-8">
+    <v-card-text class="pt-8">
+      <v-form @submit.prevent="submit">
+        <v-text-field
+          v-model="email"
+          :error-messages="emailErrors"
+          label="Email Address"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="code"
+          :error-messages="codeErrors"
+          label="Verification Code"
+          required
+          hint="Check your email for the verification code"
+          persistent-hint
+        ></v-text-field>
+        <v-btn hidden type="submit">submit</v-btn>
+      </v-form>
+
+      <v-alert type="error" :value="!!serverError" outlined dense class="mt-4">
+        <div class="font-weight-bold">Server Error</div>
         {{serverError}}
       </v-alert>
 
-      <div class="mt-8">
+      <div class="mt-4">
         <a @click="resend">Can't find your code? Request a new one.</a>
-        <v-alert type="info" outlined class="mt-4" v-if="resendCode">
-          Request submitted, check your email for a new code.
+        <v-alert type="info" outlined dense class="mt-4" v-if="resendCode">
+          <div class="font-weight-bold">Request submitted, check your email for a new code.</div>
         </v-alert>
       </div>
-
-      Status: {{ submitStatus }}
     </v-card-text>
-    <v-card-actions class="mx-4 pb-4">
-      <v-btn color="primary" class="mr-4" :loading="submitStatus === 'PENDING'" @click="submit">submit</v-btn>
-      <v-btn @click="clear">clear</v-btn>
+
+    <v-divider></v-divider>
+
+    <v-card-actions class="mx-4 py-4">
+      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+      <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
-      <v-btn :to="{ name: 'login' }">cancel</v-btn>
+      <v-btn text :to="{ name: 'login' }">cancel</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -90,6 +94,7 @@ export default {
     submit () {
       // console.log('submit', this.$v)
       this.$v.$touch()
+      this.serverError = null
       if (this.$v.$invalid) {
         this.submitStatus = 'ERROR'
       } else {
@@ -104,7 +109,7 @@ export default {
               // auto-sign in using password from Signup form
               return this.$Amplify.Auth.signIn(this.$parent.user.username, this.$parent.user.password)
                 .then((data) => {
-                  AmplifyEventBus.$emit('authState', { state: 'signIn' })
+                  AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'welcome' } })
                 })
             }
             return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'login' } })
@@ -135,6 +140,7 @@ export default {
       this.password = ''
       this.repeatPassword = ''
       this.submitStatus = 'READY'
+      this.serverError = null
     }
   }
 }

@@ -21,10 +21,11 @@
       </v-alert>
     </v-card-text>
     <v-card-text v-else class="pt-4">
-      <v-alert type="info" outlined prominent class="mb-8">
+      <v-alert type="info" outlined dense class="mb-8">
+        <div class="font-weight-bold">What is a Published Project?</div>
         <p>
-          Publishing a project will save the dataset to the TAME web server and make it publicly accessible to any user from the
-          <strong>Load Project</strong> screen.
+          Publishing a project will save the dataset to the TAME web server and make it publicly accessible to <em>any user</em>
+          from the <strong>Load Project</strong> screen.
         </p>
         <p>
           Once it is published, you can continue to make changes to the project by uploading new versions of the dataset or changing the variable settings.

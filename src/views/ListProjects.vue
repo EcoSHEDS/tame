@@ -18,11 +18,14 @@
       <v-row>
         <v-col cols="12" lg="6" xl="4" v-for="project in projects" :key="project.id">
           <v-card class="fill-height d-flex flex-column">
-            <v-card-title primary-title>
+            <v-card-title primary-title class="pb-0">
               <span class="text-truncate">{{ project.name }}</span>
             </v-card-title>
+            <v-card-text class="body-2 pb-4">
+              Last Update: {{ project.updatedAt | moment('MMM DD, YYYY') }}
+            </v-card-text>
             <v-card-text class="flex pb-0">
-              <p class="body-2">{{ project.description }}</p>
+              <p class="body-1 grey--text text--darken-3">{{ project.description }}</p>
             </v-card-text>
             <v-card-actions class="pa-4">
               <v-btn large color="primary" class="px-6" :to="`/project/${ project.id }`">Load Project <v-icon right>mdi-chevron-right</v-icon></v-btn>
@@ -59,6 +62,8 @@ export default {
     this.$http.get('/projects')
       .then(response => {
         this.projects = response.data
+          .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.name >= b.name ? 0 : NaN))
+          // .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : a.updatedAt >= b.updatedAt ? 0 : NaN))
         this.status = 'ready'
       })
       .catch((err) => {

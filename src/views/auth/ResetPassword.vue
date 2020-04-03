@@ -17,8 +17,8 @@
           persistent-hint
         ></v-text-field>
 
-        <v-alert type="success" :value="requestSent" outlined prominent class="mt-4">
-          <div class="title">Request submitted</div>
+        <v-alert type="success" :value="requestSent" outlined dense class="mt-4">
+          <div class="font-weight-bold">Request submitted</div>
           Check your email for the verification code, and then set a new password.
         </v-alert>
 
@@ -48,13 +48,13 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined prominent class="mt-4">
-        <div class="title">Server Error</div>
+      <v-alert type="error" :value="!!serverError" outlined dense class="mt-4">
+        <div class="font-weight-bold">Server Error</div>
         {{serverError}}
       </v-alert>
 
-      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined prominent class="mt-4 mb-0">
-        <div class="title">Password has been reset</div>
+      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined dense class="mt-4 mb-0">
+        <div class="font-weight-bold">Password has been reset</div>
         You will be automatically transfered to the <router-link :to="{ name: 'login' }">Login screen</router-link>
          in {{ count }} seconds...
       </v-alert>
@@ -63,7 +63,7 @@
     <v-divider></v-divider>
 
     <v-card-actions class="mx-4 py-4">
-      <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
       <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
       <v-btn text :to="{ name: 'login' }">cancel</v-btn>

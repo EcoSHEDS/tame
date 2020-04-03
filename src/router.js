@@ -32,15 +32,19 @@ AmplifyEventBus.$on('authState', async ({ state, redirect }) => {
     router.push(redirect || { name: 'logout' })
   } else if (state === 'signIn') {
     await getUser()
-    router.push(redirect || { name: 'home' })
+    if (redirect) router.push(redirect)
+  } else if (state === 'signInRefresh') {
+    await getUser(true)
+    if (redirect) router.push(redirect)
   } else if (state === 'confirmSignUp') {
     router.push({ name: 'signupConfirm' })
   }
 })
 
-function getUser () {
-  return Auth.currentAuthenticatedUser()
+function getUser (force) {
+  return Auth.currentAuthenticatedUser({ bypassCache: !!force })
     .then((data) => {
+      console.log(data)
       if (data && data.signInUserSession) {
         return store.dispatch('setUser', data)
       }
@@ -53,7 +57,8 @@ function getUser () {
     })
 }
 
-getUser()
+// initial page load
+getUser(true)
 
 const router = new Router({
   routes: [
@@ -160,7 +165,7 @@ const router = new Router({
           }
         },
         {
-          path: 'signup-confirm',
+          path: 'confirm',
           name: 'signupConfirm',
           component: SignupConfirm,
           meta: {

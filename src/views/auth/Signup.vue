@@ -9,15 +9,15 @@
     <v-card-text class="pt-8">
       <v-form @submit.prevent="submit">
         <v-text-field
-          v-model="name"
-          :error-messages="nameErrors"
-          label="Name"
-          required
-        ></v-text-field>
-        <v-text-field
           v-model="email"
           :error-messages="emailErrors"
           label="Email Address"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="name"
+          :error-messages="nameErrors"
+          label="Name"
           required
         ></v-text-field>
         <v-text-field
@@ -152,7 +152,7 @@ export default {
             if (data.userConfirmed === false) {
               return AmplifyEventBus.$emit('authState', { state: 'confirmSignUp' })
             }
-            return AmplifyEventBus.$emit('authState', { state: 'signIn' })
+            return AmplifyEventBus.$emit('authState', { state: 'signIn', redirect: { name: 'login' } })
           })
           .catch(e => this.setError(e))
       }
