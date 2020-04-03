@@ -9,6 +9,7 @@
       @ready="$emit('ready', map)">
       <l-control-zoom position="topleft"></l-control-zoom>
       <l-control-layers position="topleft"></l-control-layers>
+      <l-control-scale position="bottomleft"></l-control-scale>
       <l-tile-layer
         v-for="tile in basemaps"
         :key="tile.name"
@@ -24,9 +25,7 @@
 </template>
 
 <script>
-import { LMap, LTileLayer, LControlZoom, LControlLayers } from 'vue2-leaflet'
-// import L from 'leaflet'
-// import * as d3 from 'd3'
+import { LMap, LTileLayer, LControlZoom, LControlLayers, LControlScale } from 'vue2-leaflet'
 
 import evt from '@/events'
 
@@ -58,8 +57,8 @@ export default {
     LMap,
     LTileLayer,
     LControlZoom,
-    LControlLayers
-    // LControlDraw
+    LControlLayers,
+    LControlScale
   },
   data: () => ({
     ready: false,
@@ -78,7 +77,6 @@ export default {
       this.disableClick = true
     })
     this.map.on('moveend', () => {
-      // console.log('center:', this.map.getCenter())
       moveTimeout = setTimeout(() => {
         this.disableClick = false
       }, 100)
@@ -90,16 +88,6 @@ export default {
       evt.$emit('map:zoom', this.map.getZoom())
       evt.$emit('map:render')
     })
-
-    // const svgLayer = L.svg()
-    // this.map.addLayer(svgLayer)
-
-    // this.svg = d3.select(svgLayer.getPane()).select('svg')
-    //   .classed('leaflet-zoom-animated', false)
-    //   .classed('leaflet-zoom-hide', true)
-    //   .classed('map', true)
-    //   .attr('pointer-events', null)
-    //   .style('z-index', 201)
 
     this.ready = true
   },
@@ -127,8 +115,12 @@ export default {
   left: 500px;
   top: 0px;
 }
+
+.leaflet-control-container > .leaflet-bottom.leaflet-left {
+  left: 500px;
+}
+
 .leaflet-container {
-  /* background: #272727 !important; */
   background: #444 !important;
 }
 </style>
