@@ -38,6 +38,7 @@
           :hover-arrows="map.hoverArrows"
           :hover-color="map.hoverColor"
           :all-lines="map.allLines"
+          :vector-mode="map.vectorMode"
           @click="selectId">
           </TameMapLayerCanvas>
       </TameMap>
@@ -350,6 +351,38 @@
                           </v-tooltip>
                         </v-col>
                       </v-row>
+                      <v-row no-gutters class="my-2">
+                        <v-col cols="7" class="pb-0">
+                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                            Vector Mode (<span class="caption font-weight-medium"><v-icon color="success" small>mdi-flask-outline</v-icon> Experimental Feature</span>)
+                          </div>
+                        </v-col>
+                        <v-col cols="4" class="pb-0">
+                          <v-switch
+                            v-model="map.vectorMode"
+                            hide-details
+                            class="mt-0 float-right">
+                            <template v-slot:append>
+                              <div class="mt-1 caption grey--text text--darken-2" style="width:40px">
+                                {{map.vectorMode ? 'On' : 'Off'}}
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                        <v-col cols="1" class="text-right">
+                          <v-tooltip right open-delay="100" max-width="400">
+                            <template v-slot:activator="{ on }">
+                              <v-btn small icon v-on="on" class="align-self-center">
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
+                              </v-btn>
+                            </template>
+                            <span class="font-weight-bold"><v-icon small dark>mdi-alert</v-icon> EXPERIMENTAL FEATURE <v-icon small dark>mdi-alert</v-icon></span><br><br>
+                            Show movement using arrow vectors.<br>
+                            Size and outline variables have no effect.<br>
+                            Mouse hover/click not implemented.<br>
+                          </v-tooltip>
+                        </v-col>
+                      </v-row>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -580,6 +613,7 @@ export default {
       hoverArrows: true,
       hoverColor: true,
       allLines: false,
+      vectorMode: false,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -790,6 +824,7 @@ export default {
       this.map.hoverArrows = true
       this.map.hoverColor = true
       this.map.allLines = false
+      this.map.vectorMode = false
 
       this.setColorContinuous({ scheme: 'Viridis', invert: false })
       this.setColorDiscrete({ scheme: 'Category10' })
@@ -946,7 +981,7 @@ export default {
         },
         {
           id: '$bearing',
-          name: 'Bearing to Next Location (degrees from N)',
+          name: 'Bearing to Next Location (degrees)',
           type: 'continuous',
           domain: [0, 360]
         }

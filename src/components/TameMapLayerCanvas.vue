@@ -66,6 +66,11 @@ export default {
       type: Boolean,
       required: false,
       default: false
+    },
+    vectorMode: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   },
   data () {
@@ -327,6 +332,9 @@ export default {
     },
     allLines () {
       this.render()
+    },
+    vectorMode () {
+      this.render()
     }
   },
   methods: {
@@ -382,7 +390,7 @@ export default {
     },
     render () {
       this.renderBase()
-      this.renderOverlay()
+      if (!this.vectorMode) this.renderOverlay()
     },
     renderBase () {
       // console.log('renderBase')
@@ -394,6 +402,8 @@ export default {
       this.picker.context.clearRect(0, 0, this.picker.canvas.width, this.picker.canvas.height)
 
       if (!this.project) return
+
+      if (this.vectorMode) return this.renderBaseVector()
 
       const data = xf.allFiltered()
 
@@ -438,6 +448,27 @@ export default {
         this.picker.context.beginPath()
         this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
         this.picker.context.fill()
+      })
+    },
+    renderBaseVector () {
+      const c = this.project.columns
+      const nested = d3.nest()
+        .key(d => d[c.id])
+        .sortValues((a, b) => a[c.datetime].valueOf() - b[c.datetime].valueOf())
+        .entries(xf.all())
+
+      this.base.context.lineWidth = 3
+      nested.forEach(d => {
+        if (d.values.length > 1) {
+          for (let i = 0; i < d.values.length - 1; i++) {
+            if (xf.isElementFiltered(d.values[i].$index)) {
+              this.base.context.strokeStyle = this.getFillColor(d.values[i]).formatRgb()
+              this.base.context.beginPath()
+              this.drawArrow(this.base.context, d.values[i], d.values[i + 1], false)
+              this.base.context.stroke()
+            }
+          }
+        }
       })
     },
     getFillColor (d) {
@@ -508,7 +539,7 @@ export default {
           this.overlay.context.strokeStyle = color.formatRgb()
           this.overlay.context.beginPath()
           if (this.hoverArrows) {
-            this.drawArrow(this.overlay.context, from, to)
+            this.drawArrow(this.overlay.context, from, to, true)
           } else {
             line([from, to])
           }
@@ -582,7 +613,7 @@ export default {
         y: point.y + jitter.y * Math.pow(this.jitterY, 2)
       }
     },
-    drawArrow (context, from, to) {
+    drawArrow (context, from, to, buffer) {
       // console.log('drawArrow')
       if (!context || !from || !to) return
 
@@ -597,14 +628,20 @@ export default {
       const angle = Math.atan2(dy, dx)
 
       // buffer for point radius
-      tox -= tor * Math.cos(angle)
-      toy -= tor * Math.sin(angle)
-      fromx += fromr * Math.cos(angle)
-      fromy += fromr * Math.sin(angle)
+      if (buffer) {
+        tox -= tor * Math.cos(angle)
+        toy -= tor * Math.sin(angle)
+        fromx += fromr * Math.cos(angle)
+        fromy += fromr * Math.sin(angle)
+      }
 
       // length
       const pathLength = Math.sqrt(dy * dy + dx * dx)
-      const arrowSize = pathLength < this.arrowSize ? pathLength : this.arrowSize
+      const arrowSize = this.arrowSize < pathLength
+        ? this.arrowSize
+        : pathLength > 5
+          ? pathLength
+          : 5
 
       context.moveTo(fromx, fromy)
       context.lineTo(tox, toy)
