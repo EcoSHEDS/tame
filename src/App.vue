@@ -12,6 +12,18 @@
     </v-app-bar>
 
     <v-content v-if="$vuetify.breakpoint.mdAndUp">
+      <v-snackbar
+        top
+        v-model="snackbar.show"
+        :timeout="snackbar.timeout">
+        <v-icon small left dark>mdi-alert</v-icon>{{snackbar.text}}
+        <v-btn
+          color="blue"
+          text
+          @click="snackbar.show = false">
+          Close
+        </v-btn>
+      </v-snackbar>
       <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
         <TameMapLayerCanvas
           v-if="ready"
@@ -494,7 +506,7 @@
           </v-col>
         </v-row>
       </v-container>
-      <v-dialog scrollable v-model="showDialog" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
+      <v-dialog scrollable v-model="showDialog" :persistent="!!$route.meta.persistent" :max-width="$route.meta.width || 1000" @input="$router.push('/')">
         <router-view></router-view>
       </v-dialog>
     </v-content>
@@ -543,6 +555,11 @@ export default {
     TameLegend
   },
   data: () => ({
+    snackbar: {
+      show: false,
+      text: '',
+      timeout: 5000
+    },
     showDialog: true,
     loading: false,
     ready: false,
@@ -562,6 +579,7 @@ export default {
       },
       hoverArrows: true,
       hoverColor: true,
+      allLines: false,
       basemaps: [
         {
           name: 'ESRI World Imagery',
@@ -690,6 +708,11 @@ export default {
     'draw.operation' () {
       this.onDraw()
     },
+    'selection.selected' () {
+      if (this.project && this.selection.selected.length === 0 && this.map.transparency < 0.25) {
+        this.showSnackbar('Points may not be visible due to low transparency')
+      }
+    },
     project () {
       this.resetProject()
     },
@@ -713,7 +736,7 @@ export default {
     evt.$off('filter', this.onFilter)
   },
   methods: {
-    ...mapActions(['loadProject', 'setColorVariable']),
+    ...mapActions(['loadProject', 'setColorVariable', 'setColorContinuous', 'setColorDiscrete']),
     closeDialog () {
       this.showDialog = false
       setTimeout(() => {
@@ -747,7 +770,9 @@ export default {
         this.tags.dim.dispose()
         this.tags.dim = null
       }
+
       xf.remove(d => true)
+
       this.selection.options = []
       this.selection.selected = []
       this.color.selected = null
@@ -758,7 +783,19 @@ export default {
       this.outline.options = []
       this.filters.selected = []
       this.filters.options = []
+
+      this.map.transparency = 0.8
+      this.map.jitter.x = 0
+      this.map.jitter.y = 0
+      this.map.hoverArrows = true
+      this.map.hoverColor = true
+      this.map.allLines = false
+
+      this.setColorContinuous({ scheme: 'Viridis', invert: false })
+      this.setColorDiscrete({ scheme: 'Category10' })
+
       this.ready = false
+
       evt.$emit('filter')
       evt.$emit('map:render')
     },
@@ -927,7 +964,7 @@ export default {
         { header: 'Calculated Variables' },
         ...calculatedVariables
       ]
-      const colorVariables = variables.filter(d => d.color)
+      const colorVariables = variables.filter(d => !d.skip && d.color)
       if (colorVariables.length > 0) {
         this.color.options = [
           ...this.color.options,
@@ -940,7 +977,7 @@ export default {
         { header: 'Calculated Variables' },
         ...calculatedVariables
       ]
-      const sizeVariables = variables.filter(d => d.size)
+      const sizeVariables = variables.filter(d => !d.skip && d.size)
       if (sizeVariables.length > 0) {
         this.size.options = [
           ...this.size.options,
@@ -949,7 +986,7 @@ export default {
         ]
       }
 
-      const outlineVariables = variables.filter(d => d.outline)
+      const outlineVariables = variables.filter(d => !d.skip && d.outline)
       if (outlineVariables.length > 0) {
         this.outline.options = [
           { header: 'Dataset Variables' },
@@ -974,11 +1011,12 @@ export default {
         { header: 'Calculated Variables' },
         ...calculatedVariables
       ]
-      if (variables.some(d => d.filter)) {
+      const filterVariables = variables.filter(d => !d.skip && d.filter)
+      if (filterVariables.length > 0) {
         this.filters.options = [
           ...this.filters.options,
           { header: 'Dataset Variables' },
-          ...variables.filter(d => d.filter)
+          ...filterVariables
         ]
       }
 
@@ -1070,6 +1108,11 @@ export default {
     unselectAll () {
       this.selection.selected = []
       this.clearDraw()
+    },
+    showSnackbar (text, timeout) {
+      this.snackbar.timeout = timeout || 5000
+      this.snackbar.text = text
+      this.snackbar.show = true
     },
     toggleDraw () {
       if (this.draw.rect.enabled()) {

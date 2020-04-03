@@ -32,7 +32,7 @@
     <v-card-actions class="mx-4 py-4">
       <v-btn color="error" @click="confirm" :loading="status === 'PENDING'" :disabled="status === 'SUCCESS'">confirm</v-btn>
       <v-spacer></v-spacer>
-      <v-btn to="/" text>cancel</v-btn>
+      <v-btn to="/" text>close</v-btn>
     </v-card-actions>
   </v-card>
 </template>

@@ -52,7 +52,7 @@
             <v-file-input
               ref="fileInput"
               v-model="file.input"
-              label="Select a file..."
+              :label="isNew ? 'Select a file...' : 'To replace your dataset, select a new file...'"
               outlined
               class="mb-4 mt-8"
               prepend-inner-icon="$file"
@@ -73,16 +73,14 @@
                   &nbsp;&nbsp;# Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
                   &nbsp;Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
                 </div>
+                <p>
+                  To replace the dataset with a new version, select a new file on your computer using the input box above.
+                </p>
                 <div>
-                  To replace the dataset with a new version, select another file on your computer using the input box above.
+                  Note the entire dataset must be replaced, TAME does not currently support appending only new
+                  observations.
                 </div>
               </v-alert>
-              <!-- <v-alert type="info" dense outlined :value="!!file.value && !file.value.local">
-                <div class="font-weight-bold">
-                  To update the dataset, use the input box above to load a new file from your computer, and then proceed
-                  through the remaining steps.
-                </div>
-              </v-alert> -->
               <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000">
                 <div class="font-weight-bold">Large File Detected</div>
                 Files with more than 10,000 rows may cause the application to run more slowly depending on the speed of your computer.
@@ -501,9 +499,8 @@ export default {
     submit () {
       this.finish.status = 'PENDING'
       let project = {
-        name: this.file.value.name,
         columns: this.columns.value,
-        variables: this.variables.value.filter(d => !d.skip),
+        variables: this.variables.value,
         file: this.file.value
       }
 
@@ -512,6 +509,8 @@ export default {
           ...this.project,
           ...project
         }
+      } else {
+        project.name = this.file.value.name
       }
 
       return this.loadProject(project)

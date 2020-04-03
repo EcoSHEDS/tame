@@ -7,17 +7,17 @@
     </v-toolbar>
 
     <v-card-text v-if="!user" class="pt-4 pb-0">
-      <v-alert type="error" outlined prominent>
-        <div class="title">Not Logged In</div>
+      <v-alert type="error" outlined dense>
+        <div class="font-weight-bold">Not Logged In</div>
         <p>You must be logged in to publish a project.</p>
-        <p>Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.</p>
+        <p class="mb-0">Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.</p>
       </v-alert>
     </v-card-text>
     <v-card-text v-else-if="!project" class="pt-4">
-      <v-alert type="error" outlined prominent>
-        <div class="title">Project Not Found</div>
+      <v-alert type="error" outlined dense>
+        <div class="font-weight-bold">Project Not Found</div>
         <p>An existing project could not be found.</p>
-        <p>Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</p>
+        <p class="mb-0">Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</p>
       </v-alert>
     </v-card-text>
     <v-card-text v-else class="pt-4">

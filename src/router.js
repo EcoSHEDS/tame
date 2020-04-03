@@ -75,7 +75,8 @@ const router = new Router({
       name: 'welcome',
       component: Welcome,
       meta: {
-        width: 800
+        width: 800,
+        persistent: true
       }
     },
     {
@@ -83,7 +84,8 @@ const router = new Router({
       name: 'listProjects',
       component: ListProjects,
       meta: {
-        width: 1200
+        width: 1200,
+        persistent: true
       }
     },
     {
@@ -91,7 +93,8 @@ const router = new Router({
       name: 'newProject',
       component: ProjectForm,
       meta: {
-        isNew: true
+        isNew: true,
+        persistent: true
       }
     },
     {
@@ -99,7 +102,8 @@ const router = new Router({
       name: 'editProject',
       component: ProjectForm,
       meta: {
-        isNew: false
+        isNew: false,
+        persistent: true
       }
     },
     {
@@ -107,7 +111,8 @@ const router = new Router({
       name: 'publishProject',
       component: PublishProject,
       meta: {
-        width: 800
+        width: 800,
+        persistent: true
       }
     },
     {
@@ -115,7 +120,8 @@ const router = new Router({
       name: 'unpublishProject',
       component: UnpublishProject,
       meta: {
-        width: 800
+        width: 800,
+        persistent: true
       }
     },
     {
@@ -137,7 +143,8 @@ const router = new Router({
           name: 'account',
           component: Account,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -145,7 +152,8 @@ const router = new Router({
           name: 'login',
           component: Login,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -153,7 +161,8 @@ const router = new Router({
           name: 'logout',
           component: Logout,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -161,7 +170,8 @@ const router = new Router({
           name: 'signup',
           component: Signup,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -169,7 +179,8 @@ const router = new Router({
           name: 'signupConfirm',
           component: SignupConfirm,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -177,7 +188,8 @@ const router = new Router({
           name: 'changePassword',
           component: ChangePassword,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         },
         {
@@ -185,7 +197,8 @@ const router = new Router({
           name: 'resetPassword',
           component: ResetPassword,
           meta: {
-            width: 600
+            width: 600,
+            persistent: true
           }
         }
       ]

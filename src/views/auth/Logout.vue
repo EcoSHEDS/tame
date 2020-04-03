@@ -23,6 +23,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 export default {
   name: 'Logout',
   data () {
@@ -30,6 +31,9 @@ export default {
       timeout: null,
       count: 3
     }
+  },
+  computed: {
+    ...mapGetters(['project'])
   },
   created () {
     this.countDownTimer()
@@ -45,7 +49,11 @@ export default {
           this.countDownTimer()
         }, 1000)
       } else {
-        this.$router.push('/')
+        if (this.project) {
+          this.$router.push({ name: 'home' })
+        } else {
+          this.$router.push({ name: 'welcome' })
+        }
       }
     }
   }
