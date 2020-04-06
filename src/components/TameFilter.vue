@@ -113,11 +113,9 @@ export default {
       this.idFilter.group = this.idFilter.dim.group().reduceCount()
       this.idFilter.options = this.idFilter.group.all().map(d => ({ id: d.key }))
       return
-    }
-
-    if (variable.type === 'continuous') {
+    } else if (variable.type === 'continuous') {
       const margins = { top: 4, right: 10, bottom: 18, left: 30 }
-      const dim = xf.dimension(d => d[variable.id])
+      const dim = xf.dimension(d => isNaN(d[variable.id]) ? -Infinity : d[variable.id])
       const l = this.variable.domain[0]
       const u = this.variable.domain[1]
       const n = 30

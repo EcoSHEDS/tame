@@ -360,7 +360,7 @@ import { mapGetters, mapActions } from 'vuex'
 import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
-import { validateDatasetColumns } from '@/lib/datasetValidators'
+import { validateDatasetColumns } from '@/lib/dataset'
 
 export default {
   name: 'ProjectForm',
@@ -837,7 +837,7 @@ export default {
         }
         variable.size = false
       } else if (variable.type === 'continuous') {
-        variable.domain = d3.extent(this.file.parsed.data, d => +d[variable.id])
+        variable.domain = d3.extent(this.file.parsed.data, d => parseFloat(d[variable.id]))
         variable.outline = false
       }
     }

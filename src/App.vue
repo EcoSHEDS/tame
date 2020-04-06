@@ -562,7 +562,7 @@ import { mapGetters, mapActions } from 'vuex'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
-import calculateBearing from '@/lib/bearing'
+import { processDataset } from '@/lib/dataset'
 
 import UsgsHeader from '@/components/usgs/UsgsHeader'
 import UsgsFooter from '@/components/usgs/UsgsFooter'
@@ -854,136 +854,149 @@ export default {
       const { columns, variables, dataset } = this.project
       const data = dataset.data
 
-      const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
+      // const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
 
-      data.forEach((row, index) => {
-        row.$index = index
-        row[columns.datetime] = new Date(row[columns.datetime])
-        row[columns.latitude] = +row[columns.latitude]
-        row[columns.longitude] = +row[columns.longitude]
-        numericVariables.forEach(v => {
-          row[v] = +row[v]
-        })
-      })
+      // data.forEach((row, index) => {
+      //   row.$index = index
+      //   row[columns.datetime] = new Date(row[columns.datetime])
+      //   row[columns.latitude] = +row[columns.latitude]
+      //   row[columns.longitude] = +row[columns.longitude]
+      //   numericVariables.forEach(v => {
+      //     row[v] = +row[v]
+      //   })
+      // })
 
-      const groupByTag = d3.nest()
-        .key(d => d[columns.id])
-        .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
-        .entries(data)
+      // const groupByTag = d3.nest()
+      //   .key(d => d[columns.id])
+      //   .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
+      //   .entries(data)
 
-      const mapByIndex = new Map()
-      groupByTag.forEach(d => {
-        const n = d.values.length
+      // const mapByIndex = new Map()
+      // groupByTag.forEach(d => {
+      //   const n = d.values.length
 
-        const calculatedValues = {}
+      //   const calculatedValues = {}
 
-        for (let i = 0; i < (n - 1); i++) {
-          const start = d.values[i]
-          const end = d.values[i + 1]
+      //   for (let i = 0; i < (n - 1); i++) {
+      //     const start = d.values[i]
+      //     const end = d.values[i + 1]
 
-          const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
-          const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
-          const bearing = calculateBearing(
-            [start[columns.latitude], start[columns.longitude]],
-            [end[columns.latitude], end[columns.longitude]]
-          )
+      //     const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
+      //     const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
+      //     const bearing = calculateBearing(
+      //       [start[columns.latitude], start[columns.longitude]],
+      //       [end[columns.latitude], end[columns.longitude]]
+      //     )
 
-          const velocity = days > 0 ? meters / days : -Infinity
+      //     const velocity = days > 0 ? meters / days : -Infinity
 
-          calculatedValues[start.$index] = {
-            $duration: days,
-            $distance: meters,
-            $velocity: velocity,
-            $bearing: bearing
-          }
-        }
+      //     calculatedValues[start.$index] = {
+      //       $duration: days,
+      //       $distance: meters,
+      //       $velocity: velocity,
+      //       $bearing: bearing
+      //     }
+      //   }
 
-        calculatedValues[d.values[n - 1].$index] = {
-          $duration: -Infinity,
-          $distance: -Infinity,
-          $velocity: -Infinity,
-          $bearing: -Infinity
-        }
+      //   calculatedValues[d.values[n - 1].$index] = {
+      //     $duration: -Infinity,
+      //     $distance: -Infinity,
+      //     $velocity: -Infinity,
+      //     $bearing: -Infinity
+      //   }
 
-        const summary = d.values.reduce((p, v) => {
-          const distance = calculatedValues[v.$index].$distance
-          const duration = calculatedValues[v.$index].$duration
-          p.count += 1
-          p.distance += isFinite(distance) ? distance : 0
-          p.duration += isFinite(duration) ? duration : 0
-          return p
-        }, {
-          count: 0,
-          distance: 0,
-          duration: 0
-        })
+      //   const summary = d.values.reduce((p, v) => {
+      //     const distance = calculatedValues[v.$index].$distance
+      //     const duration = calculatedValues[v.$index].$duration
+      //     p.count += 1
+      //     p.distance += isFinite(distance) ? distance : 0
+      //     p.duration += isFinite(duration) ? duration : 0
+      //     return p
+      //   }, {
+      //     count: 0,
+      //     distance: 0,
+      //     duration: 0
+      //   })
 
-        d.values.forEach(d => {
-          mapByIndex.set(d.$index, {
-            ...calculatedValues[d.$index],
-            $total_n: summary.count,
-            $total_distance: summary.distance,
-            $total_duration: summary.duration
-          })
-        })
-      })
+      //   d.values.forEach(d => {
+      //     mapByIndex.set(d.$index, {
+      //       ...calculatedValues[d.$index],
+      //       $total_n: summary.count,
+      //       $total_distance: summary.distance,
+      //       $total_duration: summary.duration
+      //     })
+      //   })
+      // })
 
-      const fullDataset = Object.freeze(
-        data.map(d => ({
-          ...d,
-          ...mapByIndex.get(d.$index)
-        }))
-      )
+      // const fullDataset = Object.freeze(
+      //   data.map(d => ({
+      //     ...d,
+      //     ...mapByIndex.get(d.$index)
+      //   }))
+      // )
+      const processedDataset = processDataset(data, columns, variables)
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
 
-      xf.add(fullDataset)
-      this.dataset = fullDataset
+      xf.add(processedDataset)
+      this.dataset = processedDataset
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
       const calculatedVariables = [
         {
-          id: '$total_n',
-          name: 'Total # of Observations',
+          id: '$doy',
+          name: 'Day of the Year',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_n))]
-        },
-        {
-          id: '$total_distance',
-          name: 'Total Distance (m)',
-          type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_distance))]
-        },
-        {
-          id: '$total_duration',
-          name: 'Total Time (days)',
-          type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$total_duration))]
+          domain: [0, 366]
         },
         {
           id: '$distance',
           name: 'Distance to Next Location (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$distance))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$distance))]
         },
         {
           id: '$duration',
           name: 'Time to Next Location (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$duration))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$duration))]
         },
         {
           id: '$velocity',
           name: 'Velocity to Next Location (m/day)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(fullDataset, d => d.$velocity))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$velocity))]
         },
         {
           id: '$bearing',
-          name: 'Bearing to Next Location (degrees)',
+          name: 'Heading to Next Location (degrees)',
           type: 'continuous',
           domain: [0, 360]
+        },
+        {
+          id: '$total_n',
+          name: 'Total # of Observations',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_n))]
+        },
+        {
+          id: '$total_distance',
+          name: 'Total Distance (m)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))]
+        },
+        {
+          id: '$total_distance',
+          name: 'Total Distance (m)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))]
+        },
+        {
+          id: '$total_duration',
+          name: 'Total Time (days)',
+          type: 'continuous',
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_duration))]
         }
       ]
 

@@ -24,7 +24,7 @@ function validateCsvFile (filepath) {
   })
 }
 
-describe('datasetValidators', () => {
+describe('dataset', () => {
   describe('validateDatasetColumns()', () => {
     it('should reject with no data', () => {
       return expect(validateDatasetColumns([])).to.eventually.be.rejected
