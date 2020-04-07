@@ -16,7 +16,7 @@
     </v-card-text>
     <v-card-text v-else-if="status === 'ready' && projects.length > 0" class="py-4 px-6">
       <v-row>
-        <v-col cols="12" lg="6" xl="4" v-for="project in projects" :key="project.id">
+        <v-col cols="12" md="6" lg="4" xl="4" v-for="project in projects" :key="project.id">
           <v-card class="fill-height d-flex flex-column">
             <v-card-title primary-title class="pb-0">
               <span class="text-truncate">{{ project.name }}</span>
