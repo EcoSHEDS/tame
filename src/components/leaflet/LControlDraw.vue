@@ -28,8 +28,7 @@ export default {
     }
   },
   mounted () {
-    window.layer = this.layer = new L.FeatureGroup()
-    window.control = this.control = new L.Control.Draw({
+    this.control = new L.Control.Draw({
       position: 'topright',
       draw: {
         circle: false,
@@ -43,7 +42,6 @@ export default {
         edit: false
       }
     })
-    // window.toolbar = this.toolbar = new L.EditToolbar.Delete()
     this.map.addLayer(this.layer)
     this.map.addControl(this.control)
     this.map.on('draw:created', this.onCreated)

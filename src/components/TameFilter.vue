@@ -43,7 +43,7 @@
         <span>Close Filter</span>
       </v-tooltip>
     </v-toolbar>
-    <v-card-text v-show="!hide">
+    <v-card-text v-show="!hide" class="pb-1">
       <div v-if="variable.type === 'id'">
         <v-autocomplete
           :items="idFilter.options"
@@ -60,7 +60,27 @@
           hide-details
           @change="onIdFilter"
           label="Select tag ID(s)...">
+          <template v-slot:selection="{ item, index }">
+            <v-chip close small v-if="index < 10" @click:close="removeIdFilter(item.id)">
+              <span>{{ item.id }}</span>
+            </v-chip>
+            <span
+              v-if="index === 10"
+              class="grey--text caption"
+            >(+{{ idFilter.selected.length - 1 }} more)</span>
+          </template>
         </v-autocomplete>
+        <div class="text-right mt-2">
+          <v-btn small text color="default" @click="useSelected">Use Selected</v-btn>
+          <v-tooltip right open-delay="100" max-width="400">
+            <template v-slot:activator="{ on }">
+              <v-btn small icon v-on="on" class="align-self-center">
+                <v-icon small>mdi-alert-circle-outline</v-icon>
+              </v-btn>
+            </template>
+            Filter the dataset for only the selected individuals (if any).
+          </v-tooltip>
+        </div>
       </div>
       <div class="tame-filter-chart"></div>
     </v-card-text>
@@ -83,6 +103,11 @@ export default {
     variable: {
       type: Object,
       required: false
+    },
+    selectedIds: {
+      type: Array,
+      required: false,
+      default: () => []
     }
   },
   data () {
@@ -115,7 +140,7 @@ export default {
       return
     } else if (variable.type === 'continuous') {
       const margins = { top: 4, right: 10, bottom: 18, left: 30 }
-      const dim = xf.dimension(d => isNaN(d[variable.id]) ? -Infinity : d[variable.id])
+      const dim = xf.dimension(d => isNaN(d[variable.id]) || d[variable.id] === null ? -Infinity : d[variable.id])
       const l = this.variable.domain[0]
       const u = this.variable.domain[1]
       const n = 30
@@ -146,6 +171,13 @@ export default {
           evt.$emit('filter')
         })
       this.chart.xUnits(() => 30)
+      if (variable.tickFormat) {
+        this.chart.xAxis().tickFormat(d3.format(variable.tickFormat))
+      }
+      if (variable.tickValues) {
+        console.log(Object.keys(variable.tickValues))
+        this.chart.xAxis().tickValues(Object.keys(variable.tickValues)).tickFormat(d => variable.tickValues[d])
+      }
       this.chart.yAxis().ticks(4, 's')
     } else if (variable.type === 'discrete') {
       const margins = { top: 0, right: 10, bottom: 35, left: 16 }
@@ -194,7 +226,7 @@ export default {
               }
             })
         })
-      this.chart.xAxis().ticks(4, 's')
+      this.chart.xAxis().ticks(4, 'r')
     } else if (variable.type === 'datetime') {
       const margins = { top: 4, right: 10, bottom: 18, left: 30 }
 
@@ -270,6 +302,10 @@ export default {
     evt.$emit('filter')
   },
   methods: {
+    useSelected () {
+      this.idFilter.selected = this.selectedIds.slice()
+      this.onIdFilter()
+    },
     render () {
       this.chart && this.chart.render()
     },
@@ -285,6 +321,11 @@ export default {
     },
     close () {
       this.$emit('close')
+    },
+    removeIdFilter (id) {
+      console.log('removeIdFilter', id)
+      this.idFilter.selected = this.idFilter.selected.filter(d => d !== id)
+      this.onIdFilter()
     },
     onIdFilter () {
       // console.log('onIdFilter')

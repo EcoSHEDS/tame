@@ -8,6 +8,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    version: 1,
     usgs: process.env.VUE_APP_USGS === 'true',
     user: null,
     project: null,
@@ -26,6 +27,7 @@ export default new Vuex.Store({
     }
   },
   getters: {
+    version: state => state.version,
     user: state => state.user,
     project: state => state.project,
     isOwner: (state) => {

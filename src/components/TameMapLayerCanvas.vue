@@ -80,8 +80,7 @@ export default {
       tip: d3Tip()
         .attr('class', 'd3-tip')
         .direction('e'),
-      arrowSize: 12,
-      nestedData: []
+      arrowSize: 12
     }
   },
   computed: {
@@ -96,7 +95,7 @@ export default {
       return this.$parent.zoomLevel
     },
     boundingBox () {
-      // console.log('tame-map-layer:boundingBox')
+      console.log('tame-map-layer:boundingBox')
       if (this.dataset.length === 0) return null
 
       const lonExtent = d3.extent(this.dataset.map(d => d[this.project.columns.longitude]))
@@ -104,6 +103,7 @@ export default {
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
     },
     mappedDataset () {
+      console.log('mappedDataset()')
       pickerMap.clear()
       jitterIdMap.clear()
 
@@ -117,32 +117,30 @@ export default {
       // jitter by ID
       const ids = new Set(this.dataset.map(d => d[this.project.columns.id]))
       ids.forEach(id => {
-        jitterIdMap.set(id, { x: Math.random(), y: Math.random() })
+        jitterIdMap.set(id, { x: Math.random() - 0.5, y: Math.random() - 0.5 })
       })
 
       return this.dataset
     },
-    jitterValues () {
-      const n = this.mappedDataset.length
+    jitterDistance () {
+      console.log('jitterDistance()')
       const bbox = this.boundingBox
-
-      if (n === 0 || !bbox) return []
-
       const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][0], bbox[0][1]))
       const topRight = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][1], bbox[0][0]))
-
       const dX = bottomLeft.x - topRight.x
       const dY = bottomLeft.y - topRight.y
-      const dMax = dX > dY ? dX : dY
-
-      // return d3.range(n).map((_, i) => ({
-      //   x: Math.round((Math.random() - 0.5) * dMax),
-      //   y: Math.round((Math.random() - 0.5) * dMax)
-      // }))
-      return this.mappedDataset.map(d => ({
-        x: Math.round((jitterIdMap.get(d[this.project.columns.id]).x - 0.5) * dMax),
-        y: Math.round((jitterIdMap.get(d[this.project.columns.id]).y - 0.5) * dMax)
-      }))
+      return dX > dY ? dX : dY
+    },
+    jitterValues () {
+      console.log('jitterValues()')
+      const values = []
+      this.mappedDataset.forEach(d => {
+        values[d.$index] = {
+          x: jitterIdMap.get(d[this.project.columns.id]).x,
+          y: jitterIdMap.get(d[this.project.columns.id]).y
+        }
+      })
+      return values
     }
   },
   mounted () {
@@ -199,22 +197,32 @@ export default {
     }
 
     this.tip.html(d => {
-      return `
+      const primary = `
         <strong>${pad(10, 'Tag ID', '&nbsp;')}: ${d[this.project.columns.id]}</strong><br>
         ${pad(10, 'Location', '&nbsp;')}: ${d[this.project.columns.latitude].toFixed(4)}, ${d[this.project.columns.longitude].toFixed(4)}<br>
         ${pad(10, 'Timestamp', '&nbsp;')}: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
-
-        <br><strong>Total Observed Movement</strong><br>
+      `
+      const total = `
+        <strong>Total Observed Movement</strong><br>
         ${pad(10, '# Obs', '&nbsp;')}: ${d.$total_n.toFixed(0)}<br>
         ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$total_duration)}<br>
         ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$total_distance)}<br>
-
-        <br><strong>Movement To Next Location</strong><br>
-        ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$duration)}<br>
-        ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$distance)}<br>
-        ${pad(10, 'Velocity', '&nbsp;')}: ${formatVelocity(d.$velocity)}<br>
-        ${pad(10, 'Bearing', '&nbsp;')}: ${formatBearing(d.$bearing)}<br>
       `
+      let next = '<strong>Movement To Next Location</strong><br>'
+      if (d.$next) {
+        next += `
+          ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$duration)}<br>
+          ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$distance)}<br>
+          ${pad(10, 'Velocity', '&nbsp;')}: ${formatVelocity(d.$velocity)}<br>
+          ${pad(10, 'Bearing', '&nbsp;')}: ${formatBearing(d.$bearing)}<br>
+        `
+      } else {
+        next += '&nbsp;&nbsp;&nbsp;N/A (Last Observation)'
+      }
+      return `
+        ${primary}<br>
+        ${total}<br>
+        ${next}`
     })
 
     const size = this.map.getSize()
@@ -289,8 +297,6 @@ export default {
       .style('z-index', 201)
     this.svg.select('g').call(this.tip)
 
-    this.updateDataset()
-
     if (this.dataset.length > 0) {
       this.fitBounds()
       this.render()
@@ -313,16 +319,14 @@ export default {
     this.tip.destroy()
   },
   watch: {
-    project () {
-      this.fitBounds()
-      this.updateDataset()
-    },
-    selectedIds () {
-      // this.renderOverlay()
-      this.render()
-    },
     transparency () {
       this.setTransparency()
+    },
+    project () {
+      this.fitBounds()
+    },
+    selectedIds () {
+      this.render()
     },
     jitterX () {
       this.render()
@@ -338,6 +342,57 @@ export default {
     }
   },
   methods: {
+    reset () {
+      var topLeft = this.map.containerPointToLayerPoint([0, 0])
+      L.DomUtil.setPosition(this.base.canvas, topLeft)
+      L.DomUtil.setPosition(this.overlay.canvas, topLeft)
+      L.DomUtil.setPosition(this.picker.canvas, topLeft)
+
+      var size = this.map.getSize()
+
+      this.base.canvas.width = size.x
+      this.base.canvas.height = size.y
+      this.overlay.canvas.width = size.x
+      this.overlay.canvas.height = size.y
+      this.picker.canvas.width = size.x
+      this.picker.canvas.height = size.y
+    },
+    setTransparency () {
+      d3.select(this.base.canvas)
+        .style('opacity', (1 - this.transparency) * (this.selectedIds.length > 0 ? 0.5 : 1))
+    },
+    fitBounds () {
+      // console.log('fitBounds()')
+      if (!this.boundingBox) return
+
+      const bounds = [
+        [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
+        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
+      ]
+
+      this.map.fitBounds(bounds)
+    },
+    projectCanvasPoint (d) {
+      const latLng = new L.LatLng(d[this.project.columns.latitude], d[this.project.columns.longitude])
+      const point = this.map.latLngToContainerPoint(latLng)
+
+      const jitter = this.jitterValues[d.$index]
+      return {
+        x: point.x + jitter.x * Math.pow(this.jitterX, 2) * this.jitterDistance,
+        y: point.y + jitter.y * Math.pow(this.jitterY, 2) * this.jitterDistance
+      }
+    },
+    getFillColor (d) {
+      let color = d3.color(this.getColor(d))
+      if (color === null) {
+        color = d3.color('white')
+        color.opacity = 0
+      }
+      return color
+    },
+    getPickerColor (i) {
+      return `${((i * 100) % 256)},${(Math.floor((i * 100) / 256) % 256)},${(Math.floor((i * 100) / 65536) % 256)}`
+    },
     showHover (d) {
       this.hover = d
 
@@ -359,8 +414,8 @@ export default {
             update => update,
             exit => exit.remove()
           )
-          .attr('cx', point.x + jitter.x * Math.pow(this.jitterX, 2))
-          .attr('cy', point.y + jitter.y * Math.pow(this.jitterY, 2))
+          .attr('cx', point.x + jitter.x * Math.pow(this.jitterX, 2) * this.jitterDistance)
+          .attr('cy', point.y + jitter.y * Math.pow(this.jitterY, 2) * this.jitterDistance)
           .attr('r', 0)
           .style('opacity', 0)
           .style('pointer-events', 'none')
@@ -369,239 +424,8 @@ export default {
         this.tip.hide()
       }
     },
-    reset () {
-      var topLeft = this.map.containerPointToLayerPoint([0, 0])
-      L.DomUtil.setPosition(this.base.canvas, topLeft)
-      L.DomUtil.setPosition(this.overlay.canvas, topLeft)
-      L.DomUtil.setPosition(this.picker.canvas, topLeft)
-
-      var size = this.map.getSize()
-
-      this.base.canvas.width = size.x
-      this.base.canvas.height = size.y
-      this.overlay.canvas.width = size.x
-      this.overlay.canvas.height = size.y
-      this.picker.canvas.width = size.x
-      this.picker.canvas.height = size.y
-    },
-    setTransparency () {
-      d3.select(this.base.canvas)
-        .style('opacity', (1 - this.transparency) * (this.selectedIds.length > 0 ? 0.5 : 1))
-    },
-    updateDataset () {
-      if (!this.project) {
-        this.nestedData = []
-        return
-      }
-      const c = this.project.columns
-      const nestedData = d3.nest()
-        .key(d => d[c.id])
-        .sortValues((a, b) => a[c.datetime].valueOf() - b[c.datetime].valueOf())
-        .entries(xf.all())
-      this.nestedData = Object.freeze(nestedData)
-    },
-    render () {
-      this.renderBase()
-      this.renderOverlay()
-    },
-    renderBase () {
-      // console.log('renderBase')
-      if (!this.base.context) return
-
-      this.reset()
-
-      this.base.context.clearRect(0, 0, this.base.canvas.width, this.base.canvas.height)
-      this.picker.context.clearRect(0, 0, this.picker.canvas.width, this.picker.canvas.height)
-
-      if (!this.project) return
-
-      this.renderAllVectors()
-      this.renderAllCircles()
-    },
-    renderAllCircles () {
-      console.log('renderAllCircles')
-      this.base.context.lineWidth = 0.5
-      xf.allFiltered().forEach((d, i) => {
-        const point = this.projectCanvasPoint(d)
-
-        const r = this.getSize(d) * 10
-
-        if (this.showCircles >= 2) {
-          this.base.context.fillStyle = this.getFillColor(d).formatRgb()
-          this.base.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
-          this.base.context.beginPath()
-          this.base.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
-          this.base.context.fill()
-          this.base.context.stroke()
-        }
-
-        const pickerColor = this.getPickerColor(d.$index)
-        this.picker.context.fillStyle = `rgb(${pickerColor})`
-        this.picker.context.beginPath()
-        this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
-        this.picker.context.fill()
-      })
-    },
-    renderAllVectors () {
-      // console.log('renderAllVectors')
-      // if (!this.showAllVectors || this.selectedIds.length > 0) return
-      if (this.showVectors < 2) return
-
-      this.base.context.lineWidth = 1
-      this.nestedData.forEach(d => {
-        if (d.values.length > 1) {
-          for (let i = 0; i < d.values.length - 1; i++) {
-            if (xf.isElementFiltered(d.values[i].$index)) {
-              this.drawArrow(this.base.context, d.values[i], d.values[i + 1], this.getFillColor(d.values[i]).formatRgb())
-            }
-          }
-        }
-      })
-    },
-    renderOverlay () {
-      // console.log('renderOverlay')
-      if (!this.overlay.context) return
-
-      this.overlay.context.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height)
-
-      if (!this.project) return
-
-      this.setTransparency()
-
-      const c = this.project.columns
-
-      const hoverPoints = this.hover ? xf.allFiltered().filter(d => this.hover[c.id] === d[c.id]) : []
-      hoverPoints.sort((a, b) => a[c.datetime].valueOf() - b[c.datetime].valueOf())
-
-      const selectedPoints = this.selectedIds.length > 0 ? xf.allFiltered().filter(d => this.selectedIds.includes(d[c.id])) : []
-
-      this.renderSelectedVectors(selectedPoints)
-
-      // hover paths
-      if (hoverPoints.length > 0) {
-        const hoverPointsAll = hoverPoints
-        const hoverPointIndex = hoverPointsAll.findIndex(b => b.$index === this.hover.$index)
-        this.overlay.context.lineWidth = 3
-
-        hoverPointsAll.forEach((d, i) => {
-          if (i === 0) return
-          const from = hoverPointsAll[i - 1]
-          const to = hoverPointsAll[i]
-
-          let color
-          if (!this.hoverColor) {
-            color = this.getFillColor(from)
-          } else if (i <= hoverPointIndex) {
-            color = d3.color('deepskyblue')
-            color.opacity = 0.8
-          } else {
-            color = d3.color('orangered')
-            color.opacity = 0.8
-          }
-
-          this.drawArrow(this.overlay.context, from, to, color.formatRgb())
-        })
-      }
-
-      // selected points
-      this.renderSelectedPoints(selectedPoints)
-
-      // hover points
-      this.overlay.context.lineWidth = 2
-      hoverPoints
-        .forEach((d) => {
-          const point = this.projectCanvasPoint(d)
-          const r = this.getSize(d) * 10
-
-          this.overlay.context.fillStyle = this.getFillColor(d).formatRgb()
-          this.overlay.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
-          this.overlay.context.beginPath()
-          this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
-          this.overlay.context.fill()
-          this.overlay.context.stroke()
-
-          const pickerColor = this.getPickerColor(d.$index)
-          this.picker.context.fillStyle = `rgb(${pickerColor})`
-          this.picker.context.beginPath()
-          this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
-          this.picker.context.fill()
-        })
-    },
-    renderSelectedPoints (data) {
-      this.overlay.context.lineWidth = 2
-      data.forEach((d) => {
-        const point = this.projectCanvasPoint(d)
-        const r = this.getSize(d) * 10
-
-        if (this.showCircles >= 1) {
-          this.overlay.context.fillStyle = this.getFillColor(d).formatRgb()
-          this.overlay.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
-          this.overlay.context.beginPath()
-          this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
-          this.overlay.context.fill()
-          this.overlay.context.stroke()
-        }
-
-        const pickerColor = this.getPickerColor(d.$index)
-        this.picker.context.fillStyle = `rgb(${pickerColor})`
-        this.picker.context.beginPath()
-        this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
-        this.picker.context.fill()
-      })
-    },
-    renderSelectedVectors (data) {
-      if (data.length === 0 || this.showVectors < 1) return
-
-      const nested = d3.nest()
-        .key(d => d[this.project.columns.id])
-        .sortValues((a, b) => a[this.project.columns.datetime].valueOf() - b[this.project.columns.datetime].valueOf())
-        .entries(data)
-
-      nested.forEach(d => {
-        if (d.values.length > 1) {
-          for (let i = 0; i < d.values.length - 1; i++) {
-            this.overlay.context.lineWidth = 3
-            if (xf.isElementFiltered(d.values[i].$index + 1)) {
-              this.drawArrow(this.overlay.context, d.values[i], d.values[i + 1], this.getFillColor(d.values[i]).formatRgb())
-            }
-          }
-        }
-      })
-    },
-    getFillColor (d) {
-      let color = d3.color(this.getColor(d))
-      if (color === null) {
-        color = d3.color('white')
-        color.opacity = 0
-      }
-      return color
-    },
-    getPickerColor (i) {
-      return `${((i * 100) % 256)},${(Math.floor((i * 100) / 256) % 256)},${(Math.floor((i * 100) / 65536) % 256)}`
-    },
-    projectCanvasPoint (d) {
-      const latLng = new L.LatLng(d[this.project.columns.latitude], d[this.project.columns.longitude])
-      const point = this.map.latLngToContainerPoint(latLng)
-      const jitter = this.jitterValues[d.$index]
-
-      return {
-        x: point.x + jitter.x * Math.pow(this.jitterX, 2),
-        y: point.y + jitter.y * Math.pow(this.jitterY, 2)
-      }
-    },
-    fitBounds () {
-      // console.log('fitBounds()')
-      if (!this.boundingBox) return
-
-      const bounds = [
-        [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
-        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
-      ]
-
-      this.map.fitBounds(bounds)
-    },
-    drawArrow (context, from, to, color) {
-      // console.log('drawArrow')
+    drawVector (context, from, to, color, buffer) {
+      // console.log('drawVector')
       if (!context || !from || !to) return
 
       context.strokeStyle = color
@@ -615,16 +439,18 @@ export default {
       const angle = Math.atan2(dy, dx)
 
       // buffer for point radius
-      const fromr = 0.5
-      const tor = 0.5
+      // const fromr = 0.5
+      // const tor = 0.5
       // if (buffer) {
-      //   fromr = this.getSize(from) * 10 * 1.0
-      //   tor = this.getSize(to) * 10 * 1.3 // increase to add more buffer beyond edge of point (only needed for `to` point)
-
-      //   tox -= tor * Math.cos(angle)
-      //   toy -= tor * Math.sin(angle)
-      //   fromx += fromr * Math.cos(angle)
-      //   fromy += fromr * Math.sin(angle)
+      const fromr = 0.5
+      let tor = 0.5
+      if (buffer) {
+        tor = this.getSize(to) * 10 * 1.3 // increase to add more buffer beyond edge of point (only needed for `to` point)
+      }
+      // tox -= tor * Math.cos(angle)
+      // toy -= tor * Math.sin(angle)
+      // fromx += fromr * Math.cos(angle)
+      // fromy += fromr * Math.sin(angle)
       // }
 
       tox -= tor * Math.cos(angle)
@@ -645,9 +471,167 @@ export default {
       context.beginPath()
       context.moveTo(tox, toy)
       context.lineTo(tox - arrowSize * Math.cos(angle - Math.PI / 6), toy - arrowSize * Math.sin(angle - Math.PI / 6))
-      // context.moveTo(tox, toy)
       context.lineTo(tox - arrowSize * Math.cos(angle + Math.PI / 6), toy - arrowSize * Math.sin(angle + Math.PI / 6))
       context.fill()
+    },
+    render () {
+      this.renderBase()
+      this.renderOverlay()
+    },
+    renderBase () {
+      // console.log('renderBase')
+      if (!this.base.context) return
+
+      this.reset()
+
+      this.base.context.clearRect(0, 0, this.base.canvas.width, this.base.canvas.height)
+      this.picker.context.clearRect(0, 0, this.picker.canvas.width, this.picker.canvas.height)
+
+      if (!this.project) return
+
+      this.renderAllVectors()
+      this.renderAllCircles()
+    },
+    renderAllCircles () {
+      // console.log('renderAllCircles')
+      this.base.context.lineWidth = 0.5
+      xf.allFiltered().forEach((d, i) => {
+        const point = this.projectCanvasPoint(d)
+        const r = this.getSize(d) * 10
+
+        if (this.showCircles >= 2) {
+          this.base.context.fillStyle = this.getFillColor(d).formatRgb()
+          this.base.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
+          this.base.context.beginPath()
+          this.base.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+          this.base.context.fill()
+          this.base.context.stroke()
+        }
+
+        const pickerColor = this.getPickerColor(d.$index)
+        this.picker.context.fillStyle = `rgb(${pickerColor})`
+        this.picker.context.beginPath()
+        this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
+        this.picker.context.fill()
+
+        // add next circle even if not filtered for hover interaction
+        if (d.$next && !xf.isElementFiltered(d.$next.$index)) {
+          const pickerColor = this.getPickerColor(d.$next.$index)
+          const point = this.projectCanvasPoint(d.$next)
+          const r = this.getSize(d.$next) * 10
+          this.picker.context.fillStyle = `rgb(${pickerColor})`
+          this.picker.context.beginPath()
+          this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
+          this.picker.context.fill()
+        }
+      })
+    },
+    renderAllVectors () {
+      // console.log('renderAllVectors')
+      if (this.showVectors < 2) return
+
+      this.base.context.lineWidth = 1
+      xf.allFiltered().forEach(d => this.drawVector(this.base.context, d, d.$next, this.getFillColor(d).formatRgb(), this.showCircles >= 2))
+    },
+    renderOverlay () {
+      // console.log('renderOverlay')
+      if (!this.overlay.context) return
+
+      this.overlay.context.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height)
+
+      if (!this.project) return
+
+      this.setTransparency()
+
+      const c = this.project.columns
+      const hoverPoints = this.hover ? xf.all().filter(d => this.hover[c.id] === d[c.id]) : []
+      const selectedPoints = this.selectedIds.length > 0 ? xf.allFiltered().filter(d => this.selectedIds.includes(d[c.id])) : []
+
+      this.renderSelectedVectors(selectedPoints)
+      this.renderHoverVectors(hoverPoints)
+      this.renderSelectedCircles(selectedPoints)
+      this.renderHoverCircles(hoverPoints)
+    },
+    renderHoverCircles (values) {
+      this.overlay.context.lineWidth = 2
+      values.forEach((d) => {
+        const point = this.projectCanvasPoint(d)
+        const r = this.getSize(d) * 10
+
+        const fillColor = this.getFillColor(d)
+        const strokeColor = d3.color(this.getOutline(d))
+
+        if (!xf.isElementFiltered(d.$index)) {
+          fillColor.opacity *= 0.5
+          strokeColor.opacity *= 0.5
+        }
+
+        this.overlay.context.fillStyle = fillColor.formatRgb()
+        this.overlay.context.strokeStyle = strokeColor.formatRgb()
+        this.overlay.context.beginPath()
+        this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+        this.overlay.context.fill()
+        this.overlay.context.stroke()
+      })
+    },
+    renderHoverVectors (values) {
+      if (values.length === 0) return
+
+      values.forEach((d, i) => {
+        let color
+        if (!this.hoverColor) {
+          color = this.getFillColor(d)
+        } else if (d[this.project.columns.datetime] < this.hover[this.project.columns.datetime]) {
+          color = d3.color('deepskyblue')
+          color.opacity = 0.8
+        } else {
+          color = d3.color('orangered')
+          color.opacity = 0.8
+        }
+        if (!xf.isElementFiltered(d.$index)) {
+          color.opacity *= 0.5
+        }
+        this.drawVector(this.overlay.context, d, d.$next, color.formatRgb(), true)
+      })
+    },
+    renderSelectedCircles (data) {
+      this.overlay.context.lineWidth = 2
+      data.forEach((d) => {
+        const point = this.projectCanvasPoint(d)
+        const r = this.getSize(d) * 10
+
+        if (this.showCircles >= 1) {
+          this.overlay.context.fillStyle = this.getFillColor(d).formatRgb()
+          this.overlay.context.strokeStyle = d3.color(this.getOutline(d)).formatRgb()
+          this.overlay.context.beginPath()
+          this.overlay.context.arc(point.x, point.y, r, 0, 2 * Math.PI)
+          this.overlay.context.fill()
+          this.overlay.context.stroke()
+        }
+
+        const pickerColor = this.getPickerColor(d.$index)
+        this.picker.context.fillStyle = `rgb(${pickerColor})`
+        this.picker.context.beginPath()
+        this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
+        this.picker.context.fill()
+
+        // add next circle even if not filtered for hover interaction
+        if (d.$next && !xf.isElementFiltered(d.$next.$index)) {
+          const pickerColor = this.getPickerColor(d.$next.$index)
+          const point = this.projectCanvasPoint(d.$next)
+          const r = this.getSize(d.$next) * 10
+          this.picker.context.fillStyle = `rgb(${pickerColor})`
+          this.picker.context.beginPath()
+          this.picker.context.arc(point.x, point.y, r + 2, 0, 2 * Math.PI)
+          this.picker.context.fill()
+        }
+      })
+    },
+    renderSelectedVectors (data) {
+      if (data.length === 0 || this.showVectors < 1) return
+
+      this.overlay.context.lineWidth = 3
+      data.forEach(d => this.drawVector(this.overlay.context, d, d.$next, this.getFillColor(d).formatRgb(), this.showCircles >= 1))
     }
   },
   render: function (h) {

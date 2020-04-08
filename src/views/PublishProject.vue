@@ -135,7 +135,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['user', 'project']),
+    ...mapGetters(['user', 'project', 'version']),
     idErrors () {
       const errors = []
       if (this.status === 'READY') return errors
@@ -229,7 +229,8 @@ export default {
           name: this.form.name,
           description: this.form.description,
           columns: this.project.columns,
-          variables: this.project.variables
+          variables: this.project.variables,
+          version: this.version
         }
 
         if (this.isNew) {

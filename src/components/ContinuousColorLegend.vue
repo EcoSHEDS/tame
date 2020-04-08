@@ -101,6 +101,11 @@ export default {
         .clamp(true)
 
       const axis = d3.axisRight(axisScale).ticks(8).tickSize(10)
+
+      if (this.variable.tickValues) {
+        axis.tickValues(Object.keys(this.variable.tickValues)).tickFormat(d => this.variable.tickValues[d])
+      }
+
       this.svg.select('g.legend-axis')
         .call(axis)
     },

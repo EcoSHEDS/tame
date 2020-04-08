@@ -595,8 +595,6 @@ export default {
     },
     // Step 2: Columns
     resetColumns () {
-      if (this.columns.status === 'READY') return
-
       if (!this.file.parsed) {
         this.columns.status = 'READY'
         this.columns.error = null
@@ -609,6 +607,29 @@ export default {
       }
 
       const fields = this.file.parsed.meta.fields
+
+      if (this.columns.status === 'READY') {
+        if (this.file.parsed.meta.fields.includes('tag-local-identifier')) {
+          this.columns.value.id = 'tag-local-identifier'
+        }
+        if (this.file.parsed.meta.fields.includes('timestamp')) {
+          this.columns.value.datetime = 'timestamp'
+        } else if (this.file.parsed.meta.fields.includes('datetime')) {
+          this.columns.value.datetime = 'datetime'
+        }
+        if (this.file.parsed.meta.fields.includes('location-lat')) {
+          this.columns.value.latitude = 'location-lat'
+        } else if (this.file.parsed.meta.fields.includes('latitude')) {
+          this.columns.value.latitude = 'latitude'
+        }
+        if (this.file.parsed.meta.fields.includes('location-long')) {
+          this.columns.value.longitude = 'location-long'
+        } else if (this.file.parsed.meta.fields.includes('longitude')) {
+          this.columns.value.longitude = 'longitude'
+        }
+        return
+      }
+
       if (!fields.includes(this.columns.value.id)) {
         this.columns.value.id = null
       }

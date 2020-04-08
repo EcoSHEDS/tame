@@ -119,7 +119,7 @@
                       <v-autocomplete
                         v-model="color.selected"
                         :items="color.options"
-                        label="Color By"
+                        label="Color Variable"
                         item-value="id"
                         item-text="name"
                         return-object
@@ -131,7 +131,7 @@
                       </v-autocomplete>
                       <v-autocomplete
                         v-model="size.selected"
-                        label="Size By"
+                        label="Size Variable"
                         item-value="id"
                         item-text="name"
                         return-object
@@ -145,7 +145,7 @@
                       </v-autocomplete>
                       <v-autocomplete
                         v-model="outline.selected"
-                        label="Outline By"
+                        label="Outline Variable"
                         item-value="id"
                         item-text="name"
                         return-object
@@ -162,218 +162,231 @@
                     <v-divider></v-divider>
 
                     <v-card-text>
-                      <div class="subtitle-1">
-                        Display Settings
+                      <v-row no-gutters>
+                        <v-col cols="11" class="py-0">
+                          <span class="subtitle-1">Display Settings</span>
+                        </v-col>
+                        <v-col cols="1" class="py-0 text-right">
+                          <v-btn icon small @click="showDisplaySettings = !showDisplaySettings" class="align-self-center">
+                            <v-icon small v-if="!showDisplaySettings">mdi-menu-up</v-icon>
+                            <v-icon small v-else>mdi-menu-down</v-icon>
+                          </v-btn>
+                        </v-col>
+                      </v-row>
+                      <div v-if="showDisplaySettings">
+                        <v-row no-gutters class="my-2">
+                          <v-col cols="5" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Transparency
+                            </div>
+                          </v-col>
+                          <v-col cols="6" class="pb-0">
+                            <v-slider
+                              v-model="map.transparency"
+                              hide-details
+                              :min="0"
+                              :max="1"
+                              :step="0.01">
+                              <template v-slot:append>
+                                <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
+                                  {{map.transparency}}
+                                </div>
+                              </template>
+                            </v-slider>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="align-self-center">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              Adjust the transparency of circles and movement vectors. Does not affect selected or hovered individuals.<br><br>
+                              When one or more individuals are selected, transparency is automatically increased for the unselected individuals.
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
+                        <!-- <v-alert color="orange" text dense dismissable border="left" class="mb-0 body-2" :value="map.transparency < 0.25 && selection.selected.length === 0">
+                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-information</v-icon> Map may appear empty due to low transparency</div>
+                        </v-alert> -->
+                        <v-row no-gutters class="my-2">
+                          <v-col cols="5" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Horizontal Jitter
+                            </div>
+                          </v-col>
+                          <v-col cols="6" class="pb-0">
+                            <v-slider
+                              v-model="map.jitter.x"
+                              hide-details
+                              :min="0"
+                              :max="1"
+                              :step="0.01">
+                              <template v-slot:append>
+                                <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
+                                  {{map.jitter.x}}
+                                </div>
+                              </template>
+                            </v-slider>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="align-self-center">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              Add horizontal jitter (random variation) to circles
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
+                        <v-row no-gutters class="my-2">
+                          <v-col cols="5" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Vertical Jitter
+                            </div>
+                          </v-col>
+                          <v-col cols="6" class="pb-0">
+                            <v-slider
+                              v-model="map.jitter.y"
+                              hide-details
+                              :min="0"
+                              :max="1"
+                              :step="0.01">
+                              <template v-slot:append>
+                                <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
+                                  {{map.jitter.y}}
+                                </div>
+                              </template>
+                            </v-slider>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="align-self-center">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              Add vertical jitter (random variation) to circles
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
+
+                        <v-divider></v-divider>
+
+                        <v-row no-gutters class="my-2">
+                          <v-col cols="8" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Show Circles
+                            </div>
+                          </v-col>
+                          <v-col cols="3" class="pb-0">
+                            <div>
+                              <v-radio-group dense v-model="map.showCircles" column hide-details class="mt-0">
+                                <v-radio :value="2" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Always</span></template>
+                                </v-radio>
+                                <v-radio :value="1" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Selected Only</span></template>
+                                </v-radio>
+                                <v-radio :value="0" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Never</span></template>
+                                </v-radio>
+                              </v-radio-group>
+                            </div>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="mt-1">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              Circles indicate the observed locations of each individual.<br><br>
+                              They can be be shown always, never, or only for selected individuals.
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
+
+                        <v-divider></v-divider>
+
+                        <v-row no-gutters class="my-2">
+                          <v-col cols="8" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Show Movement Vectors
+                            </div>
+                          </v-col>
+                          <v-col cols="3" class="pb-0">
+                            <div>
+                              <v-radio-group dense v-model="map.showVectors" column class="mt-0" hide-details>
+                                <v-radio :value="2" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Always</span></template>
+                                </v-radio>
+                                <v-radio :value="1" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Selected Only</span></template>
+                                </v-radio>
+                                <v-radio :value="0" class="mb-0">
+                                  <template slot="label"><span class="caption grey--text text--darken-2">Never</span></template>
+                                </v-radio>
+                              </v-radio-group>
+                            </div>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="mt-1">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              Vectors indicate the movement of individuals from one observed location to another.<br><br>
+                              Each vector is associated with its <span class="font-weight-bold">starting point</span>, with both sharing the
+                              same color and crossfilter behavior.<br><br>
+                              They can be be shown always, never, or only for selected individuals.
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
+                        <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="map.showCircles === 0 && map.showVectors === 0">
+                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c circles and vectors are never shown</div>
+                        </v-alert>
+                        <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="(map.showCircles + map.showVectors > 0) && map.showCircles <= 1 && map.showVectors <= 1 && selection.selected.length === 0">
+                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c no individuals are selected</div>
+                        </v-alert>
+
+                        <v-divider></v-divider>
+
+                        <v-row no-gutters class="mt-2">
+                          <v-col cols="8" class="pb-0">
+                            <div class="subtitle-2 grey--text text--darken-2 pt-1">
+                              Color <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> Vector on Hover
+                            </div>
+                          </v-col>
+                          <v-col cols="3" class="pb-0">
+                            <v-switch
+                              v-model="map.hoverColor"
+                              hide-details
+                              class="mt-0">
+                              <template v-slot:append>
+                                <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
+                                  {{map.hoverColor ? 'On' : 'Off'}}
+                                </div>
+                              </template>
+                            </v-switch>
+                          </v-col>
+                          <v-col cols="1" class="text-right">
+                            <v-tooltip right open-delay="100" max-width="400">
+                              <template v-slot:activator="{ on }">
+                                <v-btn small icon v-on="on" class="mt-1">
+                                  <v-icon small>mdi-alert-circle-outline</v-icon>
+                                </v-btn>
+                              </template>
+                              When the mouse is hovered over an observed location (circle),
+                              the movement lines connecting observations before that point will be colored
+                              <span class="font-weight-medium" style="color:deepskyblue">BLUE</span>,
+                              and afterwards <span class="font-weight-medium" style="color:orangered">RED</span>.
+                            </v-tooltip>
+                          </v-col>
+                        </v-row>
                       </div>
-                      <v-row no-gutters class="my-2">
-                        <v-col cols="5" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Transparency
-                          </div>
-                        </v-col>
-                        <v-col cols="6" class="pb-0">
-                          <v-slider
-                            v-model="map.transparency"
-                            hide-details
-                            :min="0"
-                            :max="1"
-                            :step="0.01">
-                            <template v-slot:append>
-                              <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
-                                {{map.transparency}}
-                              </div>
-                            </template>
-                          </v-slider>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            Adjust the transparency of circles and movement vectors. Does not affect selected or hovered individuals.<br><br>
-                            When one or more individuals are selected, transparency is automatically increased for the unselected individuals.
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-                      <!-- <v-alert color="orange" text dense dismissable border="left" class="mb-0 body-2" :value="map.transparency < 0.25 && selection.selected.length === 0">
-                        <div class="font-weight-medium"><v-icon color="orange" left small>mdi-information</v-icon> Map may appear empty due to low transparency</div>
-                      </v-alert> -->
-                      <v-row no-gutters class="my-2">
-                        <v-col cols="5" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Horizontal Jitter
-                          </div>
-                        </v-col>
-                        <v-col cols="6" class="pb-0">
-                          <v-slider
-                            v-model="map.jitter.x"
-                            hide-details
-                            :min="0"
-                            :max="1"
-                            :step="0.01">
-                            <template v-slot:append>
-                              <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
-                                {{map.jitter.x}}
-                              </div>
-                            </template>
-                          </v-slider>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            Add horizontal jitter (random variation) to circles
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-                      <v-row no-gutters class="my-2">
-                        <v-col cols="5" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Vertical Jitter
-                          </div>
-                        </v-col>
-                        <v-col cols="6" class="pb-0">
-                          <v-slider
-                            v-model="map.jitter.y"
-                            hide-details
-                            :min="0"
-                            :max="1"
-                            :step="0.01">
-                            <template v-slot:append>
-                              <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
-                                {{map.jitter.y}}
-                              </div>
-                            </template>
-                          </v-slider>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="align-self-center">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            Add vertical jitter (random variation) to circles
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-
-                      <v-divider></v-divider>
-
-                      <v-row no-gutters class="my-2">
-                        <v-col cols="8" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Show Circles
-                          </div>
-                        </v-col>
-                        <v-col cols="3" class="pb-0">
-                          <div>
-                            <v-radio-group dense v-model="map.showCircles" column hide-details class="mt-0">
-                              <v-radio :value="2" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Always</span></template>
-                              </v-radio>
-                              <v-radio :value="1" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Selected Only</span></template>
-                              </v-radio>
-                              <v-radio :value="0" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Never</span></template>
-                              </v-radio>
-                            </v-radio-group>
-                          </div>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="mt-1">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            Circles indicate the observed locations of each individual.<br><br>
-                            They can be be shown always, never, or only for selected individuals.
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-                      <v-row no-gutters class="my-2">
-                        <v-col cols="8" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Show Movement Vectors
-                          </div>
-                        </v-col>
-                        <v-col cols="3" class="pb-0">
-                          <div>
-                            <v-radio-group dense v-model="map.showVectors" column class="mt-0" hide-details>
-                              <v-radio :value="2" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Always</span></template>
-                              </v-radio>
-                              <v-radio :value="1" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Selected Only</span></template>
-                              </v-radio>
-                              <v-radio :value="0" class="mb-0">
-                                <template slot="label"><span class="caption grey--text text--darken-2">Never</span></template>
-                              </v-radio>
-                            </v-radio-group>
-                          </div>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="mt-1">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            Vectors indicate the movement of individuals from one observed location to another.<br><br>
-                            Each vector is associated with its <span class="font-weight-bold">starting point</span>, with both sharing the
-                            same color and crossfilter behavior.<br><br>
-                            They can be be shown always, never, or only for selected individuals.
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
-                      <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="map.showCircles === 0 && map.showVectors === 0">
-                        <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c circles and vectors are never shown</div>
-                      </v-alert>
-                      <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="(map.showCircles + map.showVectors > 0) && map.showCircles <= 1 && map.showVectors <= 1 && selection.selected.length === 0">
-                        <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c no individuals are selected</div>
-                      </v-alert>
-
-                      <v-divider></v-divider>
-
-                      <v-row no-gutters class="mt-2">
-                        <v-col cols="8" class="pb-0">
-                          <div class="subtitle-2 grey--text text--darken-2 pt-1">
-                            Color Vector as <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> on Hover
-                          </div>
-                        </v-col>
-                        <v-col cols="3" class="pb-0">
-                          <v-switch
-                            v-model="map.hoverColor"
-                            hide-details
-                            class="mt-0">
-                            <template v-slot:append>
-                              <div class="mt-1 caption grey--text text--darken-2" style="width:50px">
-                                {{map.hoverColor ? 'On' : 'Off'}}
-                              </div>
-                            </template>
-                          </v-switch>
-                        </v-col>
-                        <v-col cols="1" class="text-right">
-                          <v-tooltip right open-delay="100" max-width="400">
-                            <template v-slot:activator="{ on }">
-                              <v-btn small icon v-on="on" class="mt-1">
-                                <v-icon small>mdi-alert-circle-outline</v-icon>
-                              </v-btn>
-                            </template>
-                            When the mouse is hovered over an observed location (circle),
-                            the movement lines connecting observations before that point will be colored
-                            <span class="font-weight-medium" style="color:deepskyblue">BLUE</span>,
-                            and afterwards <span class="font-weight-medium" style="color:orangered">RED</span>.
-                          </v-tooltip>
-                        </v-col>
-                      </v-row>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -512,7 +525,13 @@
                     <v-divider class="my-0 py-0" v-if="filters.selected.length > 0"></v-divider>
 
                     <v-card-text class="mt-0 py-0" v-if="filters.selected.length > 0">
-                      <TameFilter v-for="variable in filters.selected" :key="variable.id" :variable="variable" @close="removeFilter(variable)"></TameFilter>
+                      <TameFilter
+                        v-for="variable in filters.selected"
+                        :key="variable.id"
+                        :variable="variable"
+                        :selectedIds="selection.selected"
+                        @close="removeFilter(variable)">
+                      </TameFilter>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -560,7 +579,6 @@ import UsgsFooter from '@/components/usgs/UsgsFooter'
 
 import TameAppBar from '@/components/TameAppBar'
 import TameMap from '@/components/TameMap'
-// import TameMapLayer from '@/components/TameMapLayer'
 import TameMapLayerCanvas from '@/components/TameMapLayerCanvas'
 import TameFilter from '@/components/TameFilter'
 import TameLegend from '@/components/TameLegend'
@@ -585,6 +603,7 @@ export default {
       timeout: 5000
     },
     showDialog: true,
+    showDisplaySettings: true,
     loading: false,
     ready: false,
     error: null,
@@ -852,18 +871,26 @@ export default {
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
-      const calculatedVariables = [
+      const calculatedByObservation = [
         {
           id: '$doy',
           name: 'Day of the Year',
           type: 'continuous',
-          domain: [0, 366]
+          domain: [1, 366],
+          tickValues: {
+            1: 'Jan 1',
+            91: 'Apr 1',
+            182: 'Jul 1',
+            274: 'Oct 1',
+            365: 'Dec 31'
+          }
         },
         {
           id: '$distance',
           name: 'Distance to Next Location (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$distance))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$distance))],
+          tickFormat: '.2s'
         },
         {
           id: '$duration',
@@ -875,14 +902,25 @@ export default {
           id: '$velocity',
           name: 'Velocity to Next Location (m/day)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$velocity))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$velocity))],
+          tickFormat: '.2s'
         },
         {
           id: '$bearing',
           name: 'Heading to Next Location (degrees)',
           type: 'continuous',
-          domain: [0, 360]
-        },
+          domain: [0, 360],
+          // tickValues: [0, 90, 180, 270, 360],
+          tickValues: {
+            0: '0 (N)',
+            90: '90 (E)',
+            180: '180 (S)',
+            270: '270 (W)',
+            360: '360 (N)'
+          }
+        }
+      ]
+      const calculatedById = [
         {
           id: '$total_n',
           name: 'Total # of Observations',
@@ -893,52 +931,60 @@ export default {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))],
+          tickFormat: '.2s'
         },
         {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))],
+          tickFormat: '.2s'
         },
         {
           id: '$total_duration',
           name: 'Total Time (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_duration))]
+          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_duration))],
+          tickFormat: '.2s'
         }
       ]
 
       const uniqueIds = [...new Set(data.map(d => d[columns.id]))].sort(d3.ascending)
       this.color.options = [
-        { header: 'Primary Variables' },
-        {
-          id: columns.id,
-          name: 'Individual Tag ID',
-          type: 'discrete',
-          domain: uniqueIds
-        },
-        { header: 'Calculated Variables' },
-        ...calculatedVariables
+        { header: 'Individual Metrics' },
+        ...[
+          {
+            id: columns.id,
+            name: 'Individual ID',
+            type: 'discrete',
+            domain: uniqueIds
+          },
+          ...calculatedById
+        ],
+        { header: 'Movement Metrics' },
+        ...calculatedByObservation
       ]
       const colorVariables = variables.filter(d => !d.skip && d.color)
       if (colorVariables.length > 0) {
         this.color.options = [
           ...this.color.options,
-          { header: 'Dataset Variables' },
+          { header: 'Additional Variables' },
           ...colorVariables
         ]
       }
 
       this.size.options = [
-        { header: 'Calculated Variables' },
-        ...calculatedVariables
+        { header: 'Individual Metrics' },
+        ...calculatedById,
+        { header: 'Movement Metrics' },
+        ...calculatedByObservation
       ]
       const sizeVariables = variables.filter(d => !d.skip && d.size)
       if (sizeVariables.length > 0) {
         this.size.options = [
           ...this.size.options,
-          { header: 'Dataset Variables' },
+          { header: 'Additional Variables' },
           ...sizeVariables
         ]
       }
@@ -946,33 +992,40 @@ export default {
       const outlineVariables = variables.filter(d => !d.skip && d.outline)
       if (outlineVariables.length > 0) {
         this.outline.options = [
-          { header: 'Dataset Variables' },
+          { header: 'Additional Variables' },
           ...outlineVariables
         ]
       } else {
         this.outline.options = []
       }
 
+      const idFilterVariable = {
+        id: columns.id,
+        name: 'Individual ID',
+        type: 'id'
+      }
+      const datetimeFilterVariable = {
+        id: 'datetime',
+        name: 'Date',
+        type: 'datetime'
+      }
       this.filters.options = [
-        { header: 'Primary Variables' },
-        {
-          id: columns.id,
-          name: 'Individual Tag ID',
-          type: 'id'
-        },
-        {
-          id: 'datetime',
-          name: 'Date',
-          type: 'datetime'
-        },
-        { header: 'Calculated Variables' },
-        ...calculatedVariables
+        { header: 'Individual Metrics' },
+        ...[
+          idFilterVariable,
+          ...calculatedById
+        ],
+        { header: 'Movement Metrics' },
+        ...[
+          datetimeFilterVariable,
+          ...calculatedByObservation
+        ]
       ]
       const filterVariables = variables.filter(d => !d.skip && d.filter)
       if (filterVariables.length > 0) {
         this.filters.options = [
           ...this.filters.options,
-          { header: 'Dataset Variables' },
+          { header: 'Additional Variables' },
           ...filterVariables
         ]
       }
@@ -982,7 +1035,7 @@ export default {
       // this.size.selected = this.size.options[1]
       // this.outline.selected = this.outline.options.length > 0 ? this.outline.options[0] : null
 
-      this.filters.selected = [this.filters.options[1], this.filters.options[2]]
+      this.filters.selected = [idFilterVariable, datetimeFilterVariable]
 
       this.selectOption()
       this.ready = true

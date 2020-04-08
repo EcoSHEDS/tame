@@ -41,9 +41,36 @@ export function validateDatasetColumns (rows, columns) {
   })
 }
 
-export function processDataset (data, columns, variables, calculated) {
+function toNext (from, to, columns) {
+  if (!to) {
+    return {
+      $duration: null,
+      $distance: null,
+      $velocity: null,
+      $bearing: null
+    }
+  }
+  const days = (to[columns.datetime] - from[columns.datetime]) / 1000 / 86400
+  const meters = L.latLng(from[columns.latitude], from[columns.longitude]).distanceTo([to[columns.latitude], to[columns.longitude]])
+  const bearing = calculateBearing(
+    [from[columns.latitude], from[columns.longitude]],
+    [to[columns.latitude], to[columns.longitude]]
+  )
+
+  const velocity = days > 0 ? meters / days : -Infinity
+
+  return {
+    $duration: days,
+    $distance: meters,
+    $velocity: velocity,
+    $bearing: bearing
+  }
+}
+
+export function processDataset (data, columns, variables) {
   const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
 
+  // parse each row, assign index
   data.forEach((row, index) => {
     row.$index = index
     row.$doy = moment.utc(row[columns.datetime]).dayOfYear()
@@ -55,70 +82,33 @@ export function processDataset (data, columns, variables, calculated) {
     })
   })
 
-  const groupByTag = d3.nest()
+  const nested = d3.nest()
     .key(d => d[columns.id])
     .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
     .entries(data)
 
-  const mapByIndex = new Map()
-  groupByTag.forEach(d => {
-    const n = d.values.length
+  return nested.map(({ values }, i) => {
+    const calculated = values.map((d, i) => ({
+      ...d,
+      $next: values[i + 1],
+      ...toNext(d, values[i + 1], columns)
+    }))
 
-    const calculatedValues = {}
-
-    for (let i = 0; i < (n - 1); i++) {
-      const start = d.values[i]
-      const end = d.values[i + 1]
-
-      const days = (end[columns.datetime] - start[columns.datetime]) / 1000 / 86400
-      const meters = L.latLng(start[columns.latitude], start[columns.longitude]).distanceTo([end[columns.latitude], end[columns.longitude]])
-      const bearing = calculateBearing(
-        [start[columns.latitude], start[columns.longitude]],
-        [end[columns.latitude], end[columns.longitude]]
-      )
-
-      const velocity = days > 0 ? meters / days : -Infinity
-
-      calculatedValues[start.$index] = {
-        $duration: days,
-        $distance: meters,
-        $velocity: velocity,
-        $bearing: bearing
-      }
-    }
-
-    calculatedValues[d.values[n - 1].$index] = {
-      $duration: -Infinity,
-      $distance: -Infinity,
-      $velocity: -Infinity,
-      $bearing: -Infinity
-    }
-
-    const summary = d.values.reduce((p, v) => {
-      const distance = calculatedValues[v.$index].$distance
-      const duration = calculatedValues[v.$index].$duration
-      p.count += 1
-      p.distance += isFinite(distance) ? distance : 0
-      p.duration += isFinite(duration) ? duration : 0
+    const calculatedTotal = calculated.reduce((p, v) => {
+      p.$total_n += 1
+      p.$total_distance += isFinite(v.$distance) ? v.$distance : 0
+      p.$total_duration += isFinite(v.$duration) ? v.$duration : 0
       return p
     }, {
-      count: 0,
-      distance: 0,
-      duration: 0
+      $total_n: 0,
+      $total_distance: 0,
+      $total_duration: 0
     })
 
-    d.values.forEach(d => {
-      mapByIndex.set(d.$index, {
-        ...calculatedValues[d.$index],
-        $total_n: summary.count,
-        $total_distance: summary.distance,
-        $total_duration: summary.duration
-      })
-    })
-  })
-
-  return data.map(d => ({
-    ...d,
-    ...mapByIndex.get(d.$index)
-  }))
+    return calculated.map(d => ({
+      ...d,
+      ...calculatedTotal
+    }))
+  }).flat()
+    .sort((a, b) => d3.ascending(a.$index, b.$index))
 }

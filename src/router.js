@@ -44,7 +44,6 @@ AmplifyEventBus.$on('authState', async ({ state, redirect }) => {
 function getUser (force) {
   return Auth.currentAuthenticatedUser({ bypassCache: !!force })
     .then((data) => {
-      console.log(data)
       if (data && data.signInUserSession) {
         return store.dispatch('setUser', data)
       }

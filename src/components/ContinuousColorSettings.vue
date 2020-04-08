@@ -59,13 +59,14 @@ export default {
         options: [
           { header: 'Sequential (Multi Hue)' },
           ...colors.sequentialMulti,
-          ...colors.sequentialMultiColor,
-          { header: 'Sequential (Single Hue)' },
-          ...colors.sequentialSingle,
+          { header: 'Cyclical' },
+          ...colors.cyclical,
           { header: 'Diverging' },
           ...colors.diverging,
-          { header: 'Cyclical' },
-          ...colors.cyclical
+          { header: 'Sequential (Multi Hue)' },
+          ...colors.sequentialMultiColor,
+          { header: 'Sequential (Single Hue)' },
+          ...colors.sequentialSingle
         ],
         selected: null
       },
