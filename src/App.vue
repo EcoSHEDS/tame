@@ -4,7 +4,7 @@
     <UsgsHeader v-if="usgs"></UsgsHeader>
 
     <TameAppBar v-if="$vuetify.breakpoint.mdAndUp"></TameAppBar>
-    <v-app-bar app dense clipped-left dark absolute :style="{'margin-top': usgs ? '72px' : '0'}" v-else>
+    <v-app-bar app dense clipped-left dark absolute :style="{'margin-top': usgs ? '68px' : '0'}" v-else>
       <v-toolbar-title class="subheading">
         <span>Tagged Animal Movement Explorer (TAME)</span>
         <span class="text-uppercase overline ml-3">Beta</span>
@@ -98,13 +98,13 @@
                 dark
                 slider-color="white">
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-map</v-icon> Map Variables
+                  <v-icon small class="mr-1">mdi-map</v-icon> Map
                 </v-tab>
                 <v-tab ripple>
                   <v-icon small class="mr-1">mdi-crosshairs-gps</v-icon> Selection
                 </v-tab>
                 <v-tab ripple>
-                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Filters
+                  <v-icon small class="mr-1">mdi-chart-bar</v-icon> Crossfilters
                 </v-tab>
                 <v-spacer></v-spacer>
                 <v-btn icon small @click="tabs.collapse = !tabs.collapse" class="align-self-center mr-1">
@@ -193,7 +193,7 @@
                               </v-btn>
                             </template>
                             Adjust the transparency of circles and movement vectors. Does not affect selected or hovered individuals.<br><br>
-                            When one or more individuals are selected, transparency is multiplied by 0.5 for the unselected individuals.
+                            When one or more individuals are selected, transparency is automatically increased for the unselected individuals.
                           </v-tooltip>
                         </v-col>
                       </v-row>
@@ -596,7 +596,7 @@ export default {
     map: {
       center: [35, -92.8],
       zoom: 5,
-      transparency: 0.8,
+      transparency: 0.2,
       jitter: {
         x: 0,
         y: 0
@@ -686,7 +686,7 @@ export default {
   computed: {
     ...mapGetters(['user', 'project', 'isOwner', 'usgs', 'colorScale']),
     maxHeight () {
-      return (this.$vuetify.breakpoint.height - 279 - (this.usgs ? 72 + 59 : 0)) + 'px'
+      return (this.$vuetify.breakpoint.height - 280 - (this.usgs ? 68 + 59 : 0)) + 'px'
     },
     colorValueScale () {
       // maps raw value to [0, 1] for input to colorScale
@@ -733,8 +733,8 @@ export default {
       this.onDraw()
     },
     'selection.selected' () {
-      if (this.project && this.selection.selected.length === 0 && this.map.transparency < 0.25) {
-        this.showSnackbar('Map may appear empty due to low transparency')
+      if (this.project && this.selection.selected.length === 0 && this.map.transparency > 0.75) {
+        this.showSnackbar('Map may appear empty due to high transparency')
       }
     },
     project () {
@@ -808,7 +808,7 @@ export default {
       this.filters.selected = []
       this.filters.options = []
 
-      this.map.transparency = 0.8
+      this.map.transparency = 0.2
       this.map.jitter.x = 0
       this.map.jitter.y = 0
       this.map.hoverColor = true

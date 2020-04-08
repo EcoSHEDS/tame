@@ -386,7 +386,7 @@ export default {
     },
     setTransparency () {
       d3.select(this.base.canvas)
-        .style('opacity', this.transparency * (this.selectedIds.length > 0 ? 0.5 : 1))
+        .style('opacity', (1 - this.transparency) * (this.selectedIds.length > 0 ? 0.5 : 1))
     },
     updateDataset () {
       if (!this.project) {

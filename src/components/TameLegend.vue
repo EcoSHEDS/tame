@@ -55,7 +55,7 @@ export default {
   computed: {
     ...mapGetters(['usgs']),
     maxHeight () {
-      return (this.$vuetify.breakpoint.height - 120 - (this.usgs ? 68 + 59 : 0)) + 'px'
+      return (this.$vuetify.breakpoint.height - 112 - (this.usgs ? 68 + 59 : 0)) + 'px'
     }
   }
 }
