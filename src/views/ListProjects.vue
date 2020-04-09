@@ -49,6 +49,8 @@
 </template>
 
 <script>
+import * as d3 from 'd3'
+
 export default {
   name: 'ListProjects',
   data () {
@@ -62,7 +64,7 @@ export default {
     this.$http.get('/projects')
       .then(response => {
         this.projects = response.data
-          .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.name >= b.name ? 0 : NaN))
+          .sort((a, b) => d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()))
           // .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : a.updatedAt >= b.updatedAt ? 0 : NaN))
         this.status = 'ready'
       })

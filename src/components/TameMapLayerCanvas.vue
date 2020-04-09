@@ -441,17 +441,11 @@ export default {
       // buffer for point radius
       // const fromr = 0.5
       // const tor = 0.5
-      // if (buffer) {
       const fromr = 0.5
       let tor = 0.5
       if (buffer) {
         tor = this.getSize(to) * 10 * 1.3 // increase to add more buffer beyond edge of point (only needed for `to` point)
       }
-      // tox -= tor * Math.cos(angle)
-      // toy -= tor * Math.sin(angle)
-      // fromx += fromr * Math.cos(angle)
-      // fromy += fromr * Math.sin(angle)
-      // }
 
       tox -= tor * Math.cos(angle)
       toy -= tor * Math.sin(angle)
@@ -530,8 +524,8 @@ export default {
       // console.log('renderAllVectors')
       if (this.showVectors < 2) return
 
-      this.base.context.lineWidth = 1
-      xf.allFiltered().forEach(d => this.drawVector(this.base.context, d, d.$next, this.getFillColor(d).formatRgb(), this.showCircles >= 2))
+      this.base.context.lineWidth = 1.5
+      xf.allFiltered().forEach(d => this.drawVector(this.base.context, d, d.$next, this.getFillColor(d).formatRgb(), (this.selectedIds.includes(d[this.project.columns.id]) && this.showCircles >= 1) || this.showCircles >= 2))
     },
     renderOverlay () {
       // console.log('renderOverlay')
@@ -591,7 +585,7 @@ export default {
         if (!xf.isElementFiltered(d.$index)) {
           color.opacity *= 0.5
         }
-        this.drawVector(this.overlay.context, d, d.$next, color.formatRgb(), true)
+        this.drawVector(this.overlay.context, d, d.$next, color.formatRgb(), this.showCircles >= 2 || (this.showCircles >= 1 && this.selectedIds.includes(this.hover[this.project.columns.id])))
       })
     },
     renderSelectedCircles (data) {

@@ -1,7 +1,9 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
+import { processDataset } from '@/lib/dataset'
 import { generateColorScale } from '@/lib/colors'
 
 Vue.use(Vuex)
@@ -100,11 +102,6 @@ export default new Vuex.Store({
     async loadProject ({ commit }, project) {
       if (!project) return commit('SET_PROJECT', null)
 
-      // if (project.file.parsed) {
-      //   commit('SET_PROJECT', project)
-      //   return Promise.resolve(project)
-      // }
-
       if (!project.file) {
         return Promise.reject(new Error('Project file not found'))
       }
@@ -115,8 +112,27 @@ export default new Vuex.Store({
             if (results.errors.length > 0) {
               return reject(new Error(`${results.errors[0].message} (Row ${results.errors[0].row})`))
             }
-            project.dataset = Object.freeze(results)
-            commit('SET_PROJECT', project)
+
+            const { aggregation, columns, variables } = project
+
+            const dataset = processDataset(results.data, columns, variables, aggregation)
+
+            variables.forEach(variable => {
+              if (variable.skip) return
+
+              if (variable.type === 'discrete') {
+                variable.domain = [...new Set(dataset.map(d => d[variable.id]))]
+              } else if (variable.type === 'continuous') {
+                variable.domain = d3.extent(dataset, d => d[variable.id])
+              }
+            })
+
+            results.data = dataset
+
+            // project.dataset = Object.freeze(dataset)
+            project.dataset = results
+
+            commit('SET_PROJECT', Object.freeze(project))
             return resolve(project)
           })
           .catch(e => reject(e))

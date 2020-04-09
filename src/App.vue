@@ -236,7 +236,8 @@
                                   <v-icon small>mdi-alert-circle-outline</v-icon>
                                 </v-btn>
                               </template>
-                              Add horizontal jitter (random variation) to circles
+                              Add horizontal jitter (random variation) to each individual.<br><br>
+                              Note that the observations for each individual will be moved the same amount.
                             </v-tooltip>
                           </v-col>
                         </v-row>
@@ -267,7 +268,8 @@
                                   <v-icon small>mdi-alert-circle-outline</v-icon>
                                 </v-btn>
                               </template>
-                              Add vertical jitter (random variation) to circles
+                              Add vertical jitter (random variation) to each individual.<br><br>
+                              Note that the observations for each individual will be moved the same amount.
                             </v-tooltip>
                           </v-col>
                         </v-row>
@@ -339,7 +341,7 @@
                                 </v-btn>
                               </template>
                               Vectors indicate the movement of individuals from one observed location to another.<br><br>
-                              Each vector is associated with its <span class="font-weight-bold">starting point</span>, with both sharing the
+                              Each vector is associated with its <span class="font-weight-bold">starting point</span> such that both have the
                               same color and crossfilter behavior.<br><br>
                               They can be be shown always, never, or only for selected individuals.
                             </v-tooltip>
@@ -405,12 +407,12 @@
                           <v-tooltip right open-delay="100" max-width="400">
                             <template v-slot:activator="{ on }">
                               <v-btn small icon v-on="on" class="float-right">
-                                <v-icon>mdi-alert-circle-outline</v-icon>
+                                <v-icon small>mdi-alert-circle-outline</v-icon>
                               </v-btn>
                             </template>
-                            Click an observed location (circle) on the map or choose an ID from the dropdown menu to
-                            select an individual with a unique tag ID, which will highlight all locations where that individual was observed.<br>
-                            Click on a selected individual again or uncheck it in the dropdown menu to unselect it.<br>
+                            Click an observed location (circle) or choose an ID from the dropdown menu to select an individual.<br><br>
+                            Selecting an individual will highlight all the observed locations and movements of that individual.<br><br>
+                            Click on a selected individual again or uncheck it in the dropdown menu to unselect it.<br><br>
                             More than one individual can be selected at a time.
                           </v-tooltip>
                         </v-col>
@@ -447,18 +449,15 @@
                         <v-tooltip right open-delay="100" max-width="400">
                           <template v-slot:activator="{ on }">
                             <v-btn icon small v-on="on" class="align-self-center">
-                              <v-icon>mdi-alert-circle-outline</v-icon>
+                              <v-icon small>mdi-alert-circle-outline</v-icon>
                             </v-btn>
                           </template>
-                          Select all individuals that were observed in a specific area by clicking <strong>Draw New Area</strong>
-                          and then click-and-drag to draw the target area on the map.
+                          Click <strong>Draw New Area</strong> and then click-and-drag on the map to draw a new selection area.<br><br>
 
-                          Add more areas to select individuals that passed through multiple areas.
+                          All individuals that were observed within that area will be selected. Add more areas to select individuals that passed through multiple areas.<br><br>
 
                           <strong>Intersection</strong> selects individuals that passed through ALL areas, <strong>Union</strong> selects individuals
                           that passed through ANY of the areas.
-
-                          These selections are not affected by the crossfilters.
                         </v-tooltip>
                       </div>
 
@@ -545,6 +544,9 @@
               :color-variable="color.selected"
               :size-variable="size.selected"
               :outline-variable="outline.selected"
+              :selected-ids="selection.selected"
+              @clearSelected="unselectAll"
+              @clearFilters="clearFilters"
               v-if="ready"></TameLegend>
           </v-col>
         </v-row>
@@ -567,12 +569,12 @@
 
 <script>
 import * as d3 from 'd3'
+import dc from 'dc'
 import L from 'leaflet'
 import { mapGetters, mapActions } from 'vuex'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
-import { processDataset } from '@/lib/dataset'
 
 import UsgsHeader from '@/components/usgs/UsgsHeader'
 import UsgsFooter from '@/components/usgs/UsgsFooter'
@@ -856,18 +858,15 @@ export default {
     },
     initProject () {
       // console.log('initProject', this.project)
-
       if (!this.project) return
 
       const { columns, variables, dataset } = this.project
-      const data = dataset.data
 
-      const processedDataset = processDataset(data, columns, variables)
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
 
-      xf.add(processedDataset)
-      this.dataset = processedDataset
+      xf.add(dataset.data)
+      this.dataset = Object.freeze(dataset.data)
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
@@ -889,20 +888,20 @@ export default {
           id: '$distance',
           name: 'Distance to Next Location (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$distance))],
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))],
           tickFormat: '.2s'
         },
         {
           id: '$duration',
           name: 'Time to Next Location (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$duration))]
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
         },
         {
           id: '$velocity',
           name: 'Velocity to Next Location (m/day)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$velocity))],
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$velocity))],
           tickFormat: '.2s'
         },
         {
@@ -910,7 +909,6 @@ export default {
           name: 'Heading to Next Location (degrees)',
           type: 'continuous',
           domain: [0, 360],
-          // tickValues: [0, 90, 180, 270, 360],
           tickValues: {
             0: '0 (N)',
             90: '90 (E)',
@@ -925,32 +923,32 @@ export default {
           id: '$total_n',
           name: 'Total # of Observations',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_n))]
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_n))]
         },
         {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))],
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_distance))],
           tickFormat: '.2s'
         },
         {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_distance))],
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_distance))],
           tickFormat: '.2s'
         },
         {
           id: '$total_duration',
           name: 'Total Time (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(processedDataset, d => d.$total_duration))],
+          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_duration))],
           tickFormat: '.2s'
         }
       ]
 
-      const uniqueIds = [...new Set(data.map(d => d[columns.id]))].sort(d3.ascending)
+      const uniqueIds = [...new Set(this.dataset.map(d => d[columns.id]))].sort(d3.ascending)
       this.color.options = [
         { header: 'Individual Metrics' },
         ...[
@@ -1072,6 +1070,11 @@ export default {
 
       this.counts.tags.filtered = this.tags.group ? this.tags.group.all().filter(d => d.value > 0).length : 0
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
+    },
+    clearFilters () {
+      console.log('clearFilters')
+      dc.filterAll()
+      evt.$emit('filterAll')
     },
     selectByAreas (layer) {
       // console.log('selectByAreas', layer, layer.features[0])

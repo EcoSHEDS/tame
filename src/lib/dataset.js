@@ -25,10 +25,10 @@ export function validateDatasetColumns (rows, columns) {
   }))
 
   const rowSchema = Joi.object({
-    [columns.id]: Joi.string().required(),
-    [columns.datetime]: Joi.date().iso().required(),
-    [columns.latitude]: Joi.number().min(-90).max(90).unsafe().required(),
-    [columns.longitude]: Joi.number().min(-180).max(180).unsafe().required()
+    [columns.id]: Joi.string(),
+    [columns.datetime]: Joi.date().iso(),
+    [columns.latitude]: Joi.number().min(-90).max(90).unsafe(),
+    [columns.longitude]: Joi.number().min(-180).max(180).unsafe()
   })
   const schema = Joi.array().items(rowSchema).min(1).required()
 
@@ -67,13 +67,11 @@ function toNext (from, to, columns) {
   }
 }
 
-export function processDataset (data, columns, variables) {
+export function processDataset (data, columns, variables, aggregation) {
   const numericVariables = variables.filter(d => d.type === 'continuous').map(d => d.id)
 
   // parse each row, assign index
-  data.forEach((row, index) => {
-    row.$index = index
-    row.$doy = moment.utc(row[columns.datetime]).dayOfYear()
+  data.forEach((row) => {
     row[columns.datetime] = new Date(row[columns.datetime])
     row[columns.latitude] = parseFloat(row[columns.latitude])
     row[columns.longitude] = parseFloat(row[columns.longitude])
@@ -82,19 +80,36 @@ export function processDataset (data, columns, variables) {
     })
   })
 
+  // filter out missing primary variables
+  data = data.filter(row => {
+    return row[columns.id].trim().length >= 1 &&
+      !isNaN(row[columns.datetime]) &&
+      !isNaN(row[columns.latitude]) &&
+      row[columns.latitude] >= -90 &&
+      row[columns.latitude] <= 90 &&
+      !isNaN(row[columns.longitude]) &&
+      row[columns.longitude] >= -180 &&
+      row[columns.longitude] <= 180
+  })
+
+  // assign derived variables
+  data.forEach((row, index) => {
+    row.$index = index
+    row.$doy = moment.utc(row[columns.datetime]).dayOfYear()
+  })
+
   const nested = d3.nest()
     .key(d => d[columns.id])
-    .sortValues((a, b) => (a[columns.datetime] < b[columns.datetime] ? -1 : a[columns.datetime] > b[columns.datetime] ? 1 : a[columns.datetime] >= b[columns.datetime] ? 0 : NaN))
+    .sortValues((a, b) => d3.ascending(a.datetime, b.datetime))
     .entries(data)
 
-  return nested.map(({ values }, i) => {
-    const calculated = values.map((d, i) => ({
+  const preAggregated = nested.map(({ values }, i) => {
+    values = values.map((d, i) => ({
       ...d,
-      $next: values[i + 1],
       ...toNext(d, values[i + 1], columns)
     }))
 
-    const calculatedTotal = calculated.reduce((p, v) => {
+    const totals = values.reduce((p, v) => {
       p.$total_n += 1
       p.$total_distance += isFinite(v.$distance) ? v.$distance : 0
       p.$total_duration += isFinite(v.$duration) ? v.$duration : 0
@@ -105,10 +120,40 @@ export function processDataset (data, columns, variables) {
       $total_duration: 0
     })
 
-    return calculated.map(d => ({
+    values = values.map(d => ({
       ...d,
-      ...calculatedTotal
+      ...totals
     }))
+
+    values.forEach((d, i) => {
+      d.$next = values[i + 1]
+    })
+
+    return values
   }).flat()
     .sort((a, b) => d3.ascending(a.$index, b.$index))
+
+  if (!aggregation || aggregation === 'none') return preAggregated
+
+  const aggregated = aggregateDataset(preAggregated, columns, aggregation)
+
+  return processDataset(aggregated, columns, variables)
+}
+
+export function aggregateDataset (values, columns, aggregation) {
+  if (!aggregation || aggregation === 'none') return values
+
+  const nested = d3.nest()
+    .key(d => d[columns.id])
+    .key(d => moment.utc(d[columns.datetime]).startOf('day').format('YYYY-MM-DD'))
+
+  if (aggregation === 'firstDay') {
+    nested.sortValues((a, b) => d3.ascending(a[columns.datetime], b[columns.datetime]))
+  } else if (aggregation === 'maxDistance') {
+    nested.sortValues((a, b) => d3.descending(a.$distance, b.$distance))
+  } else {
+    throw new Error('Invalid aggregation method')
+  }
+
+  return nested.entries(values).map(d => d.values.map(d => d.values[0])).flat()
 }

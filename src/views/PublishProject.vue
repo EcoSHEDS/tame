@@ -7,32 +7,47 @@
     </v-toolbar>
 
     <v-card-text v-if="!user" class="pt-4 pb-0">
-      <v-alert type="error" outlined dense>
-        <div class="font-weight-bold">Not Logged In</div>
-        <p>You must be logged in to publish a project.</p>
-        <p class="mb-0">Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.</p>
+      <v-alert type="error" outlined dense class="body-2">
+        <div class="font-weight-bold body-1">Not Logged In</div>
+        <div class="my-2">
+          You must be logged in to publish a project.
+        </div>
+        <div class="mt-2">
+          Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.
+        </div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="!project" class="pt-4">
+    <v-card-text v-else-if="!project" class="pt-4 pb-0">
       <v-alert type="error" outlined dense>
-        <div class="font-weight-bold">Project Not Found</div>
+        <div class="font-weight-bold body-1">Project Not Found</div>
         <p>An existing project could not be found.</p>
         <p class="mb-0">Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</p>
       </v-alert>
     </v-card-text>
+    <v-card-text v-else-if="project.file.size > 5e6" class="pt-4 pb-0">
+      <v-alert type="error" outlined dense class="body-2">
+        <div class="font-weight-bold body-1">File Size Too Large</div>
+        <div class="mb-2">
+          The dataset file for this project exceeds the maximum size of 5 MB (file is {{ (project.file.size / 1e6).toFixed(1) }} MB).
+        </div>
+        <div class="my-2">
+          To publish this dataset, reduce the file size by removing rows and/or columns and then reload the CSV file using the <strong>Edit Project</strong> form.
+        </div>
+      </v-alert>
+    </v-card-text>
     <v-card-text v-else class="pt-4">
-      <v-alert type="info" outlined dense class="mb-8">
-        <div class="font-weight-bold">What is a Published Project?</div>
-        <p>
+      <v-alert type="info" outlined dense class="mb-8 body-2">
+        <div class="font-weight-bold body-1">What is a Published Project?</div>
+        <div class="mb-2">
           Publishing a project will save the dataset to the TAME web server and make it publicly accessible to <em>any user</em>
           from the <strong>Load Project</strong> screen.
-        </p>
-        <p>
+        </div>
+        <div class="my-2">
           Once it is published, you can continue to make changes to the project by uploading new versions of the dataset or changing the variable settings.
-        </p>
-        <p class="mb-0">
+        </div>
+        <div class="mt-2">
           You will also be able to <strong>Unpublish</strong> the project at any time to remove it from the server.
-        </p>
+        </div>
       </v-alert>
 
       <v-text-field
@@ -74,12 +89,11 @@
         {{serverError}}
       </v-alert>
 
-      <v-alert type="success" v-if="status === 'SUCCESS'" outlined prominent class="mt-4">
-        <div class="title">Success! Your project has been published.</div>
-        <br>
-        <div>
+      <v-alert type="success" v-if="status === 'SUCCESS'" outlined dense class="mt-4 body-2">
+        <div class="font-weight-bold body-1">Success! Your project has been published.</div>
+        <div class="">
           You can find it on the <router-link :to="{ name: 'listProjects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
-          <pre class="grey--text text--darken-2 ml-4">
+          <pre class="grey--text text--darken-2">
             <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
           </pre>
         </div>
@@ -90,12 +104,12 @@
 
     <v-card-actions class="mx-4 py-4">
       <v-btn
-        v-if="!!user && !!project"
+        v-if="!!user && !!project && project.file.size <= 5e6"
         @click="submit"
         color="primary"
         class="mr-4"
         :loading="status === 'PENDING'"
-        :disabled="!user || !project || status === 'SUCCESS'">
+        :disabled="!user || !project || project.file.size > 5e6 || status === 'SUCCESS'">
         submit
       </v-btn>
       <v-spacer></v-spacer>
@@ -224,14 +238,19 @@ export default {
 
       let project
       try {
-        const newProject = {
+        let newProject = {
           id: this.form.id,
           name: this.form.name,
           description: this.form.description,
           columns: this.project.columns,
           variables: this.project.variables,
+          aggregation: this.project.aggregation,
           version: this.version
         }
+        newProject = JSON.parse(JSON.stringify(newProject))
+        newProject.variables.forEach(d => {
+          delete d.domain
+        })
 
         if (this.isNew) {
           // console.log('post', newProject)
@@ -269,6 +288,13 @@ export default {
             }
           }).then(response => response.data)
         } catch (e) {
+          if (this.isNew) {
+            this.$http.delete(`/projects/${project.id}`, {
+              headers: {
+                Authorization: token
+              }
+            })
+          }
           return this.setError(e)
         }
       }

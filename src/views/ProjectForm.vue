@@ -58,42 +58,65 @@
               prepend-inner-icon="$file"
               prepend-icon
               hide-details
+              truncate-length="100"
               @change="loadLocalFile">
             </v-file-input>
             <div v-if="file.status === 'SUCCESS'">
-              <v-alert type="success" dense outlined :value="!!file.value">
-                <div class="font-weight-bold" v-if="!!file.value.local">
+              <v-alert type="success" dense outlined :value="!!file.value" class="body-2">
+                <div class="body-1 font-weight-bold" v-if="!!file.value.local">
                   File Successfully Loaded from Your Computer
                 </div>
-                <div class="font-weight-bold" v-else-if="!file.value.local">
+                <div class="body-1 font-weight-bold" v-else-if="!file.value.local">
                   File Successfully Loaded from the Server
                 </div>
                 <div class="my-4 font-family-mono">
-                  Filename: <strong>{{ file.value.name }}</strong><br>
-                  &nbsp;&nbsp;# Rows: <strong>{{ file.parsed.data.length.toLocaleString() }}</strong><br>
-                  &nbsp;Columns: <strong>{{ file.parsed.meta.fields.join(', ') }}</strong>
+                  <!-- Filename: <strong>{{ file.value.name }}</strong><br>
+                  &nbsp;&nbsp;# Rows: <strong></strong><br>
+                  &nbsp;: <strong>{{  }}</strong> -->
+                  <v-row no-gutters>
+                    <v-col cols="2" class="px-1 py-1 text-right">Filename:</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.value.name }}</v-col>
+                    <v-col cols="2" class="px-1 py-1 text-right">Filesize:</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.value.size | prettyBytes(1) }}</v-col>
+                    <v-col cols="2" class="px-1 py-1 text-right"># Rows:</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</v-col>
+                    <v-col cols="2" class="px-1 py-1 text-right">Columns:</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.parsed.meta.fields.join(', ') }}</v-col>
+                  </v-row>
                 </div>
-                <p>
+                <div class="mt-4">
                   To replace the dataset with a new version, select a new file on your computer using the input box above.
-                </p>
-                <div>
-                  Note the entire dataset must be replaced, TAME does not currently support appending only new
-                  observations.
+                  Note that the entire dataset must be replaced, TAME does not currently support appending new observations to an existing dataset.
                 </div>
               </v-alert>
-              <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000">
-                <div class="font-weight-bold">Large File Detected</div>
-                Files with more than 10,000 rows may cause the application to run more slowly depending on the speed of your computer.
-                For optimal performance, reduce the file size by including fewer individuals, limiting the overall time period, or aggregating
-                time steps (e.g. hourly to daily timesteps).
+              <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000" class="body-2">
+                <div class="body-1 font-weight-bold">Large File Detected</div>
+                <div class="mb-4">
+                  Datasets with more than {{ aggregation.maxRows.toLocaleString() }} rows can cause TAME to become sluggish.
+                </div>
+                <div class="my-4 body-1 font-weight-medium">
+                  For optimal performance, enable dataset aggregation in Step 4 of this form.
+                </div>
+                <div class="mt-4">
+                  Alternatively, reduce the size of the dataset by removing some individuals or by selecting a shorter time period, and then reload the CSV file.
+                </div>
+              </v-alert>
+              <v-alert type="warning" dense outlined :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
+                <div class="body-1 font-weight-bold">Project Will Not Be Publishable</div>
+                <div class="mb-4">
+                  A project can only be published to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
+                </div>
+                <div class="mt-4">
+                  You can continue to load this file into TAME, but you will not be able to publish it for other users to access unless the file size is reduced by removing rows and/or columns.
+                </div>
               </v-alert>
             </div>
-            <v-alert type="error" dense outlined :value="file.status === 'ERROR'">
+            <v-alert type="error" dense outlined :value="file.status === 'ERROR'" class="body-2">
               <span v-html="file.error"></span>
             </v-alert>
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" @click="nextFile" class="ml-2 pl-4" :disabled="file.status !== 'SUCCESS'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="nextFile" class="ml-2 pl-4" :disabled="file.status !== 'SUCCESS'" :loading="file.status === 'PENDING'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -163,14 +186,14 @@
                 </v-select>
               </v-col>
             </v-row>
-            <v-alert type="error" dense outlined :value="columns.status === 'ERROR' && !!columns.error">
+            <v-alert type="error" dense outlined :value="columns.status === 'ERROR' && !!columns.error" class="body-2">
               <span v-html="columns.error"></span>
             </v-alert>
           </v-card-text>
           <v-card-text v-else>
-            <v-alert type="error" dense outlined>
-              <div class="title">File Not Found</div>
-              Please return to previous step to load a file.
+            <v-alert type="error" dense outlined class="body-2">
+              <div class="body-1 font-weight-bold">File Not Found</div>
+              <div>Please return to previous step to load a file.</div>
             </v-alert>
           </v-card-text>
           <v-card-actions>
@@ -180,7 +203,7 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :rules="[() => variables.status !== 'ERROR']" :complete="variables.status === 'SUCCESS'" step="3">Configure additional variables</v-stepper-step>
+      <v-stepper-step :rules="[() => variables.status !== 'ERROR']" :complete="variables.status === 'SUCCESS'" :loading="variables.status === 'PENDING'" step="3">Configure additional variables</v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
           <v-card-text class="py-0" v-if="variables.value.length > 0">
@@ -202,20 +225,22 @@
             <v-row class="mt-8">
               <v-col md="4" class="mr-2">
                 <div>Column Names</div>
-                <v-list>
-                  <v-list-item-group v-model="variableIndex" color="primary">
-                    <v-list-item v-for="(variable, i) in variables.value" :key="'variable-' + i">
-                      <v-list-item-content>
-                        <v-list-item-title>
-                          <v-icon left v-if="variable.skip" color="default">mdi-checkbox-blank-circle-outline</v-icon>
-                          <v-icon left v-else-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
-                          <v-icon left v-else color="error">mdi-close-circle-outline</v-icon>
-                          {{variable.id}}
-                        </v-list-item-title>
-                      </v-list-item-content>
-                    </v-list-item>
-                  </v-list-item-group>
-                </v-list>
+                <div style="max-height: 400px; overflow-y:auto">
+                  <v-list>
+                    <v-list-item-group v-model="variableIndex" color="primary">
+                      <v-list-item v-for="(variable, i) in variables.value" :key="'variable-' + i">
+                        <v-list-item-content>
+                          <v-list-item-title>
+                            <v-icon left v-if="variable.skip" color="default">mdi-checkbox-blank-circle-outline</v-icon>
+                            <v-icon left v-else-if="variable.valid" color="success">mdi-check-circle-outline</v-icon>
+                            <v-icon left v-else color="error">mdi-close-circle-outline</v-icon>
+                            {{variable.id}}
+                          </v-list-item-title>
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list-item-group>
+                  </v-list>
+                </div>
               </v-col>
               <v-divider vertical></v-divider>
               <v-col md="7" class="ml-2" v-if="variable.value">
@@ -282,7 +307,7 @@
                     class="mt-0"
                     @change="validateVariable(variable.value)"></v-checkbox>
                 </div>
-                <v-alert type="error" outlined dense :value="!variable.value.valid && !!variable.value.error" class="mt-4 mb-0">
+                <v-alert type="error" outlined dense :value="!variable.value.valid && !!variable.value.error" class="mt-4 mb-0 body-2">
                   <span v-html="variable.value.error"></span>
                 </v-alert>
               </v-col>
@@ -294,12 +319,12 @@
             </v-row>
           </v-card-text>
           <v-card-text v-else class="py-0">
-            <v-alert type="info" outlined dense>
-              <div class="font-weight-bold">Additional Variables Not Found</div>
-              Dataset file does not contain any additional variables. Please continue to the final step.
+            <v-alert type="info" outlined dense class="body-2">
+              <div class="body-1 font-weight-bold">Additional Variables Not Found</div>
+              <div>Dataset file does not contain any additional variables. Please continue to the final step.</div>
             </v-alert>
           </v-card-text>
-          <v-alert outlined dense type="error" :value="variables.status === 'ERROR' && !!variables.error" class="mt-8">
+          <v-alert outlined dense type="error" :value="variables.status === 'ERROR' && !!variables.error" class="mt-8 body-2">
             <span v-html="variables.error"></span>
           </v-alert>
           <v-card-actions class="mt-4">
@@ -309,25 +334,82 @@
         </v-card>
       </v-stepper-content>
 
-      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="4">Finish</v-stepper-step>
+      <v-stepper-step :rules="[() => aggregation.status !== 'ERROR']" :complete="aggregation.status === 'SUCCESS'" :loading="aggregation.status === 'PENDING'" step="4">Dataset aggregation</v-stepper-step>
       <v-stepper-content step="4">
         <v-card>
+          <v-card-text class="py-0">
+            <div class="subtitle-1 font-weight-medium">Instructions</div>
+            <p>
+              To reduce the size of the dataset, use one of the daily aggregation options below.
+            </p>
+
+            <v-alert type="warning" :value="file.parsed && file.parsed.data.length > aggregation.maxRows" dense outlined class="body-2">
+              <div class="body-1 font-weight-bold">Aggregation Required</div>
+              <div class="mb-2">
+                Current dataset has more than {{ aggregation.maxRows.toLocaleString() }} rows, which would cause TAME to crash or become too slugish.
+              </div>
+              <div>Please select an aggregation option below to reduce the size of the dataset.</div>
+            </v-alert>
+
+            <v-row class="mt-2" no-gutters>
+              <v-col cols="12">
+                <div class="body-2 font-weight-medium">For each individual and date, include:</div>
+                <v-radio-group v-model="aggregation.value" class="ml-4" dense @change="changeAggregation">
+                  <v-radio
+                    value="none"
+                    label="All observations (no aggregation)"
+                    :disabled="file.parsed && file.parsed.data.length > aggregation.maxRows">
+                  </v-radio>
+                  <v-radio
+                    value="maxDistance"
+                    label="Only the observation with the longest distance to the next observed location">
+                  </v-radio>
+                  <v-radio
+                    value="firstDay"
+                    label="Only the first observation of the day">
+                  </v-radio>
+                </v-radio-group>
+              </v-col>
+            </v-row>
+            <!-- <pre>{{ aggregation.value }}</pre> -->
+
+            <v-alert outlined dense type="error" :value="aggregation.status === 'ERROR' && !!aggregation.error" class="mt-2 body-2">
+              <span v-html="aggregation.error"></span>
+            </v-alert>
+          </v-card-text>
+          <v-card-actions class="mt-4">
+            <v-btn text color="default" @click="prevAggregation" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
+            <v-btn color="primary" @click="nextAggregation" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-stepper-content>
+
+      <v-stepper-step :complete="finish.status === 'SUCCESS'" step="5">Finish</v-stepper-step>
+      <v-stepper-content step="5">
+        <v-card>
           <v-card-text v-if="!(project && project.id)">
-            <v-alert type="success" outlined dense>
-              <strong>All done!</strong><br><br>
-              You can change any of these options or load a new version of the dataset by clicking the <strong>Edit Project</strong> button.<br><br>
-              You can also <strong>Publish</strong> your project to save it to the TAME server and make it available to other users.
+            <v-alert type="success" outlined dense class="body-2">
+              <div class="body-1 font-weight-bold">All done!</div>
+              <div class="my-2">
+                You can change any of these options or load a new version of the dataset by clicking the <span class="font-weight-bold">Edit Project</span> button.
+              </div>
+              <div class="mt-2" v-if="file.value && (file.value.size / 1024 / 1024) < 5">
+                You can also <span class="font-weight-bold">Publish</span> your project to save it to the TAME server and make it available to other users.
+              </div>
+              <div class="mt-2" v-else>
+                You will not be able to publish this project because the file size exceeds the 5 MB limit.
+              </div>
             </v-alert>
           </v-card-text>
           <v-card-text v-else class="pb-0">
-            <v-alert type="success" outlined dense>
-              <div class="font-weight-bold">All done!</div>
-              Please click the Finish button to apply these changes.
+            <v-alert type="success" outlined dense class="body-2">
+              <div class="body-1 font-weight-bold">All done!</div>
+              <div>Please click the Finish button to apply these changes.</div>
             </v-alert>
-            <v-alert type="warning" outlined dense>
-              <div class="font-weight-bold">Changes will NOT be automatically saved to server</div>
-              After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
-              in order to save these changes to the server.
+            <v-alert type="warning" outlined dense class="body-2">
+              <div class="body-1 font-weight-bold">Changes will NOT be automatically saved to server</div>
+              <div>After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
+              in order to save these changes to the server.</div>
             </v-alert>
           </v-card-text>
           <v-card-actions>
@@ -342,7 +424,7 @@
 
     <v-card-actions class="mx-4 py-4">
       <v-btn
-        :disabled="file.status !== 'SUCCESS' || columns.status !== 'SUCCESS' || variables.status !== 'SUCCESS'"
+        :disabled="file.status !== 'SUCCESS' || columns.status !== 'SUCCESS' || variables.status !== 'SUCCESS' || aggregation.status !== 'SUCCESS'"
         @click="submit"
         :loading="finish.status === 'PENDING'"
         color="primary"
@@ -357,7 +439,6 @@
 import { validationMixin } from 'vuelidate'
 import { required, minLength, maxLength } from 'vuelidate/lib/validators'
 import { mapGetters, mapActions } from 'vuex'
-import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
 import { validateDatasetColumns } from '@/lib/dataset'
@@ -376,7 +457,7 @@ export default {
     },
     variable: {
       value: {
-        name: { required, minLength: minLength(1), maxLength: maxLength(25) },
+        name: { required, minLength: minLength(1), maxLength: maxLength(50) },
         type: { required }
       }
     }
@@ -423,6 +504,12 @@ export default {
         // error: null,
         value: null
       },
+      aggregation: {
+        status: 'READY',
+        error: null,
+        maxRows: 20000,
+        value: 'none'
+      },
       finish: {
         status: 'READY',
         error: null
@@ -459,7 +546,7 @@ export default {
       const errors = []
       !this.$v.variable.value.name.required && errors.push('Label is required.')
       !this.$v.variable.value.name.minLength && errors.push('Label must be at least 1 character.')
-      !this.$v.variable.value.name.maxLength && errors.push('Label cannot be more than 25 characters.')
+      !this.$v.variable.value.name.maxLength && errors.push('Label cannot be more than 50 characters.')
       return errors
     }
   },
@@ -488,6 +575,8 @@ export default {
       this.columns.status = 'SUCCESS'
       this.variables.value = project.variables
       this.variables.status = 'SUCCESS'
+      this.aggregation.value = project.aggregation || 'none'
+      this.aggregation.status = 'SUCCESS'
       this.finish.status = 'SUCCESS'
     } else {
       // clear currently loaded project when creating a new project
@@ -499,9 +588,10 @@ export default {
     submit () {
       this.finish.status = 'PENDING'
       let project = {
+        file: this.file.value,
         columns: this.columns.value,
         variables: this.variables.value,
-        file: this.file.value
+        aggregation: this.aggregation.value
       }
 
       if (this.project && this.project.id) {
@@ -544,8 +634,8 @@ export default {
         this.$refs.fileInput.blur()
 
         return this.setError('file', `
-          <div class="font-weight-bold">Failed to load file (${localFile.name})</div><br>
-          File must be a comma-separated value (CSV) file with extension '.csv'.
+          <div class="body-1 font-weight-bold">Failed to load file (${localFile.name})</div>
+          <div>File must be a comma-separated value (CSV) file with extension '.csv'.</div>
         `)
       }
 
@@ -555,23 +645,24 @@ export default {
           this.$refs.fileInput.blur()
           if (results.errors.length > 0) {
             return this.setError('file', `
-              <strong>Failed to load file (${localFile.name})</strong><br><br>
-              ${results.errors[0].message} (Row ${results.errors[0].row})
+              <div class="body-1 font-weight-bold">Failed to load file (${localFile.name})</div>
+              <div class="mt-2">${results.errors[0].message} (Row ${results.errors[0].row})</div>
             `)
           }
-          if (results.data.length > 50000) {
+          if (results.data.length > 500000) {
             return this.setError('file', `
-              <strong>File Too Large (${localFile.name})</strong><br>
-              Files cannot have more than 50,000 rows or the application may become unresponsive or crash.<br>
-              Reduce the file size by including fewer individuals, limiting the overall time period, or aggregating
-                time steps (e.g. hourly to daily timesteps).
+              <div class="body-1 font-weight-bold">File Too Large (${localFile.name})</div>
+              <div class="mb-2">Files cannot have more than 500,000 rows or the application may become unresponsive or crash.</div>
+              <div class="mt-2">Reduce dataset size by removing some individuals, limiting the overall time period, or aggregate to less frequent
+                time steps (e.g. hourly to daily). Then reload the CSV file.</div>
             `)
           }
           if (!results.meta.fields.every(d => d.length > 0)) {
             const index = results.meta.fields.findIndex(d => d.length === 0) + 1
             return this.setError('file', `
-              <strong>Failed to load file (${localFile.name})</strong><br><br>
-              File contains an unnamed column (column ${index}). Please remove this column or add a name for it in the header row.
+              <div class="body-1 font-weight-bold">Failed to load file (${localFile.name})</div>
+              <div class="mb-2">File contains an unnamed column (column ${index}).</div>
+              <div class="mt-2">Please remove this column or add a name for it in the header row.</div>
             `)
           }
 
@@ -654,7 +745,10 @@ export default {
 
       if (!this.file.parsed) {
         return Promise.resolve(
-          this.setError('columns', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+          this.setError('columns', `
+            <div class="body-1 font-weight-bold">File Not Found</div>
+            <div>Please return to the first step and load a file.</div>
+          `)
         )
       }
 
@@ -681,15 +775,15 @@ export default {
             valueMessage = ` (found value "${value}")`
           }
           return this.setError('columns', `
-            <div class="font-weight-bold">Failed to validate primary variable columns</div><br>
-            <p class="font-weight-bold">Reason: ${e.message || e}${valueMessage}</p>
-            <p>
+            <div class="body-1 font-weight-bold">Failed to validate primary variable columns</div>
+            <div class="font-weight-bold mb-2">Reason: ${e.message || e}${valueMessage}</div>
+            <div class="my-2">
               Note that the location of the error is specified using the format "[ROW].COLUMN" where the ROWs start at 0.<br>
-              E.g. "[2].Latitude" indicates that the error occurred at the 3rd row in the Latitude column.
-            </p>
-            <p class="mb-0">
+              E.g. "[2].Latitude" indicates that the error occurred at the 3rd row in the "Latitude" column.
+            </div>
+            <div class="mt-2">
               Please fix the error in the file, and return to the previous step to reload it.
-            </p>
+            </div>
           `)
         })
     },
@@ -705,8 +799,8 @@ export default {
         .catch((e) => {
           console.log(e)
           return this.setError('columns', `
-            <div class="font-weight-bold">Unknown Error Occurred</div>
-            ${e.message || e}
+            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+            <div class="mt-2"> class="mt-2"${e.message || e}</div>
           `)
         })
     },
@@ -762,17 +856,22 @@ export default {
       })
 
       this.variables.value = newValue
+      this.variables.value.forEach(this.validateVariable)
       this.selectVariableIndex(0)
       this.validateVariables()
+      this.resetAggregation()
     },
     validateVariables () {
+      console.log('validateVariables()')
       if (this.variables.status === 'READY') return true
 
-      console.log('validateVariables()')
       if (!this.file.parsed) {
-        return this.setError('variables', '<strong>File not found</strong><br><br>Please return to the first step and load a new file.')
+        return this.setError('variables', `
+          <div class="body-1 font-weight-bold">File Not Found</div>
+          <div>Please return to the first step and load a file.</div>
+        `)
       }
-
+      console.log('validateVariables(go)')
       return new Promise((resolve, reject) => {
         for (let i = 0; i < this.variables.value.length; i++) {
           const variable = this.variables.value[i]
@@ -801,15 +900,13 @@ export default {
         .catch((e) => {
           console.log(e)
           return this.setError('variables', `
-            <div class="font-weight-bold">Unknown Error Occurred</div>
-            ${e.message || e}
+            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+            <div class="mt-2"> class="mt-2"${e.message || e}</div>
           `)
         })
     },
     // Step 3a: Variable
     selectVariableIndex (index) {
-      console.log(`selectVariableIndex(${index})`)
-
       this.variables.error = null
 
       if (this.variableIndex !== index) {
@@ -826,8 +923,6 @@ export default {
       this.variable.value = this.variables.value[this.variableIndex]
     },
     validateVariable (variable) {
-      console.log(`validateVariable(${variable.id})`)
-
       this.variables.error = null
 
       variable.valid = true
@@ -842,25 +937,87 @@ export default {
         }
       }
 
-      if (!variable.name.trim()) {
+      if (!variable.name.trim() || variable.name.length > 50) {
         variable.valid = false
       }
 
       if (variable.type === 'discrete') {
-        variable.domain = [...new Set(this.file.parsed.data.map(d => d[variable.id]))].sort(d3.ascending)
-        if (variable.outline && variable.domain.length !== 2) {
+        const domain = [...new Set(this.file.parsed.data.map(d => d[variable.id]))]
+        if (domain.length > 100) {
+          variable.valid = false
+          variable.error = `
+            <div class="font-weight-bold">Invalid Discrete Variable</div>
+            <div class="body-2 mb-2">A discrete variable cannot have more than 100 unique values (found ${domain.length.toLocaleString()}).</div>
+            <div class="body-2 mt-2">Exclude this variable, or modify the dataset file and return to step 1 to reload the CSV file.</div>
+          `
+        }
+        if (variable.outline && domain.length !== 2) {
           variable.valid = false
           variable.error = `
             <div class="font-weight-bold">Invalid Outline Option</div>
-            A variable can only be an Outline option if it has exactly 2 unique values (found ${variable.domain.length}).<br><br>
-            Unselect the Outline option and try again, or modify the dataset file.
+            <div class="body-2 my-2">A variable can only be an Outline option if it has exactly 2 unique values (found ${domain.length}).</div>
+            <div class="body-2">Unselect the Outline option and try again, or modify the dataset file.</div>
           `
         }
         variable.size = false
       } else if (variable.type === 'continuous') {
-        variable.domain = d3.extent(this.file.parsed.data, d => parseFloat(d[variable.id]))
         variable.outline = false
       }
+    },
+    // Step 4: Aggregation
+    resetAggregation () {
+      if (!this.file.parsed) {
+        this.aggregation.status = 'READY'
+        this.aggregation.error = null
+        this.aggregation.value = 'none'
+        return
+      }
+
+      this.validateAggregation()
+    },
+    validateAggregation () {
+      if (this.aggregation.status === 'READY') return true
+
+      if (!this.file.parsed) {
+        return this.setError('aggregation', `
+          <div class="body-1 font-weight-bold">File Not Found</div>
+          <div>Please return to the first step and load a file.</div>
+        `)
+      }
+
+      return new Promise((resolve, reject) => {
+        this.aggregation.status = 'SUCCESS'
+        const n = this.file.parsed.data.length
+        if (n > this.aggregation.maxRows) {
+          if (this.aggregation.value === 'none' || !this.aggregation.value) {
+            return resolve(this.setError('aggregation', `
+              <div class="body-1 font-weight-bold">Aggregation Required</div>
+              <div>Datasets with more than 20,000 rows must be aggregated to daily timesteps. Please select an option above.</div>
+            `))
+          }
+        }
+        return resolve(true)
+      })
+    },
+    changeAggregation () {
+      this.validateAggregation()
+    },
+    prevAggregation () {
+      this.step -= 1
+    },
+    nextAggregation () {
+      this.aggregation.status = 'PENDING'
+      this.validateAggregation()
+        .then((isValid) => {
+          if (isValid) this.step += 1
+        })
+        .catch((e) => {
+          console.log(e)
+          return this.setError('aggregation', `
+            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+            <div class="mt-2">${e.message || e}</div>
+          `)
+        })
     }
   }
 }

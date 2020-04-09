@@ -10,6 +10,7 @@ import './plugins/dc'
 import './plugins/leaflet'
 import './plugins/moment'
 import './plugins/vue2-filters'
+import './plugins/vue-filter-pretty-bytes'
 
 import '@/assets/css/tame-styles.css'
 
