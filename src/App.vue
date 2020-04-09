@@ -277,12 +277,12 @@
                         <v-divider></v-divider>
 
                         <v-row no-gutters class="my-2">
-                          <v-col cols="8" class="pb-0">
+                          <v-col cols="7" class="pb-0">
                             <div class="subtitle-2 grey--text text--darken-2 pt-1">
                               Show Circles
                             </div>
                           </v-col>
-                          <v-col cols="3" class="pb-0">
+                          <v-col cols="4" class="pb-0">
                             <div>
                               <v-radio-group dense v-model="map.showCircles" column hide-details class="mt-0">
                                 <v-radio :value="2" class="mb-0">
@@ -313,12 +313,12 @@
                         <v-divider></v-divider>
 
                         <v-row no-gutters class="my-2">
-                          <v-col cols="8" class="pb-0">
+                          <v-col cols="7" class="pb-0">
                             <div class="subtitle-2 grey--text text--darken-2 pt-1">
                               Show Movement Vectors
                             </div>
                           </v-col>
-                          <v-col cols="3" class="pb-0">
+                          <v-col cols="4" class="pb-0">
                             <div>
                               <v-radio-group dense v-model="map.showVectors" column class="mt-0" hide-details>
                                 <v-radio :value="2" class="mb-0">
@@ -357,7 +357,7 @@
                         <v-divider></v-divider>
 
                         <v-row no-gutters class="mt-2">
-                          <v-col cols="8" class="pb-0">
+                          <v-col cols="7" class="pb-0">
                             <div class="subtitle-2 grey--text text--darken-2 pt-1">
                               Color <span class="font-weight-medium" style="color:deepskyblue">Before</span>/<span class="font-weight-medium" style="color:orangered">After</span> Vector on Hover
                             </div>
@@ -374,7 +374,7 @@
                               </template>
                             </v-switch>
                           </v-col>
-                          <v-col cols="1" class="text-right">
+                          <v-col cols="2" class="text-right">
                             <v-tooltip right open-delay="100" max-width="400">
                               <template v-slot:activator="{ on }">
                                 <v-btn small icon v-on="on" class="mt-1">
