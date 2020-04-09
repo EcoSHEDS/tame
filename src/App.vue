@@ -838,6 +838,7 @@ export default {
 
       this.setColorContinuous({ scheme: 'Viridis', invert: false })
       this.setColorDiscrete({ scheme: 'Category10' })
+      this.setColorVariable(null)
 
       this.ready = false
 
