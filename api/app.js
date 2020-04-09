@@ -29,7 +29,7 @@ const upload = multer({
 
 app.use(morgan('tiny'))
 app.use(cors())
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '100mb' }))
 app.use(awsServerlessExpressMiddleware.eventContext())
 
 function deleteS3Object (key) {
