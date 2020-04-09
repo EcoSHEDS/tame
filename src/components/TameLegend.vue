@@ -10,18 +10,48 @@
         <v-icon small v-else>mdi-menu-down</v-icon>
       </v-btn>
     </v-toolbar>
-    <v-card-text v-show="!collapse" :style="{ 'max-height': maxHeight, 'overflow-y': 'auto'}">
+    <v-card-text v-show="!collapse" :style="{ 'max-height': maxHeight, 'overflow-y': 'auto'}" class="mt-0 pt-2">
       <div class="grey--text text--darken-2">
-        <h4>Filter Summary</h4>
+        <div class="font-weight-bold d-flex">
+          <div class="d-flex align-self-end">Selected</div>
+          <v-spacer></v-spacer>
+          <v-tooltip left open-delay="300">
+            <template v-slot:activator="{ on }">
+              <v-btn height="24" width="24" small icon @click="$emit('clearSelected')" v-on="on">
+                <v-icon small>mdi-refresh</v-icon>
+              </v-btn>
+            </template>
+            Clear Selected IDs
+          </v-tooltip>
+        </div>
         <div class="pl-2">
-          Obs.:
+          Tags:
+          {{ selectedIds.length.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
+          <span v-if="counts.tags.total > 0">({{ (selectedIds.length / counts.tags.total * 100) < 10 ? (selectedIds.length / counts.tags.total * 100).toFixed(1) : (selectedIds.length / counts.tags.total * 100).toFixed(0) }}%)</span>
+        </div>
+      </div>
+      <div class="grey--text text--darken-2 mt-2">
+        <div class="font-weight-bold d-flex">
+          <div class="d-flex align-self-end">Filtered</div>
+          <v-spacer></v-spacer>
+          <v-tooltip left open-delay="300">
+            <template v-slot:activator="{ on }">
+              <v-btn height="24" width="24" small icon @click="$emit('clearFilters')" v-on="on">
+                <v-icon small>mdi-refresh</v-icon>
+              </v-btn>
+            </template>
+            Clear All Filters
+          </v-tooltip>
+        </div>
+        <div class="pl-2">
+          Obs:
           {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
-          <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
+          <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100) < 10 ? (counts.records.filtered / counts.records.total * 100).toFixed(1) : (counts.records.filtered / counts.records.total * 100).toFixed(0) }}%)</span>
         </div>
         <div class="pl-2">
           Tags:
           {{ counts.tags.filtered.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
-          <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100).toFixed(0) }}%)</span>
+          <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100) < 10 ? (counts.tags.filtered / counts.tags.total * 100).toFixed(1) : (counts.tags.filtered / counts.tags.total * 100).toFixed(0) }}%)</span>
         </div>
       </div>
       <v-divider class="my-2"></v-divider>
@@ -41,7 +71,7 @@ import TameLegendOutline from '@/components/TameLegendOutline'
 
 export default {
   name: 'TameLegend',
-  props: ['counts', 'colorVariable', 'sizeVariable', 'outlineVariable'],
+  props: ['counts', 'colorVariable', 'sizeVariable', 'outlineVariable', 'selectedIds'],
   components: {
     ColorLegend,
     TameLegendSize,

@@ -71,7 +71,7 @@
           </template>
         </v-autocomplete>
         <div class="text-right mt-2">
-          <v-btn small text color="default" @click="useSelected">Use Selected</v-btn>
+          <v-btn small text color="default" @click="useSelected">Selected IDs</v-btn>
           <v-tooltip right open-delay="100" max-width="400">
             <template v-slot:activator="{ on }">
               <v-btn small icon v-on="on" class="align-self-center">
@@ -137,9 +137,10 @@ export default {
       this.idFilter.dim = xf.dimension(d => d[this.project.columns.id])
       this.idFilter.group = this.idFilter.dim.group().reduceCount()
       this.idFilter.options = this.idFilter.group.all().map(d => ({ id: d.key }))
+      evt.$on('filterAll', this.resetFilter)
       return
     } else if (variable.type === 'continuous') {
-      const margins = { top: 4, right: 10, bottom: 18, left: 30 }
+      const margins = { top: 4, right: 20, bottom: 18, left: 40 }
       const dim = xf.dimension(d => isNaN(d[variable.id]) || d[variable.id] === null ? -Infinity : d[variable.id])
       const l = this.variable.domain[0]
       const u = this.variable.domain[1]
@@ -148,7 +149,7 @@ export default {
       const group = dim.group(d => l + Math.floor((d - l) / interval) * interval).reduceCount()
 
       this.chart = dc.barChart(el)
-        .width(396)
+        .width(410)
         .height(100)
         .margins(margins)
         .dimension(dim)
@@ -180,7 +181,7 @@ export default {
       }
       this.chart.yAxis().ticks(4, 's')
     } else if (variable.type === 'discrete') {
-      const margins = { top: 0, right: 10, bottom: 35, left: 16 }
+      const margins = { top: 0, right: 20, bottom: 35, left: 16 }
       const dim = xf.dimension(d => d[variable.id])
       const group = dim.group().reduceCount()
       const count = variable.domain.length
@@ -189,7 +190,7 @@ export default {
       const height = margins.bottom + barHeight * count + gap * (count + 1)
 
       this.chart = dc.rowChart(el)
-        .width(396)
+        .width(410)
         .height(height)
         .margins(margins)
         .dimension(dim)
@@ -228,7 +229,7 @@ export default {
         })
       this.chart.xAxis().ticks(4, 'r')
     } else if (variable.type === 'datetime') {
-      const margins = { top: 4, right: 10, bottom: 18, left: 30 }
+      const margins = { top: 4, right: 20, bottom: 18, left: 40 }
 
       const timeExtent = d3.extent(xf.all().map(d => d[this.project.columns.datetime]))
 
@@ -239,8 +240,11 @@ export default {
       let interval = d3.utcMonth
       let xUnits = d3.utcMonths
       let label = 'Month'
-
-      if (durationDays < 120) {
+      if (durationDays < 7) {
+        interval = d3.utcHour
+        xUnits = d3.utcHours
+        label = 'Hour'
+      } else if (durationDays < 120) {
         interval = d3.utcDay
         xUnits = d3.utcDays
         label = 'Day'
@@ -261,7 +265,7 @@ export default {
       ]
 
       this.chart = dc.barChart(el)
-        .width(396)
+        .width(410)
         .height(100)
         .margins(margins)
         .dimension(dim)
@@ -296,6 +300,7 @@ export default {
       dc.chartRegistry.deregister(this.chart)
     } else if (this.variable.type === 'id') {
       this.idFilter.dim.dispose()
+      evt.$off('filterAll', this.resetFilter)
     }
     dc.renderAll()
     evt.$emit('map:render:filter')

@@ -1,14 +1,14 @@
 <template>
   <div>
     <div class="my-2 font-weight-bold grey--text text--darken-2 d-flex">
-      <div class="pt-1">
+      <div class="d-flex align-self-end">
         Color: <span v-if="variable">{{ variable.name }}</span><span v-else>None</span>
       </div>
       <v-spacer></v-spacer>
       <div>
         <v-menu v-model="settings" :close-on-content-click="false" nudge-left="620px">
           <template v-slot:activator="{ on }">
-            <v-btn icon small v-on="on" :disabled="!variable">
+            <v-btn height="24" width="24" icon small v-on="on" :disabled="!variable">
               <v-icon small>mdi-settings</v-icon>
             </v-btn>
           </template>
