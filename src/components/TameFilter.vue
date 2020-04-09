@@ -176,7 +176,6 @@ export default {
         this.chart.xAxis().tickFormat(d3.format(variable.tickFormat))
       }
       if (variable.tickValues) {
-        console.log(Object.keys(variable.tickValues))
         this.chart.xAxis().tickValues(Object.keys(variable.tickValues)).tickFormat(d => variable.tickValues[d])
       }
       this.chart.yAxis().ticks(4, 's')
@@ -328,7 +327,7 @@ export default {
       this.$emit('close')
     },
     removeIdFilter (id) {
-      console.log('removeIdFilter', id)
+      // console.log('removeIdFilter', id)
       this.idFilter.selected = this.idFilter.selected.filter(d => d !== id)
       this.onIdFilter()
     },

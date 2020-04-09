@@ -95,7 +95,7 @@ export default {
       return this.$parent.zoomLevel
     },
     boundingBox () {
-      console.log('tame-map-layer:boundingBox')
+      // console.log('tame-map-layer:boundingBox')
       if (this.dataset.length === 0) return null
 
       const lonExtent = d3.extent(this.dataset.map(d => d[this.project.columns.longitude]))
@@ -103,7 +103,7 @@ export default {
       return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
     },
     mappedDataset () {
-      console.log('mappedDataset()')
+      // console.log('mappedDataset()')
       pickerMap.clear()
       jitterIdMap.clear()
 
@@ -123,7 +123,7 @@ export default {
       return this.dataset
     },
     jitterDistance () {
-      console.log('jitterDistance()')
+      // console.log('jitterDistance()')
       const bbox = this.boundingBox
       const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][0], bbox[0][1]))
       const topRight = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][1], bbox[0][0]))
@@ -132,7 +132,7 @@ export default {
       return dX > dY ? dX : dY
     },
     jitterValues () {
-      console.log('jitterValues()')
+      // console.log('jitterValues()')
       const values = []
       this.mappedDataset.forEach(d => {
         values[d.$index] = {

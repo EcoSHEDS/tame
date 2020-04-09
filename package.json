@@ -33,7 +33,7 @@
     "vue-filter-pretty-bytes": "^0.1.4",
     "vue-moment": "^4.0.0",
     "vue-router": "^3.0.3",
-    "vue2-filters": "^0.9.1",
+    "vue2-filters": "^0.10.0",
     "vue2-leaflet": "^2.2.1",
     "vuelidate": "^0.7.5",
     "vuetify": "^2.2.17",

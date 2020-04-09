@@ -7,8 +7,8 @@
     </v-toolbar>
 
     <v-card-text v-if="!user" class="pt-4 pb-0">
-      <v-alert type="error" outlined dense class="body-2">
-        <div class="font-weight-bold body-1">Not Logged In</div>
+      <v-alert type="error" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">Not Logged In</div>
         <div class="my-2">
           You must be logged in to publish a project.
         </div>
@@ -18,15 +18,15 @@
       </v-alert>
     </v-card-text>
     <v-card-text v-else-if="!project" class="pt-4 pb-0">
-      <v-alert type="error" outlined dense>
-        <div class="font-weight-bold body-1">Project Not Found</div>
-        <p>An existing project could not be found.</p>
-        <p class="mb-0">Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</p>
+      <v-alert type="error" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">Project Not Found</div>
+        <div class="mb-2">An existing project could not be found.</div>
+        <div class="mt-2">Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</div>
       </v-alert>
     </v-card-text>
     <v-card-text v-else-if="project.file.size > 5e6" class="pt-4 pb-0">
-      <v-alert type="error" outlined dense class="body-2">
-        <div class="font-weight-bold body-1">File Size Too Large</div>
+      <v-alert type="error" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">File Size Too Large</div>
         <div class="mb-2">
           The dataset file for this project exceeds the maximum size of 5 MB (file is {{ (project.file.size / 1e6).toFixed(1) }} MB).
         </div>
@@ -36,8 +36,8 @@
       </v-alert>
     </v-card-text>
     <v-card-text v-else class="pt-4">
-      <v-alert type="info" outlined dense class="mb-8 body-2">
-        <div class="font-weight-bold body-1">What is a Published Project?</div>
+      <v-alert type="info" dense text border="left" class="mb-8 body-2">
+        <div class="body-1 font-weight-bold">What is a Published Project?</div>
         <div class="mb-2">
           Publishing a project will save the dataset to the TAME web server and make it publicly accessible to <em>any user</em>
           from the <strong>Load Project</strong> screen.
@@ -85,13 +85,14 @@
         persistent-hint>
       </v-textarea>
 
-      <v-alert type="error" :value="!!serverError" outlined class="mt-4">
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" outlined class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
 
-      <v-alert type="success" v-if="status === 'SUCCESS'" outlined dense class="mt-4 body-2">
-        <div class="font-weight-bold body-1">Success! Your project has been published.</div>
-        <div class="">
+      <v-alert type="success" v-if="status === 'SUCCESS'" dense text border="left" class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Success! Your project has been published.</div>
+        <div>
           You can find it on the <router-link :to="{ name: 'listProjects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
           <pre class="grey--text text--darken-2">
             <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
@@ -299,9 +300,10 @@ export default {
         }
       }
 
-      this.status = 'SUCCESS'
-
       this.loadProject(project)
+        .then(() => {
+          this.status = 'SUCCESS'
+        })
     },
     setError (e) {
       this.status = 'ERROR'

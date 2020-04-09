@@ -25,14 +25,14 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined dense class="mt-4">
-        <div class="font-weight-bold">Server Error</div>
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
 
       <div class="mt-4">
         <a @click="resend">Can't find your code? Request a new one.</a>
-        <v-alert type="info" outlined dense class="mt-4" v-if="resendCode">
+        <v-alert type="info" dense text border="left" class="mt-4 body-1" v-if="resendCode">
           <div class="font-weight-bold">Request submitted, check your email for a new code.</div>
         </v-alert>
       </div>

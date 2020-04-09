@@ -7,9 +7,9 @@
     </v-toolbar>
 
     <v-card-text class="body-1 py-8">
-      <v-alert type="success" outlined prominent color="grey darken-1" class="mb-0">
-        <div class="title">You have been logged out.</div>
-        This window will automatically close in {{ count }} seconds...
+      <v-alert type="success" prominent text border="left" class="mb-0 body-2">
+        <div class="body-1 font-weight-bold">You have been logged out.</div>
+        <div>This window will automatically close in {{ count }} seconds...</div>
       </v-alert>
     </v-card-text>
 

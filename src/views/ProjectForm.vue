@@ -62,7 +62,7 @@
               @change="loadLocalFile">
             </v-file-input>
             <div v-if="file.status === 'SUCCESS'">
-              <v-alert type="success" dense outlined :value="!!file.value" class="body-2">
+              <v-alert type="success" dense text border="left" :value="!!file.value" class="body-2">
                 <div class="body-1 font-weight-bold" v-if="!!file.value.local">
                   File Successfully Loaded from Your Computer
                 </div>
@@ -89,10 +89,10 @@
                   Note that the entire dataset must be replaced, TAME does not currently support appending new observations to an existing dataset.
                 </div>
               </v-alert>
-              <v-alert type="warning" dense outlined :value="file.parsed.data.length >= 10000" class="body-2">
+              <v-alert type="warning" dense text border="left" :value="file.parsed.data.length >= 10000" class="body-2">
                 <div class="body-1 font-weight-bold">Large File Detected</div>
                 <div class="mb-4">
-                  Datasets with more than {{ aggregation.maxRows.toLocaleString() }} rows can cause TAME to become sluggish.
+                  Datasets with more than 10,000 rows can cause TAME to become sluggish.
                 </div>
                 <div class="my-4 body-1 font-weight-medium">
                   For optimal performance, enable dataset aggregation in Step 4 of this form.
@@ -101,7 +101,7 @@
                   Alternatively, reduce the size of the dataset by removing some individuals or by selecting a shorter time period, and then reload the CSV file.
                 </div>
               </v-alert>
-              <v-alert type="warning" dense outlined :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
+              <v-alert type="warning" dense text border="left" :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
                 <div class="body-1 font-weight-bold">Project Will Not Be Publishable</div>
                 <div class="mb-4">
                   A project can only be published to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
@@ -111,7 +111,7 @@
                 </div>
               </v-alert>
             </div>
-            <v-alert type="error" dense outlined :value="file.status === 'ERROR'" class="body-2">
+            <v-alert type="error" dense text border="left" :value="file.status === 'ERROR'" class="body-2">
               <span v-html="file.error"></span>
             </v-alert>
           </v-card-text>
@@ -186,19 +186,19 @@
                 </v-select>
               </v-col>
             </v-row>
-            <v-alert type="error" dense outlined :value="columns.status === 'ERROR' && !!columns.error" class="body-2">
+            <v-alert type="error" dense text border="left" :value="columns.status === 'ERROR' && !!columns.error" class="body-2">
               <span v-html="columns.error"></span>
             </v-alert>
           </v-card-text>
           <v-card-text v-else>
-            <v-alert type="error" dense outlined class="body-2">
+            <v-alert type="error" dense text border="left" class="body-2">
               <div class="body-1 font-weight-bold">File Not Found</div>
               <div>Please return to previous step to load a file.</div>
             </v-alert>
           </v-card-text>
           <v-card-actions>
             <v-btn text color="default" @click="prevColumns" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="nextColumns" class="pl-4">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="nextColumns" class="pl-4" :loading="columns.status === 'PENDING'">continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -307,7 +307,7 @@
                     class="mt-0"
                     @change="validateVariable(variable.value)"></v-checkbox>
                 </div>
-                <v-alert type="error" outlined dense :value="!variable.value.valid && !!variable.value.error" class="mt-4 mb-0 body-2">
+                <v-alert type="error" dense text border="left" :value="!variable.value.valid && !!variable.value.error" class="mt-4 mb-0 body-2">
                   <span v-html="variable.value.error"></span>
                 </v-alert>
               </v-col>
@@ -319,12 +319,12 @@
             </v-row>
           </v-card-text>
           <v-card-text v-else class="py-0">
-            <v-alert type="info" outlined dense class="body-2">
+            <v-alert type="info" dense text border="left" class="body-2">
               <div class="body-1 font-weight-bold">Additional Variables Not Found</div>
               <div>Dataset file does not contain any additional variables. Please continue to the final step.</div>
             </v-alert>
           </v-card-text>
-          <v-alert outlined dense type="error" :value="variables.status === 'ERROR' && !!variables.error" class="mt-8 body-2">
+          <v-alert type="error" dense text border="left" :value="variables.status === 'ERROR' && !!variables.error" class="mt-8 body-2">
             <span v-html="variables.error"></span>
           </v-alert>
           <v-card-actions class="mt-4">
@@ -343,18 +343,24 @@
               To reduce the size of the dataset, use one of the daily aggregation options below.
             </p>
 
-            <v-alert type="warning" :value="file.parsed && file.parsed.data.length > aggregation.maxRows" dense outlined class="body-2">
+            <v-alert type="warning" dense text border="left" :value="file.parsed && file.parsed.data.length > aggregation.maxRows" class="body-2">
               <div class="body-1 font-weight-bold">Aggregation Required</div>
               <div class="mb-2">
                 Current dataset has more than {{ aggregation.maxRows.toLocaleString() }} rows, which would cause TAME to crash or become too slugish.
               </div>
               <div>Please select an aggregation option below to reduce the size of the dataset.</div>
             </v-alert>
+            <v-alert type="info" dense text border="left" :value="file.parsed && file.parsed.data.length <= aggregation.maxRows && file.parsed.data.length > 10000" class="body-2">
+              <div class="body-1 font-weight-bold">Aggregation Recommended</div>
+              <div>
+                Current dataset has more than 10,000 rows, which may cause TAME to crash or become too slugish depending on the speed of your computer.
+              </div>
+            </v-alert>
 
             <v-row class="mt-2" no-gutters>
               <v-col cols="12">
                 <div class="body-2 font-weight-medium">For each individual and date, include:</div>
-                <v-radio-group v-model="aggregation.value" class="ml-4" dense @change="changeAggregation">
+                <v-radio-group v-model="aggregation.value" class="ml-4" dense @change="validateAggregation">
                   <v-radio
                     value="none"
                     label="All observations (no aggregation)"
@@ -373,7 +379,7 @@
             </v-row>
             <!-- <pre>{{ aggregation.value }}</pre> -->
 
-            <v-alert outlined dense type="error" :value="aggregation.status === 'ERROR' && !!aggregation.error" class="mt-2 body-2">
+            <v-alert type="error" text border="left" dense :value="aggregation.status === 'ERROR' && !!aggregation.error" class="mt-2 body-2">
               <span v-html="aggregation.error"></span>
             </v-alert>
           </v-card-text>
@@ -388,7 +394,7 @@
       <v-stepper-content step="5">
         <v-card>
           <v-card-text v-if="!(project && project.id)">
-            <v-alert type="success" outlined dense class="body-2">
+            <v-alert type="success" dense text border="left" class="body-2">
               <div class="body-1 font-weight-bold">All done!</div>
               <div class="my-2">
                 You can change any of these options or load a new version of the dataset by clicking the <span class="font-weight-bold">Edit Project</span> button.
@@ -402,11 +408,11 @@
             </v-alert>
           </v-card-text>
           <v-card-text v-else class="pb-0">
-            <v-alert type="success" outlined dense class="body-2">
+            <v-alert type="success" text border="left" dense class="body-2">
               <div class="body-1 font-weight-bold">All done!</div>
               <div>Please click the Finish button to apply these changes.</div>
             </v-alert>
-            <v-alert type="warning" outlined dense class="body-2">
+            <v-alert type="warning" text border="left" dense class="body-2">
               <div class="body-1 font-weight-bold">Changes will NOT be automatically saved to server</div>
               <div>After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
               in order to save these changes to the server.</div>
@@ -862,7 +868,7 @@ export default {
       this.resetAggregation()
     },
     validateVariables () {
-      console.log('validateVariables()')
+      // console.log('validateVariables()')
       if (this.variables.status === 'READY') return true
 
       if (!this.file.parsed) {
@@ -871,7 +877,7 @@ export default {
           <div>Please return to the first step and load a file.</div>
         `)
       }
-      console.log('validateVariables(go)')
+      // console.log('validateVariables(go)')
       return new Promise((resolve, reject) => {
         for (let i = 0; i < this.variables.value.length; i++) {
           const variable = this.variables.value[i]
@@ -998,9 +1004,6 @@ export default {
         }
         return resolve(true)
       })
-    },
-    changeAggregation () {
-      this.validateAggregation()
     },
     prevAggregation () {
       this.step -= 1

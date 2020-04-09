@@ -2,7 +2,7 @@
   <div>
     <div class="my-2 font-weight-bold grey--text text--darken-2 d-flex">
       <div class="d-flex align-self-end">
-        Color: <span v-if="variable">{{ variable.name }}</span><span v-else>None</span>
+        <span class="pr-1">Color:</span> <span v-if="variable">{{ variable.name }}</span><span v-else>None</span>
       </div>
       <v-spacer></v-spacer>
       <div>

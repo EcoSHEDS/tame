@@ -6,24 +6,25 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text class="body-1">
-      <v-alert type="error" outlined dense>
-        <div class="font-weight-bold">Warning! This operation cannot be undone.</div>
-        <p class="mt-4">
+    <v-card-text class="body-1 pb-4">
+      <v-alert type="error" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">Warning! This operation cannot be undone.</div>
+        <div class="mb-2">
           When a project is unpublished, it will no longer be available to other users (including yourself)
           and the dataset will be deleted from the server.
-        </p>
-        <p class="mb-0">
+        </div>
+        <div class="mt-2">
           If you wish to continue, please click the <span class="font-weight-bold">Confirm</span> button below to unpublish your project.
-        </p>
+        </div>
       </v-alert>
 
-      <v-alert type="error" outlined :value="status === 'ERROR'">
-        <span v-html="error"></span>
+      <v-alert type="error" dense text border="left" :value="status === 'ERROR'" class="body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div><span v-html="error"></span></div>
       </v-alert>
-      <v-alert type="success" outlined :value="status === 'SUCCESS'">
-        <strong>Project has been unpublished.</strong><br><br>
-        You will be redirected to the <router-link :to="{ name: 'welcome' }">welcome</router-link> screen in 3 seconds...
+      <v-alert type="success" dense text border="left" :value="status === 'SUCCESS'" class="body-2">
+        <div class="body-1 font-weight-bold">Project Has Been Unpublished</div>
+        <div>You will be redirected to the <router-link :to="{ name: 'welcome' }">welcome</router-link> screen in 3 seconds...</div>
       </v-alert>
     </v-card-text>
 

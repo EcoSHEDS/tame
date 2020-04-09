@@ -83,7 +83,6 @@ export default {
       evt.$emit('map:move', this.map.getCenter())
     })
     this.map.on('zoomend', () => {
-      console.log('map:zoomend')
       this.zoomLevel = this.map.getZoom()
       evt.$emit('map:zoom', this.map.getZoom())
       evt.$emit('map:render')
@@ -121,6 +120,6 @@ export default {
 }
 
 .leaflet-container {
-  background: #444 !important;
+  background: #F1F1F1 !important;
 }
 </style>

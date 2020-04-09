@@ -26,9 +26,9 @@ export function validateDatasetColumns (rows, columns) {
 
   const rowSchema = Joi.object({
     [columns.id]: Joi.string(),
-    [columns.datetime]: Joi.date().iso(),
-    [columns.latitude]: Joi.number().min(-90).max(90).unsafe(),
-    [columns.longitude]: Joi.number().min(-180).max(180).unsafe()
+    [columns.datetime]: [Joi.string().valid(''), Joi.date().iso()],
+    [columns.latitude]: [Joi.string().valid(''), Joi.number().min(-90).max(90).unsafe()],
+    [columns.longitude]: [Joi.string().valid(''), Joi.number().min(-180).max(180).unsafe()]
   })
   const schema = Joi.array().items(rowSchema).min(1).required()
 
@@ -100,7 +100,7 @@ export function processDataset (data, columns, variables, aggregation) {
 
   const nested = d3.nest()
     .key(d => d[columns.id])
-    .sortValues((a, b) => d3.ascending(a.datetime, b.datetime))
+    .sortValues((a, b) => d3.ascending(a[columns.datetime], b[columns.datetime]))
     .entries(data)
 
   const preAggregated = nested.map(({ values }, i) => {
@@ -126,7 +126,7 @@ export function processDataset (data, columns, variables, aggregation) {
     }))
 
     values.forEach((d, i) => {
-      d.$next = values[i + 1]
+      d.$next = values[i + 1] ? Object.assign({}, values[i + 1]) : undefined
     })
 
     return values

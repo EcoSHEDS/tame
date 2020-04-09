@@ -17,9 +17,9 @@
           persistent-hint
         ></v-text-field>
 
-        <v-alert type="success" :value="requestSent" outlined dense class="mt-4">
-          <div class="font-weight-bold">Request submitted</div>
-          Check your email for the verification code, and then set a new password.
+        <v-alert type="success" :value="requestSent" dense text border="left" class="mt-4 body-2">
+          <div class="body-1 font-weight-bold">Request submitted</div>
+          <div>Check your email for the verification code, and then set a new password.</div>
         </v-alert>
 
         <v-text-field
@@ -48,22 +48,22 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined dense class="mt-4">
-        <div class="font-weight-bold">Server Error</div>
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
 
-      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined dense class="mt-4 mb-0">
-        <div class="font-weight-bold">Password has been reset</div>
-        You will be automatically transfered to the <router-link :to="{ name: 'login' }">Login screen</router-link>
-         in {{ count }} seconds...
+      <v-alert type="success" :value="submitStatus === 'SUCCESS'" dense text border="left" class="mt-4 mb-0 body-2">
+        <div class="body-1 font-weight-bold">Password has been reset</div>
+        <div>You will be automatically transfered to the <router-link :to="{ name: 'login' }">Login screen</router-link>
+         in {{ count }} seconds...</div>
       </v-alert>
     </v-card-text>
 
     <v-divider></v-divider>
 
     <v-card-actions class="mx-4 py-4">
-      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'" :disabled="submitStatus === 'SUCCESS'">submit</v-btn>
       <v-btn text @click="clear">clear</v-btn>
       <v-spacer></v-spacer>
       <v-btn text :to="{ name: 'login' }">cancel</v-btn>

@@ -36,14 +36,14 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined dense>
-        <div class="title">Server Error</div>
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
 
-      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined dense dismissible>
-        <div class="font-weight-bold">Update complete</div>
-        Changes have been saved to the server
+      <v-alert type="success" :value="submitStatus === 'SUCCESS'" dense text border="left" dismissible class="body-2">
+        <div class="body-1 font-weight-bold">Update complete</div>
+        <div>Changes have been saved to the server</div>
       </v-alert>
 
       <v-card-actions class="px-0">
@@ -69,16 +69,16 @@
         <span class="ml-4" style="vertical-align:middle">Loading projects...</span>
       </div>
       <div v-else-if="projectsStatus === 'ERROR'">
-        <v-alert type="error" outlined dense class="mb-0">
-          <div class="font-weight-bold">Server Error</div>
-          Failed to load projects.
+        <v-alert type="error" dense text border="left" class="mb-0 body-2">
+          <div class="body-1 font-weight-bold">Server Error</div>
+          <div>Failed to load projects.</div>
         </v-alert>
       </div>
       <div v-else="">
-        <v-alert type="info" outlined dense :value="projects.length === 0" class="mb-0">
-          <div class="font-weight-bold">No Projects Found</div>
-          You do not have any current projects.<br><br>
-          Ready to <router-link :to="{ name: 'newProject' }">create a new project</router-link>?
+        <v-alert type="info" dense text border="left" :value="projects.length === 0" class="mb-0 body-2">
+          <div class="body-1 font-weight-bold">No Projects Found</div>
+          <div class="mb-2">You do not have any current projects.</div>
+          <div class="mt-2">Ready to <router-link :to="{ name: 'newProject' }">create a new project</router-link>?</div>
         </v-alert>
         <v-row v-for="project in projects" :key="project.id" class="mt-4 elevation-1 mx-0">
           <v-col cols="8" class="black--text">
@@ -150,7 +150,6 @@ export default {
 
     this.$http.get('/projects')
       .then(response => {
-        console.log(response.data)
         this.projects = response.data.filter(project => project.userId === this.user.username)
         this.projectsStatus = 'SUCCESS'
       })

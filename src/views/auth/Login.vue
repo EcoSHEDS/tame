@@ -24,9 +24,9 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined prominent>
-        <div class="title">Server Error</div>
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
 
       <div class="mt-4">

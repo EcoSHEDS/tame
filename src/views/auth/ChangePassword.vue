@@ -32,13 +32,13 @@
         <v-btn hidden type="submit">submit</v-btn>
       </v-form>
 
-      <v-alert type="error" :value="!!serverError" outlined dense class="mt-4 mb-0">
-        <div class="font-weight-bold">Server Error</div>
-        {{serverError}}
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 mb-0 body-2">
+        <div class="body-1 font-weight-bold">Server Error</div>
+        <div>{{serverError}}</div>
       </v-alert>
-      <v-alert type="success" :value="submitStatus === 'SUCCESS'" outlined dense class="mt-4 mb-0">
-        <div class="font-weight-bold">New Password Saved</div>
-        Redirecting back to <span class="font-weight-medium">My Account</span> in {{ count }}...
+      <v-alert type="success" :value="submitStatus === 'SUCCESS'" dense text border="left" class="mt-4 mb-0 body-2">
+        <div class="body-1 font-weight-bold">New Password Saved</div>
+        <div>Redirecting back to <span class="font-weight-medium">My Account</span> in {{ count }}...</div>
       </v-alert>
     </v-card-text>
 

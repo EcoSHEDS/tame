@@ -11,14 +11,14 @@
       <span class="display-1 ml-8" style="vertical-align:middle">Loading...</span>
     </v-card-text>
     <v-card-text v-else-if="status === 'ERROR'">
-      <v-alert type="error" outlined>
-        Failed to load project.<br><br>
-        {{ error }}
+      <v-alert type="error" dense text border="left">
+        <div class="font-weight-bold">Failed to Load Project</div>
+        <div class="body-2">Reason: {{ error }}</div>
       </v-alert>
     </v-card-text>
     <v-card-text v-else-if="status === 'SUCCESS'">
-      <v-alert type="success" outlined>
-        Project has been loaded
+      <v-alert type="success" dense text border="left">
+        <div class="font-weight-bold">Project has been loaded</div>
       </v-alert>
     </v-card-text>
 

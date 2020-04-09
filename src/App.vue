@@ -771,7 +771,7 @@ export default {
       if (!this.project) {
         this.$router.push('/welcome')
       } else {
-        this.showDialog = false
+        // this.showDialog = false
         this.resetProject()
       }
     }
@@ -1072,7 +1072,7 @@ export default {
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     clearFilters () {
-      console.log('clearFilters')
+      // console.log('clearFilters')
       dc.filterAll()
       evt.$emit('filterAll')
     },
