@@ -13,6 +13,7 @@
         <v-card>
           <v-card-text class="py-0 body-2">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
+
             <p>
               TAME is designed to visualize the movement of tagged individuals over space and time.
             </p>
@@ -61,6 +62,7 @@
               truncate-length="100"
               @change="loadLocalFile">
             </v-file-input>
+
             <div v-if="file.status === 'SUCCESS'">
               <v-alert type="success" dense text border="left" :value="!!file.value" class="body-2">
                 <div class="body-1 font-weight-bold" v-if="!!file.value.local">
@@ -79,9 +81,9 @@
                     <v-col cols="2" class="px-1 py-1 text-right">Filesize:</v-col>
                     <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.value.size | prettyBytes(1) }}</v-col>
                     <v-col cols="2" class="px-1 py-1 text-right"># Rows:</v-col>
-                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.parsed.data.length.toLocaleString() }}</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.value.rows.toLocaleString() }}</v-col>
                     <v-col cols="2" class="px-1 py-1 text-right">Columns:</v-col>
-                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.parsed.meta.fields.join(', ') }}</v-col>
+                    <v-col cols="10" class="px-1 py-1 font-weight-bold">{{ file.value.columns.join(', ') }}</v-col>
                   </v-row>
                 </div>
                 <div class="mt-4">
@@ -89,10 +91,10 @@
                   Note that the entire dataset must be replaced, TAME does not currently support appending new observations to an existing dataset.
                 </div>
               </v-alert>
-              <v-alert type="warning" dense text border="left" :value="file.parsed.data.length >= 10000" class="body-2">
+              <v-alert type="warning" dense text border="left" :value="file.value.rows >= aggregation.suggestedRows" class="body-2">
                 <div class="body-1 font-weight-bold">Large File Detected</div>
                 <div class="mb-4">
-                  Datasets with more than 10,000 rows can cause TAME to become sluggish.
+                  Datasets with more than {{aggregation.suggestedRows.toLocaleString()}} rows can cause TAME to become sluggish.
                 </div>
                 <div class="my-4 body-1 font-weight-medium">
                   For optimal performance, enable dataset aggregation in Step 4 of this form.
@@ -133,7 +135,7 @@
             <v-row class="mt-4">
               <v-col>
                 <v-select
-                  :items="file.parsed.meta.fields"
+                  :items="file.value.columns"
                   v-model="columns.value.id"
                   label="Select individual/tag ID column"
                   outlined
@@ -146,7 +148,7 @@
               </v-col>
               <v-col>
                 <v-select
-                  :items="file.parsed.meta.fields"
+                  :items="file.value.columns"
                   v-model="columns.value.datetime"
                   label="Select timestamp column"
                   outlined
@@ -161,7 +163,7 @@
             <v-row>
               <v-col>
                 <v-select
-                  :items="file.parsed.meta.fields"
+                  :items="file.value.columns"
                   v-model="columns.value.latitude"
                   label="Select latitude column"
                   outlined
@@ -174,7 +176,7 @@
               </v-col>
               <v-col>
                 <v-select
-                  :items="file.parsed.meta.fields"
+                  :items="file.value.columns"
                   v-model="columns.value.longitude"
                   label="Select longitude column"
                   outlined
@@ -329,7 +331,7 @@
           </v-alert>
           <v-card-actions class="mt-4">
             <v-btn text color="default" @click="prevVariables" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="nextVariables" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="nextVariables" :loading="variables.status === 'PENDING'" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -340,52 +342,62 @@
           <v-card-text class="py-0">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
-              To reduce the size of the dataset, use one of the daily aggregation options below.
+              Large datasets (&gt; {{aggregation.suggestedRows.toLocaleString()}} rows) can cause TAME to crash or become slugish depending on the speed of your computer.
+            </p>
+            <p>
+              To improve the performance of the TAME, you can reduce the size of the dataset by selecting an aggregation option below, which will filter the full dataset
+              to only include one row (observation) per day for each individual.
+            </p>
+            <p>
+              Aggregation will only help if there are multiple observations within each day and for each individual (e.g., high frequency datasets).
             </p>
 
-            <v-alert type="warning" dense text border="left" :value="file.parsed && file.parsed.data.length > aggregation.maxRows" class="body-2">
-              <div class="body-1 font-weight-bold">Aggregation Required</div>
-              <div class="mb-2">
-                Current dataset has more than {{ aggregation.maxRows.toLocaleString() }} rows, which would cause TAME to crash or become too slugish.
-              </div>
-              <div>Please select an aggregation option below to reduce the size of the dataset.</div>
-            </v-alert>
-            <v-alert type="info" dense text border="left" :value="file.parsed && file.parsed.data.length <= aggregation.maxRows && file.parsed.data.length > 10000" class="body-2">
+            <v-alert type="warning" dense text border="left" :value="file.value && file.value.rows > aggregation.suggestedRows" class="body-2">
               <div class="body-1 font-weight-bold">Aggregation Recommended</div>
               <div>
-                Current dataset has more than 10,000 rows, which may cause TAME to crash or become too slugish depending on the speed of your computer.
+                Current dataset has more than {{aggregation.suggestedRows.toLocaleString()}} rows.
               </div>
             </v-alert>
 
             <v-row class="mt-2" no-gutters>
               <v-col cols="12">
-                <div class="body-2 font-weight-medium">For each individual and date, include:</div>
-                <v-radio-group v-model="aggregation.value" class="ml-4" dense @change="validateAggregation">
+                <div class="body-2 font-weight-medium">Select an aggregation option:</div>
+                <v-radio-group v-model="aggregation.value" class="ml-4" dense @change="changeAggregation">
                   <v-radio
                     value="none"
-                    label="All observations (no aggregation)"
-                    :disabled="file.parsed && file.parsed.data.length > aggregation.maxRows">
+                    label="">
+                    <template v-slot:label>
+                      <div><span class="font-weight-bold">None</span>: All rows will be loaded into TAME</div>
+                    </template>
                   </v-radio>
                   <v-radio
-                    value="maxDistance"
-                    label="Only the observation with the longest distance to the next observed location">
+                    value="maxDistance">
+                    <template v-slot:label>
+                      <div><span class="font-weight-bold d-inline">Daily Max Distance</span>: Only the row with the longest distance to the next row will be loaded for each day and individual</div>
+                    </template>
                   </v-radio>
                   <v-radio
-                    value="firstDay"
-                    label="Only the first observation of the day">
+                    value="firstDay">
+                    <template v-slot:label>
+                      <div><span class="font-weight-bold">First of the Day</span>: Only the first row will be loaded for each day and individual</div>
+                    </template>
                   </v-radio>
                 </v-radio-group>
               </v-col>
             </v-row>
-            <!-- <pre>{{ aggregation.value }}</pre> -->
 
             <v-alert type="error" text border="left" dense :value="aggregation.status === 'ERROR' && !!aggregation.error" class="mt-2 body-2">
               <span v-html="aggregation.error"></span>
             </v-alert>
+            <v-alert type="warning" text border="left" dense :value="aggregation.status === 'SUCCESS' && aggregation.warning" class="mt-2 body-2">
+              <div class="body-1 font-weight-bold">Warning! Proceed with Caution</div>
+              <div>Even with aggregation, this dataset still has {{aggregation.rows.toLocaleString()}}, which may case TAME to run slowly.</div>
+              <div class="mt-2">Please click Continue to proceed.</div>
+            </v-alert>
           </v-card-text>
           <v-card-actions class="mt-4">
             <v-btn text color="default" @click="prevAggregation" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="nextAggregation" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="nextAggregation" :loading="aggregation.status === 'PENDING'" class="pl-4">Continue <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -400,10 +412,7 @@
                 You can change any of these options or load a new version of the dataset by clicking the <span class="font-weight-bold">Edit Project</span> button.
               </div>
               <div class="mt-2" v-if="file.value && (file.value.size / 1024 / 1024) < 5">
-                You can also <span class="font-weight-bold">Publish</span> your project to save it to the TAME server and make it available to other users.
-              </div>
-              <div class="mt-2" v-else>
-                You will not be able to publish this project because the file size exceeds the 5 MB limit.
+                You can also <span class="font-weight-bold">Publish</span> your project to the TAME server and make it available to other users.
               </div>
             </v-alert>
           </v-card-text>
@@ -420,7 +429,7 @@
           </v-card-text>
           <v-card-actions>
             <v-btn text color="default" @click="step -= 1" class="ml-2 mr-4 pr-4"><v-icon left>mdi-chevron-left</v-icon> Go Back</v-btn>
-            <v-btn color="primary" @click="submit" :loading="finish.status === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
+            <v-btn color="primary" @click="submit" v-if="isNew" :loading="finish.status === 'PENDING'" class="mx-4 pl-4">Finish <v-icon right>mdi-chevron-right</v-icon></v-btn>
           </v-card-actions>
         </v-card>
       </v-stepper-content>
@@ -447,7 +456,7 @@ import { required, minLength, maxLength } from 'vuelidate/lib/validators'
 import { mapGetters, mapActions } from 'vuex'
 
 import parse from '@/lib/parse'
-import { validateDatasetColumns } from '@/lib/dataset'
+import { validateDatasetColumns, aggregateDataset } from '@/lib/dataset'
 
 export default {
   name: 'ProjectForm',
@@ -513,8 +522,11 @@ export default {
       aggregation: {
         status: 'READY',
         error: null,
-        maxRows: 20000,
-        value: 'none'
+        rows: 0,
+        maxRows: 1e6,
+        suggestedRows: 1e4,
+        value: 'none',
+        warning: false
       },
       finish: {
         status: 'READY',
@@ -571,26 +583,33 @@ export default {
         return this.$router.push({ name: 'newProject' })
       }
       const project = JSON.parse(JSON.stringify(this.project))
+      this.file.value = project.file
+      const parsePayload = this.file.value
       if (this.project.file.local) {
         project.file.local = this.project.file.local
+        parsePayload.local = this.project.file.local
       }
-      this.file.value = project.file
-      this.file.parsed = project.dataset
-      this.file.status = 'SUCCESS'
-      this.columns.value = project.columns
-      this.columns.status = 'SUCCESS'
-      this.variables.value = project.variables
-      this.variables.status = 'SUCCESS'
-      this.aggregation.value = project.aggregation || 'none'
-      this.aggregation.status = 'SUCCESS'
-      this.finish.status = 'SUCCESS'
+
+      this.file.status = 'PENDING'
+      parse(parsePayload)
+        .then(results => {
+          this.parsed = results
+          this.file.status = 'SUCCESS'
+          this.columns.value = project.columns
+          this.columns.status = 'SUCCESS'
+          this.variables.value = project.variables
+          this.variables.status = 'SUCCESS'
+          this.aggregation.value = project.aggregation || 'none'
+          this.aggregation.status = 'SUCCESS'
+          this.finish.status = 'SUCCESS'
+        })
     } else {
       // clear currently loaded project when creating a new project
-      this.loadProject()
+      this.setProject()
     }
   },
   methods: {
-    ...mapActions(['loadProject']),
+    ...mapActions(['setProject']),
     submit () {
       this.finish.status = 'PENDING'
       let project = {
@@ -609,7 +628,7 @@ export default {
         project.name = this.file.value.name
       }
 
-      return this.loadProject(project)
+      return this.setProject(project)
         .then((project) => {
           this.finish.status = 'SUCCESS'
           this.$router.push({ name: 'home' })
@@ -655,14 +674,6 @@ export default {
               <div class="mt-2">${results.errors[0].message} (Row ${results.errors[0].row})</div>
             `)
           }
-          if (results.data.length > 500000) {
-            return this.setError('file', `
-              <div class="body-1 font-weight-bold">File Too Large (${localFile.name})</div>
-              <div class="mb-2">Files cannot have more than 500,000 rows or the application may become unresponsive or crash.</div>
-              <div class="mt-2">Reduce dataset size by removing some individuals, limiting the overall time period, or aggregate to less frequent
-                time steps (e.g. hourly to daily). Then reload the CSV file.</div>
-            `)
-          }
           if (!results.meta.fields.every(d => d.length > 0)) {
             const index = results.meta.fields.findIndex(d => d.length === 0) + 1
             return this.setError('file', `
@@ -675,9 +686,11 @@ export default {
           this.file.value = {
             name: localFile.name,
             size: localFile.size,
-            local: localFile
+            local: localFile,
+            rows: results.data.length,
+            columns: results.meta.fields
           }
-          this.file.parsed = results
+          this.parsed = results
           this.file.status = 'SUCCESS'
           this.resetColumns()
         })
@@ -692,7 +705,7 @@ export default {
     },
     // Step 2: Columns
     resetColumns () {
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         this.columns.status = 'READY'
         this.columns.error = null
 
@@ -703,25 +716,25 @@ export default {
         return
       }
 
-      const fields = this.file.parsed.meta.fields
+      const fields = this.file.value.columns
 
       if (this.columns.status === 'READY') {
-        if (this.file.parsed.meta.fields.includes('tag-local-identifier')) {
+        if (this.file.value.columns.includes('tag-local-identifier')) {
           this.columns.value.id = 'tag-local-identifier'
         }
-        if (this.file.parsed.meta.fields.includes('timestamp')) {
+        if (this.file.value.columns.includes('timestamp')) {
           this.columns.value.datetime = 'timestamp'
-        } else if (this.file.parsed.meta.fields.includes('datetime')) {
+        } else if (this.file.value.columns.includes('datetime')) {
           this.columns.value.datetime = 'datetime'
         }
-        if (this.file.parsed.meta.fields.includes('location-lat')) {
+        if (this.file.value.columns.includes('location-lat')) {
           this.columns.value.latitude = 'location-lat'
-        } else if (this.file.parsed.meta.fields.includes('latitude')) {
+        } else if (this.file.value.columns.includes('latitude')) {
           this.columns.value.latitude = 'latitude'
         }
-        if (this.file.parsed.meta.fields.includes('location-long')) {
+        if (this.file.value.columns.includes('location-long')) {
           this.columns.value.longitude = 'location-long'
-        } else if (this.file.parsed.meta.fields.includes('longitude')) {
+        } else if (this.file.value.columns.includes('longitude')) {
           this.columns.value.longitude = 'longitude'
         }
         return
@@ -749,7 +762,7 @@ export default {
       // skip validation if project is new and form has never been submitted
       if (this.columns.status === 'READY') return true
 
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         return Promise.resolve(
           this.setError('columns', `
             <div class="body-1 font-weight-bold">File Not Found</div>
@@ -767,7 +780,7 @@ export default {
       }
 
       // validate each column
-      return validateDatasetColumns(this.file.parsed.data, this.columns.value)
+      return validateDatasetColumns(this.parsed.data, this.columns.value)
         .then(() => {
           this.columns.status = 'SUCCESS'
           this.resetVariables()
@@ -777,7 +790,7 @@ export default {
           let valueMessage = ''
           if (e.details && e.details.length > 0) {
             const path = e.details[0].path
-            const value = this.file.parsed.data[path[0]][path[1]]
+            const value = this.parsed.data[path[0]][path[1]]
             valueMessage = ` (found value "${value}")`
           }
           return this.setError('columns', `
@@ -798,21 +811,23 @@ export default {
     },
     nextColumns () {
       this.columns.status = 'PENDING'
-      this.validateColumns()
-        .then((isValid) => {
-          if (isValid) this.step += 1
-        })
-        .catch((e) => {
-          console.log(e)
-          return this.setError('columns', `
-            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
-            <div class="mt-2"> class="mt-2"${e.message || e}</div>
-          `)
-        })
+      setTimeout(() => {
+        this.validateColumns()
+          .then((isValid) => {
+            if (isValid) this.step += 1
+          })
+          .catch((e) => {
+            console.log(e)
+            return this.setError('columns', `
+              <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+              <div class="mt-2"> class="mt-2"${e.message || e}</div>
+            `)
+          })
+      }, 500)
     },
     // Step 3: Variables
     resetVariables () {
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         this.variables.status = 'READY'
         this.variables.error = null
         // this.variable.status = 'READY'
@@ -821,7 +836,7 @@ export default {
         return
       }
 
-      const additionalFields = this.file.parsed.meta.fields
+      const additionalFields = this.file.value.columns
         .filter(d => !Object.values(this.columns.value).includes(d))
 
       if (additionalFields.length === 0) {
@@ -850,7 +865,7 @@ export default {
           skip: false
         }
 
-        const value = this.file.parsed.data[0][variable.id]
+        const value = this.parsed.data[0][variable.id]
         if (isNaN(+value) || !isFinite(+value)) {
           variable.type = 'discrete'
         } else {
@@ -871,7 +886,7 @@ export default {
       // console.log('validateVariables()')
       if (this.variables.status === 'READY') return true
 
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         return this.setError('variables', `
           <div class="body-1 font-weight-bold">File Not Found</div>
           <div>Please return to the first step and load a file.</div>
@@ -899,17 +914,19 @@ export default {
     },
     nextVariables () {
       this.variables.status = 'PENDING'
-      this.validateVariables()
-        .then((isValid) => {
-          if (isValid) this.step += 1
-        })
-        .catch((e) => {
-          console.log(e)
-          return this.setError('variables', `
-            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
-            <div class="mt-2"> class="mt-2"${e.message || e}</div>
-          `)
-        })
+      setTimeout(() => {
+        this.validateVariables()
+          .then((isValid) => {
+            if (isValid) this.step += 1
+          })
+          .catch((e) => {
+            console.log(e)
+            return this.setError('variables', `
+              <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+              <div class="mt-2"> class="mt-2"${e.message || e}</div>
+            `)
+          })
+      }, 500)
     },
     // Step 3a: Variable
     selectVariableIndex (index) {
@@ -948,15 +965,15 @@ export default {
       }
 
       if (variable.type === 'discrete') {
-        const domain = [...new Set(this.file.parsed.data.map(d => d[variable.id]))]
-        if (domain.length > 100) {
-          variable.valid = false
-          variable.error = `
-            <div class="font-weight-bold">Invalid Discrete Variable</div>
-            <div class="body-2 mb-2">A discrete variable cannot have more than 100 unique values (found ${domain.length.toLocaleString()}).</div>
-            <div class="body-2 mt-2">Exclude this variable, or modify the dataset file and return to step 1 to reload the CSV file.</div>
-          `
-        }
+        const domain = [...new Set(this.parsed.data.map(d => d[variable.id]))]
+        // if (domain.length > 100) {
+        //   variable.valid = false
+        //   variable.error = `
+        //     <div class="font-weight-bold">Invalid Discrete Variable</div>
+        //     <div class="body-2 mb-2">A discrete variable cannot have more than 100 unique values (found ${domain.length.toLocaleString()}).</div>
+        //     <div class="body-2 mt-2">Exclude this variable, or modify the dataset file and return to step 1 to reload the CSV file.</div>
+        //   `
+        // }
         if (variable.outline && domain.length !== 2) {
           variable.valid = false
           variable.error = `
@@ -972,55 +989,80 @@ export default {
     },
     // Step 4: Aggregation
     resetAggregation () {
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         this.aggregation.status = 'READY'
         this.aggregation.error = null
         this.aggregation.value = 'none'
-        return
+        this.aggregation.warning = false
+        // return
       }
 
-      this.validateAggregation()
+      // this.validateAggregation()
     },
     validateAggregation () {
       if (this.aggregation.status === 'READY') return true
 
-      if (!this.file.parsed) {
+      if (!this.parsed) {
         return this.setError('aggregation', `
           <div class="body-1 font-weight-bold">File Not Found</div>
           <div>Please return to the first step and load a file.</div>
         `)
       }
+      this.aggregation.warning = false
 
       return new Promise((resolve, reject) => {
         this.aggregation.status = 'SUCCESS'
-        const n = this.file.parsed.data.length
-        if (n > this.aggregation.maxRows) {
-          if (this.aggregation.value === 'none' || !this.aggregation.value) {
+
+        const aggregated = aggregateDataset(this.parsed.data, this.columns.value, this.aggregation.value)
+        this.aggregation.rows = aggregated.length
+        if (this.aggregation.rows > this.aggregation.maxRows) {
+          if (this.aggregation.value === 'none') {
+            this.aggregation.warning = false
             return resolve(this.setError('aggregation', `
-              <div class="body-1 font-weight-bold">Aggregation Required</div>
-              <div>Datasets with more than 20,000 rows must be aggregated to daily timesteps. Please select an option above.</div>
+              <div class="body-1 font-weight-bold">Dataset Too Large</div>
+              <div class="mb-2">This dataset currently has ${this.aggregation.rows.toLocaleString()} rows, which is too large for TAME (maximum is ${this.aggregation.maxRows.toLocaleString()} rows).</div>
+              <div>Please try selecting an aggregation option.</div>
+            `))
+          } else {
+            this.aggregation.warning = false
+            return resolve(this.setError('aggregation', `
+              <div class="body-1 font-weight-bold">Aggregated Dataset Too Large</div>
+              <div class="mb-2">Even after aggregation, this dataset still has ${this.aggregation.rows.toLocaleString()} rows, which is too large for TAME (maximum is ${this.aggregation.maxRows.toLocaleString()} rows).</div>
+              <div>Please reduce the number of rows in the dataset by removing individuals or focusing on a shorter time period, and return to Step 1 to upload a smaller dataset file.</div>
             `))
           }
         }
+        if (this.aggregation.value !== 'none' && this.aggregation.rows > this.aggregation.suggestedRows) {
+          this.aggregation.warning = true
+        } else {
+          this.aggregation.warning = false
+        }
         return resolve(true)
       })
+    },
+    changeAggregation () {
+      this.aggregation.status = 'READY'
+      this.aggregation.error = null
     },
     prevAggregation () {
       this.step -= 1
     },
     nextAggregation () {
       this.aggregation.status = 'PENDING'
-      this.validateAggregation()
-        .then((isValid) => {
-          if (isValid) this.step += 1
-        })
-        .catch((e) => {
-          console.log(e)
-          return this.setError('aggregation', `
-            <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
-            <div class="mt-2">${e.message || e}</div>
-          `)
-        })
+      const warned = this.aggregation.warning
+      setTimeout(() => {
+        this.validateAggregation()
+          .then((isValid) => {
+            if (isValid && (!this.aggregation.warning || warned)) this.step += 1
+          })
+          .catch((e) => {
+            console.log(e)
+            return this.setError('aggregation', `
+              <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
+              <div class="mt-2">${e.message || e}</div>
+            `)
+          })
+      }, 500)
     }
   }
 }

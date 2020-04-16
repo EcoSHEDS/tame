@@ -85,7 +85,19 @@
         persistent-hint>
       </v-textarea>
 
-      <v-alert type="error" :value="!!serverError" outlined class="mt-4 body-2">
+      <v-textarea
+        label="Citation (optional)"
+        v-model="form.citation"
+        rows="2"
+        counter
+        outlined
+        :error-messages="citationErrors"
+        class="mt-4"
+        hint="Provide a citation or URL to this data source."
+        persistent-hint>
+      </v-textarea>
+
+      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
         <div class="body-1 font-weight-bold">Server Error</div>
         <div>{{serverError}}</div>
       </v-alert>
@@ -97,6 +109,19 @@
           <pre class="grey--text text--darken-2">
             <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
           </pre>
+        </div>
+      </v-alert>
+
+      <v-alert type="warning" dense text border="left" :value="status !== 'PENDING' && (!isNew || status === 'SUCCESS')" class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Unpublish This Project?</div>
+        <div class="mb-4">Click the button below to unpublish your project and remove it from the TAME server.</div>
+        <div class="pb-2">
+          <v-btn
+            :to="{ name: 'unpublishProject' }"
+            color="warning"
+            outlined>
+            <v-icon small left>mdi-delete</v-icon> unpublish
+          </v-btn>
         </div>
       </v-alert>
     </v-card-text>
@@ -134,15 +159,17 @@ export default {
     form: {
       id: { required, alphaNum, minLength: minLength(4), maxLength: maxLength(50) },
       name: { required, minLength: minLength(4), maxLength: maxLength(100) },
-      description: { required, minLength: minLength(4), maxLength: maxLength(250) }
+      description: { required, minLength: minLength(4), maxLength: maxLength(250) },
+      citation: { maxLength: maxLength(500) }
     }
   },
   data () {
     return {
       form: {
-        id: '',
-        name: '',
-        description: ''
+        id: null,
+        name: null,
+        description: null,
+        citation: null
       },
       isNew: true,
       status: 'READY',
@@ -173,6 +200,12 @@ export default {
       (!this.$v.form.description.minLength || !this.$v.form.description.maxLength) && errors.push('Description must be between 4 and 250 characters.')
       return errors
     },
+    citationErrors () {
+      const errors = []
+      if (this.status === 'READY') return errors
+      !this.$v.form.citation.maxLength && errors.push('Citation cannot exceed 500 characters.')
+      return errors
+    },
     projectUrl () {
       const base = process.env.VUE_APP_BASE_URL || 'http://localhost:8080/'
       const route = this.$router.resolve({
@@ -195,10 +228,11 @@ export default {
       this.form.id = this.project.id
       this.form.name = this.project.name
       this.form.description = this.project.description
+      this.form.citation = this.project.citation
     }
   },
   methods: {
-    ...mapActions(['loadProject']),
+    ...mapActions(['setProject']),
     getToken () {
       return this.$Amplify.Auth.currentSession()
         .then(session => session.getIdToken().getJwtToken())
@@ -243,6 +277,8 @@ export default {
           id: this.form.id,
           name: this.form.name,
           description: this.form.description,
+          citation: this.form.citation,
+          file: this.project.file,
           columns: this.project.columns,
           variables: this.project.variables,
           aggregation: this.project.aggregation,
@@ -252,6 +288,9 @@ export default {
         newProject.variables.forEach(d => {
           delete d.domain
         })
+        if (newProject.file.local) {
+          delete newProject.file.local
+        }
 
         if (this.isNew) {
           // console.log('post', newProject)
@@ -300,7 +339,7 @@ export default {
         }
       }
 
-      this.loadProject(project)
+      this.setProject(project)
         .then(() => {
           this.status = 'SUCCESS'
         })

@@ -42,12 +42,12 @@ export default {
     }
   },
   mounted () {
-    this.$http.get(`/projects/${this.$route.params.id}`)
+    return this.$http.get(`/projects/${this.$route.params.id}`)
       .then(response => response.data)
-      .then(project => this.loadProject(project))
-      .then(project => {
+      .then(project => this.setProject(project))
+      .then(() => {
         this.status = 'SUCCESS'
-        this.$router.push('/')
+        return this.$router.push('/')
       })
       .catch(e => {
         console.log(e)
@@ -55,7 +55,7 @@ export default {
       })
   },
   methods: {
-    ...mapActions(['loadProject']),
+    ...mapActions(['setProject']),
     setError (e) {
       this.status = 'ERROR'
       this.error = this.$Amplify.I18n.get(e.message || e)

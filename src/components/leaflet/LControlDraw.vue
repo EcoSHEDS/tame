@@ -21,6 +21,7 @@ export default {
     this.map.removeControl(this.control)
     this.map.on('draw:created', this.onCreated)
     this.map.off('draw:deleted', this.onDeleted)
+    evt.$off('unselectAll', this.clear)
   },
   computed: {
     map () {

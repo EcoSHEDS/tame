@@ -1,7 +1,14 @@
 import Papa from 'papaparse'
 
 export default (file) => new Promise((resolve, reject) => {
-  const value = file.local || file.location || null
+  let value
+  if (file.local) {
+    value = file.local
+  } else if (file.s3) {
+    value = file.s3.location
+  } else {
+    return reject(new Error('Project file not found'))
+  }
   return Papa.parse(value, {
     header: true,
     comments: '#',

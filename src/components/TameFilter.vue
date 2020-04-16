@@ -71,7 +71,7 @@
           </template>
         </v-autocomplete>
         <div class="text-right mt-2">
-          <v-btn small text color="default" @click="useSelected">Selected IDs</v-btn>
+          <v-btn small text color="default" @click="useSelected">Copy Selected IDs</v-btn>
           <v-tooltip right open-delay="100" max-width="400">
             <template v-slot:activator="{ on }">
               <v-btn small icon v-on="on" class="align-self-center">
@@ -129,7 +129,7 @@ export default {
     }
   },
   mounted () {
-    // console.log('TameFilter:mounted', this.variable.id)
+    console.log('TameFilter:mounted', this.variable.id)
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
@@ -294,10 +294,12 @@ export default {
     this.chart.render()
   },
   beforeDestroy () {
+    console.log('filter:beforeDestroy', this.variable.id)
     if (this.chart) {
       this.chart.dimension().dispose()
       dc.chartRegistry.deregister(this.chart)
     } else if (this.variable.type === 'id') {
+      console.log('dispose of idFilter')
       this.idFilter.dim.dispose()
       evt.$off('filterAll', this.resetFilter)
     }

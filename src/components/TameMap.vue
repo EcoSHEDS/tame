@@ -73,7 +73,7 @@ export default {
 
     let moveTimeout
     this.map.on('movestart', () => {
-      window.clearTimeout(moveTimeout)
+      clearTimeout(moveTimeout)
       this.disableClick = true
     })
     this.map.on('moveend', () => {
@@ -85,7 +85,7 @@ export default {
     this.map.on('zoomend', () => {
       this.zoomLevel = this.map.getZoom()
       evt.$emit('map:zoom', this.map.getZoom())
-      evt.$emit('map:render')
+      evt.$emit('map:render', 'map:zoomend')
     })
 
     this.ready = true

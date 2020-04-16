@@ -26,8 +26,7 @@
       </v-snackbar>
       <TameMap :center="map.center" :zoom="map.zoom" :basemaps="map.basemaps" @ready="mapIsReady">
         <TameMapLayerCanvas
-          v-if="ready"
-          :dataset="dataset"
+          v-if="project"
           :getColor="getColor"
           :getOutline="getOutline"
           :getSize="getSize"
@@ -54,10 +53,10 @@
                 </v-btn>
               </v-card-actions>
             </v-card>
-            <v-card width="475" class="mb-3" v-if="ready">
+            <v-card width="475" class="mb-3" v-if="project">
               <v-toolbar dark dense color="primary">
                 <h4>
-                  <span v-if="ready" class="subtitle-1 font-weight-bold">
+                  <span v-if="project" class="subtitle-1 font-weight-bold">
                     <v-icon left v-if="!project.id">mdi-paperclip</v-icon>
                     <v-icon left v-else>mdi-database</v-icon>
                     {{ project ? project.name : 'None' | truncate(40) }}
@@ -79,19 +78,16 @@
                     <router-link style="color:white" :to="{name: 'listProjects'}">load an existing one</router-link>.
                   </span>
                 </h4>
-                <v-spacer></v-spacer>
-                <v-btn small icon @click="closeProject">
-                  <v-icon small>mdi-close</v-icon>
-                </v-btn>
               </v-toolbar>
-              <v-card-actions v-if="isOwner || !project.id">
-                <v-btn small rounded v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit Project</v-btn>
+              <v-card-actions>
+                <v-btn small text v-if="!!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
+                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit</v-btn>
+                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
                 <v-spacer></v-spacer>
-                <v-btn small rounded v-if="isOwner && !!project.id" :to="{ name: 'unpublishProject' }"><v-icon left small>mdi-cloud-off-outline</v-icon>Unpublish</v-btn>
-                <v-btn small rounded v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
+                <v-btn small text @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn>
               </v-card-actions>
             </v-card>
-            <v-card width="475" class="mb-3" v-if="ready">
+            <v-card width="475" class="mb-3" v-if="project">
               <v-tabs
                 v-model="tabs.active"
                 background-color="primary"
@@ -524,13 +520,15 @@
                     <v-divider class="my-0 py-0" v-if="filters.selected.length > 0"></v-divider>
 
                     <v-card-text class="mt-0 py-0" v-if="filters.selected.length > 0">
-                      <TameFilter
+                      <div
                         v-for="variable in filters.selected"
-                        :key="variable.id"
-                        :variable="variable"
-                        :selectedIds="selection.selected"
-                        @close="removeFilter(variable)">
-                      </TameFilter>
+                        :key="variable.id">
+                        <TameFilter
+                          :variable="variable"
+                          :selectedIds="selection.selected"
+                          @close="removeFilter(variable)">
+                        </TameFilter>
+                      </div>
                     </v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -547,7 +545,7 @@
               :selected-ids="selection.selected"
               @clearSelected="unselectAll"
               @clearFilters="clearFilters"
-              v-if="ready"></TameLegend>
+              v-if="project"></TameLegend>
           </v-col>
         </v-row>
       </v-container>
@@ -575,6 +573,8 @@ import { mapGetters, mapActions } from 'vuex'
 
 import evt from '@/events'
 import { xf } from '@/crossfilter'
+// import parse from '@/lib/parse'
+// import { processDataset } from '@/lib/dataset'
 
 import UsgsHeader from '@/components/usgs/UsgsHeader'
 import UsgsFooter from '@/components/usgs/UsgsFooter'
@@ -585,7 +585,7 @@ import TameMapLayerCanvas from '@/components/TameMapLayerCanvas'
 import TameFilter from '@/components/TameFilter'
 import TameLegend from '@/components/TameLegend'
 
-window.d3 = d3
+// window.d3 = d3
 
 export default {
   name: 'App',
@@ -604,12 +604,11 @@ export default {
       text: '',
       timeout: 5000
     },
-    showDialog: true,
+    showDialog: false,
     showDisplaySettings: true,
     loading: false,
     ready: false,
     error: null,
-    dataset: [],
     tabs: {
       active: 0,
       collapse: false
@@ -759,49 +758,39 @@ export default {
       }
     },
     project () {
-      this.resetProject()
+      console.log('app:watch project', xf.size())
+      this.clearProject()
+      this.$nextTick(this.initProject)
     },
     colorScale () {
-      evt.$emit('map:render')
+      this.ready && evt.$emit('map:render', 'app:watch:colorScale')
     }
   },
   mounted () {
-    evt.$on('filter', this.onFilter)
+    // console.log('app: mounted()')
     if (this.$route.name === 'home') {
       if (!this.project) {
         this.$router.push('/welcome')
-      } else {
-        // this.showDialog = false
-        this.resetProject()
       }
+    } else {
+      this.showDialog = true
     }
+    this.initProject()
+    evt.$on('filter', this.updateFilterCounts)
   },
   beforeDestroy () {
-    xf.remove(() => true)
-    evt.$off('filter', this.onFilter)
+    evt.$off('filter', this.updateFilterCounts)
   },
   methods: {
-    ...mapActions(['loadProject', 'setColorVariable', 'setColorContinuous', 'setColorDiscrete']),
-    closeDialog () {
-      this.showDialog = false
-      setTimeout(() => {
-        this.$router.push('/')
-      }, 200)
-    },
-    changeColor (variable) {
-      if (this.color.selected !== variable) {
-        this.color.selected = variable
-      }
-      this.setColorVariable(this.color.selected)
-      this.selectOption()
-    },
-    selectOption () {
-      // instead of watching individual option selection
-      // which would trigger event 4 times when project first loaded
-      evt.$emit('map:render')
-    },
+    ...mapActions(['setProject', 'setColorVariable', 'setColorContinuous', 'setColorDiscrete']),
+
+    // Project
     clearProject () {
-      // console.log('clearProject')
+      console.log('app: clearProject()')
+      // console.log('app:clearProject()', this.project)
+
+      this.ready = false
+
       this.unselectAll()
       if (this.draw.enabled) {
         this.clearDraw()
@@ -815,8 +804,6 @@ export default {
         this.tags.dim.dispose()
         this.tags.dim = null
       }
-
-      xf.remove(d => true)
 
       this.selection.options = []
       this.selection.selected = []
@@ -840,34 +827,32 @@ export default {
       this.setColorDiscrete({ scheme: 'Category10' })
       this.setColorVariable(null)
 
-      this.ready = false
-
-      evt.$emit('filter')
-      evt.$emit('map:render')
+      // evt.$emit('filter')
+      // evt.$emit('map:render')
     },
     closeProject () {
-      this.loadProject()
-        .then(() => this.clearProject())
+      console.log('app: closeProject()')
+      // console.log('app:closeProject()', this.project)
+
+      this.setProject()
+        // .then(this.clearProject)
         .then(() => {
           this.$router.push({ name: 'welcome' })
         })
     },
-    resetProject () {
-      // console.log('resetProject', this.project)
-      this.clearProject()
-      this.$nextTick(this.initProject)
-    },
     initProject () {
-      // console.log('initProject', this.project)
+      // console.log('app:initProject()', this.project)
       if (!this.project) return
 
-      const { columns, variables, dataset } = this.project
+      // console.log('app: initProject()', xf.size(), this.project, this.ready)
+      console.log('app: initProject()')
+
+      const { columns, variables } = this.project
+
+      const dataset = xf.all()
 
       this.tags.dim = xf.dimension(d => d[columns.id])
       this.tags.group = this.tags.dim.group().reduceCount()
-
-      xf.add(dataset.data)
-      this.dataset = Object.freeze(dataset.data)
 
       this.selection.options = this.tags.group.all().map(d => ({ id: d.key }))
 
@@ -889,20 +874,20 @@ export default {
           id: '$distance',
           name: 'Distance to Next Location (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$distance))],
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$distance))],
           tickFormat: '.2s'
         },
         {
           id: '$duration',
           name: 'Time to Next Location (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$duration))]
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$duration))]
         },
         {
           id: '$velocity',
           name: 'Velocity to Next Location (m/day)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$velocity))],
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$velocity))],
           tickFormat: '.2s'
         },
         {
@@ -924,32 +909,32 @@ export default {
           id: '$total_n',
           name: 'Total # of Observations',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_n))]
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$total_n))]
         },
         {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_distance))],
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$total_distance))],
           tickFormat: '.2s'
         },
         {
           id: '$total_distance',
           name: 'Total Distance (m)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_distance))],
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$total_distance))],
           tickFormat: '.2s'
         },
         {
           id: '$total_duration',
           name: 'Total Time (days)',
           type: 'continuous',
-          domain: [0, Math.ceil(d3.max(this.dataset, d => d.$total_duration))],
+          domain: [0, Math.ceil(d3.max(dataset, d => d.$total_duration))],
           tickFormat: '.2s'
         }
       ]
 
-      const uniqueIds = [...new Set(this.dataset.map(d => d[columns.id]))].sort(d3.ascending)
+      const uniqueIds = [...new Set(dataset.map(d => d[columns.id]))].sort(d3.ascending)
       this.color.options = [
         { header: 'Individual Metrics' },
         ...[
@@ -1038,8 +1023,25 @@ export default {
 
       this.selectOption()
       this.ready = true
-      evt.$emit('filter')
+      evt.$emit('filter') // updates filter counts
+      // evt.$emit('map:render', 'app:initProject')
     },
+
+    // Map Variables
+    changeColor (variable) {
+      if (this.color.selected !== variable) {
+        this.color.selected = variable
+      }
+      this.setColorVariable(this.color.selected)
+      this.selectOption()
+    },
+    selectOption () {
+      // instead of watching individual option selection
+      // which would trigger event 4 times when project first loaded
+      this.ready && evt.$emit('map:render', 'app:selectOption')
+    },
+
+    // Map Scales
     getColor (d, i) {
       if (!d || !this.color.selected || d[this.color.selected.id] === null) {
         return '#888888'
@@ -1061,22 +1063,25 @@ export default {
       }
       return this.sizeScale(d[this.size.selected.id])
     },
-    removeFilter (variable) {
-      this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
-    },
-    onFilter () {
-      // console.log('app:onFilter')
-      this.counts.records.filtered = xf.allFiltered().length
-      this.counts.records.total = xf.size()
 
-      this.counts.tags.filtered = this.tags.group ? this.tags.group.all().filter(d => d.value > 0).length : 0
-      this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
+    // Selection
+    selectId (id) {
+      // console.log('app:selectId', id, this.selection.selected.includes(id))
+      if (this.selection.selected.includes(id)) {
+        const index = this.selection.selected.findIndex(d => d === id)
+        if (index > -1) {
+          this.selection.selected.splice(index, 1)
+        }
+      } else {
+        this.selection.selected.push(id)
+      }
     },
-    clearFilters () {
-      // console.log('clearFilters')
-      dc.filterAll()
-      evt.$emit('filterAll')
+    unselectAll () {
+      this.selection.selected = []
+      this.clearDraw()
     },
+
+    // Selection Areas
     selectByAreas (layer) {
       // console.log('selectByAreas', layer, layer.features[0])
       if (!layer || layer.features.length === 0) {
@@ -1108,26 +1113,6 @@ export default {
     pointsInArea (points, feature) {
       return points.filter(d => d3.geoContains(feature, [d[this.project.columns.longitude], d[this.project.columns.latitude]]))
     },
-    selectId (id) {
-      // console.log('app:selectId', id, this.selection.selected.includes(id))
-      if (this.selection.selected.includes(id)) {
-        const index = this.selection.selected.findIndex(d => d === id)
-        if (index > -1) {
-          this.selection.selected.splice(index, 1)
-        }
-      } else {
-        this.selection.selected.push(id)
-      }
-    },
-    unselectAll () {
-      this.selection.selected = []
-      this.clearDraw()
-    },
-    showSnackbar (text, timeout) {
-      this.snackbar.timeout = timeout || 5000
-      this.snackbar.text = text
-      this.snackbar.show = true
-    },
     toggleDraw () {
       if (this.draw.rect.enabled()) {
         this.draw.rect.disable()
@@ -1151,6 +1136,37 @@ export default {
       // console.log('clearDraw()')
       this.draw.layer && this.draw.layer.eachLayer(d => this.draw.layer.removeLayer(d))
       this.onDraw()
+    },
+
+    // Crossfilters
+    removeFilter (variable) {
+      this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
+    },
+    updateFilterCounts () {
+      // console.log('app:updateFilterCounts')
+      this.counts.records.filtered = xf.allFiltered().length
+      this.counts.records.total = xf.size()
+
+      this.counts.tags.filtered = this.tags.group ? this.tags.group.all().filter(d => d.value > 0).length : 0
+      this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
+    },
+    clearFilters () {
+      // console.log('clearFilters')
+      dc.filterAll()
+      evt.$emit('filterAll')
+    },
+
+    // Misc
+    closeDialog () {
+      this.showDialog = false
+      setTimeout(() => {
+        this.$router.push('/')
+      }, 200)
+    },
+    showSnackbar (text, timeout) {
+      this.snackbar.timeout = timeout || 5000
+      this.snackbar.text = text
+      this.snackbar.show = true
     },
     mapIsReady (map) {
       // console.log('mapIsReady', map)

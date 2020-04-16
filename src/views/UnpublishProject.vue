@@ -7,7 +7,7 @@
     </v-toolbar>
 
     <v-card-text class="body-1 pb-4">
-      <v-alert type="error" dense text border="left" class="body-2">
+      <v-alert type="error" dense text border="left" class="body-2" :value="status !== 'SUCCESS'">
         <div class="body-1 font-weight-bold">Warning! This operation cannot be undone.</div>
         <div class="mb-2">
           When a project is unpublished, it will no longer be available to other users (including yourself)
@@ -62,7 +62,7 @@ export default {
     this.timeout && clearTimeout(this.timeout)
   },
   methods: {
-    ...mapActions(['loadProject']),
+    ...mapActions(['setProject']),
     setError (message) {
       this.status = 'ERROR'
       this.error = message
@@ -101,7 +101,7 @@ export default {
         this.timeout = setTimeout(() => {
           this.$router.push({ name: 'welcome' })
         }, 3000)
-        this.loadProject()
+        this.setProject()
       } catch (e) {
         return this.setError(e)
       }

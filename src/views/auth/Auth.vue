@@ -16,9 +16,15 @@ export default {
     }
   },
   mounted () {
-    AmplifyEventBus.$on('localUser', user => {
+    AmplifyEventBus.$on('localUser', this.setLocalUser)
+  },
+  beforeDestroy () {
+    AmplifyEventBus.$off('localUser', this.setLocalUser)
+  },
+  methods: {
+    setLocalUser (user) {
       this.user = user
-    })
+    }
   }
 }
 </script>

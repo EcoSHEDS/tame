@@ -10,6 +10,7 @@ import Welcome from './views/Welcome.vue'
 import ListProjects from './views/ListProjects.vue'
 import ProjectForm from './views/ProjectForm.vue'
 import LoadProject from './views/LoadProject.vue'
+import AboutProject from './views/AboutProject.vue'
 import UnpublishProject from './views/UnpublishProject.vue'
 import PublishProject from './views/PublishProject.vue'
 
@@ -129,6 +130,14 @@ const router = new Router({
       component: LoadProject,
       meta: {
         width: 600
+      }
+    },
+    {
+      path: '/about',
+      name: 'aboutProject',
+      component: AboutProject,
+      meta: {
+        width: 800
       }
     },
     {

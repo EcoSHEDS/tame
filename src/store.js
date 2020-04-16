@@ -1,12 +1,15 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import * as d3 from 'd3'
+// import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
 import { processDataset } from '@/lib/dataset'
 import { generateColorScale } from '@/lib/colors'
+import { xf } from '@/crossfilter'
 
 Vue.use(Vuex)
+
+// window.xf = xf
 
 export default new Vuex.Store({
   state: {
@@ -99,10 +102,17 @@ export default new Vuex.Store({
       commit('SET_COLOR_DISCRETE', payload)
       return payload
     },
-    async loadProject ({ commit }, project) {
-      if (!project) return commit('SET_PROJECT', null)
+    setProject ({ commit }, project) {
+      // console.log('store:setProject()', project)
+      xf.remove(d => true)
+
+      if (!project) {
+        commit('SET_PROJECT', null)
+        return Promise.resolve(null)
+      }
 
       if (!project.file) {
+        commit('SET_PROJECT', null)
         return Promise.reject(new Error('Project file not found'))
       }
 
@@ -121,18 +131,17 @@ export default new Vuex.Store({
               if (variable.skip) return
 
               if (variable.type === 'discrete') {
-                variable.domain = [...new Set(dataset.map(d => d[variable.id]))]
+                // variable.domain = [...new Set(dataset.map(d => d[variable.id]))]
+                variable.domain = ['a', 'b']
               } else if (variable.type === 'continuous') {
-                variable.domain = d3.extent(dataset, d => d[variable.id])
+                // variable.domain = d3.extent(dataset, d => d[variable.id])
+                variable.domain = [0, 1]
               }
             })
 
-            results.data = dataset
+            xf.add(dataset)
 
-            // project.dataset = Object.freeze(dataset)
-            project.dataset = results
-
-            commit('SET_PROJECT', Object.freeze(project))
+            commit('SET_PROJECT', project)
             return resolve(project)
           })
           .catch(e => reject(e))

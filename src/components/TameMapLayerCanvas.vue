@@ -14,10 +14,6 @@ const jitterIdMap = new Map()
 export default {
   name: 'TameMapLayerCanvas',
   props: {
-    dataset: {
-      type: Array,
-      required: true
-    },
     getColor: {
       type: Function,
       required: false,
@@ -70,6 +66,7 @@ export default {
   },
   data () {
     return {
+      ready: false,
       base: {
       },
       overlay: {
@@ -80,7 +77,9 @@ export default {
       tip: d3Tip()
         .attr('class', 'd3-tip')
         .direction('e'),
-      arrowSize: 12
+      arrowSize: 12,
+      jitterDistance: 0,
+      jitterValues: []
     }
   },
   computed: {
@@ -93,54 +92,6 @@ export default {
     },
     zoomLevel () {
       return this.$parent.zoomLevel
-    },
-    boundingBox () {
-      // console.log('tame-map-layer:boundingBox')
-      if (this.dataset.length === 0) return null
-
-      const lonExtent = d3.extent(this.dataset.map(d => d[this.project.columns.longitude]))
-      const latExtent = d3.extent(this.dataset.map(d => d[this.project.columns.latitude]))
-      return [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
-    },
-    mappedDataset () {
-      // console.log('mappedDataset()')
-      pickerMap.clear()
-      jitterIdMap.clear()
-
-      if (this.dataset.length === 0) return
-
-      // picker color lookup
-      this.dataset.forEach(d => {
-        pickerMap.set(this.getPickerColor(d.$index).toString(), d)
-      })
-
-      // jitter by ID
-      const ids = new Set(this.dataset.map(d => d[this.project.columns.id]))
-      ids.forEach(id => {
-        jitterIdMap.set(id, { x: Math.random() - 0.5, y: Math.random() - 0.5 })
-      })
-
-      return this.dataset
-    },
-    jitterDistance () {
-      // console.log('jitterDistance()')
-      const bbox = this.boundingBox
-      const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][0], bbox[0][1]))
-      const topRight = this.map.latLngToContainerPoint(new L.LatLng(bbox[1][1], bbox[0][0]))
-      const dX = bottomLeft.x - topRight.x
-      const dY = bottomLeft.y - topRight.y
-      return dX > dY ? dX : dY
-    },
-    jitterValues () {
-      // console.log('jitterValues()')
-      const values = []
-      this.mappedDataset.forEach(d => {
-        values[d.$index] = {
-          x: jitterIdMap.get(d[this.project.columns.id]).x,
-          y: jitterIdMap.get(d[this.project.columns.id]).y
-        }
-      })
-      return values
     }
   },
   mounted () {
@@ -297,9 +248,8 @@ export default {
       .style('z-index', 201)
     this.svg.select('g').call(this.tip)
 
-    if (this.dataset.length > 0) {
-      this.fitBounds()
-      this.render()
+    if (xf.size() > 0) {
+      this.initProject()
     }
 
     this.setTransparency()
@@ -323,7 +273,7 @@ export default {
       this.setTransparency()
     },
     project () {
-      this.fitBounds()
+      this.initProject()
     },
     selectedIds () {
       this.render()
@@ -342,7 +292,58 @@ export default {
     }
   },
   methods: {
-    reset () {
+    initProject () {
+      console.log('canvas: initProject()')
+
+      this.ready = false
+
+      pickerMap.clear()
+      jitterIdMap.clear()
+
+      if (xf.size() === 0) return
+
+      const dataset = xf.all()
+
+      const lonExtent = d3.extent(dataset.map(d => d[this.project.columns.longitude]))
+      const latExtent = d3.extent(dataset.map(d => d[this.project.columns.latitude]))
+      const boundingBox = [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
+
+      // picker color lookup
+      dataset.forEach(d => {
+        pickerMap.set(this.getPickerColor(d.$index).toString(), d)
+      })
+
+      // jitter by ID
+      const ids = new Set(dataset.map(d => d[this.project.columns.id]))
+      ids.forEach(id => {
+        jitterIdMap.set(id, { x: Math.random() - 0.5, y: Math.random() - 0.5 })
+      })
+
+      const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(boundingBox[1][0], boundingBox[0][1]))
+      const topRight = this.map.latLngToContainerPoint(new L.LatLng(boundingBox[1][1], boundingBox[0][0]))
+      const dX = bottomLeft.x - topRight.x
+      const dY = bottomLeft.y - topRight.y
+      this.jitterDistance = dX > dY ? dX : dY
+
+      this.jitterValues = []
+      dataset.forEach(d => {
+        this.jitterValues[d.$index] = {
+          x: jitterIdMap.get(d[this.project.columns.id]).x,
+          y: jitterIdMap.get(d[this.project.columns.id]).y
+        }
+      })
+
+      // zoom/pan to bounds
+      const bounds = [
+        [boundingBox[1][0], boundingBox[0][0] - 0.03], // bottomleft
+        [boundingBox[1][1], boundingBox[0][1] + 0.03] // topright
+      ]
+      this.map.fitBounds(bounds)
+
+      this.ready = true
+      this.render()
+    },
+    resetCanvas () {
       var topLeft = this.map.containerPointToLayerPoint([0, 0])
       L.DomUtil.setPosition(this.base.canvas, topLeft)
       L.DomUtil.setPosition(this.overlay.canvas, topLeft)
@@ -360,17 +361,6 @@ export default {
     setTransparency () {
       d3.select(this.base.canvas)
         .style('opacity', (1 - this.transparency) * (this.selectedIds.length > 0 ? 0.5 : 1))
-    },
-    fitBounds () {
-      // console.log('fitBounds()')
-      if (!this.boundingBox) return
-
-      const bounds = [
-        [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
-        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
-      ]
-
-      this.map.fitBounds(bounds)
     },
     projectCanvasPoint (d) {
       const latLng = new L.LatLng(d[this.project.columns.latitude], d[this.project.columns.longitude])
@@ -469,14 +459,15 @@ export default {
       context.fill()
     },
     render () {
+      if (!this.ready) return
+      console.log('canvas: render()')
+      this.resetCanvas()
       this.renderBase()
       this.renderOverlay()
     },
     renderBase () {
       // console.log('renderBase')
       if (!this.base.context) return
-
-      this.reset()
 
       this.base.context.clearRect(0, 0, this.base.canvas.width, this.base.canvas.height)
       this.picker.context.clearRect(0, 0, this.picker.canvas.width, this.picker.canvas.height)

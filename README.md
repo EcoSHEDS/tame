@@ -76,34 +76,42 @@ aws s3 sync dist/ s3://<BUCKET_NAME>/<BASE_URL> --delete
 
 ## Cloud Formation Template
 
+Set environmental variables
+
+```
+export ENV=dev COLOR=green
+```
+
+Create auth user pool. Only one used for both blue and green.
+
+```
+aws cloudformation create-stack --stack-name tame-$ENV-auth --template-body file://aws/auth.yml --parameters file://aws/params/$ENV/auth.json
+```
+
+
+
 Create storage bucket (CHS-approval required).
 
 ```
-aws cloudformation create-stack --stack-name tame-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/s3-storage.json
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/$ENV/$COLOR/s3-storage.json
 ```
 
 Create website bucket (CHS-approval required).
 
 ```
-aws cloudformation create-stack --stack-name tame-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/s3-website.json
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/$ENV/$COLOR/s3-website.json
 ```
 
 Create S3 bucket for deploying lambda code (`./api`).
 
 ```
-aws cloudformation create-stack --stack-name tame-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/s3-lambda.json
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/$ENV/$COLOR/s3-lambda.json
 ```
 
 Create database.
 
 ```
-aws cloudformation create-stack --stack-name tame-db --template-body file://aws/db.yml --parameters file://aws/params/db.json
-```
-
-Create auth user pool.
-
-```
-aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/auth.yml --parameters file://aws/params/auth.json
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-db --template-body file://aws/db.yml --parameters file://aws/params/$ENV/$COLOR/db.json
 ```
 
 Run `package` command to upload lambda source code to S3 deployment bucket and create `aws/lambda.yml` template.
@@ -117,19 +125,19 @@ For CHS, uncomment `PermissionsBoundary` for the `LambdaExecutionRole` in `aws/l
 Create lambda.
 
 ```sh
-aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/lambda.json --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/$ENV/$COLOR/lambda.json --capabilities CAPABILITY_NAMED_IAM
 ```
 
-Copy User Pool ID to `aws/params/api.json`.
+Copy User Pool ID to `aws/params/$ENV/$COLOR/api.json`.
 
 Create API
 
 ```sh
-aws cloudformation create-stack --stack-name tame-api --template-body file://aws/api.yml --parameters file://aws/params/api.json
+aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-api --template-body file://aws/api.yml --parameters file://aws/params/$ENV/$COLOR/api.json
 ```
 
 Update a stack
 
 ```sh
-aws cloudformation deploy --stack-name tame-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
+aws cloudformation deploy --stack-name tame-$ENV-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
 ```

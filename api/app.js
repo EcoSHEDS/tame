@@ -117,15 +117,15 @@ app.post('/projects/:projectId/dataset', getProject, getUser, isOwner, upload.si
   console.log('uploaded file')
   console.log(req.file)
 
-  if (project.file) {
+  if (project.file && project.file.s3) {
     try {
-      await deleteS3Object(project.file.key)
+      await deleteS3Object(project.file.s3.key)
     } catch (e) {
       return res.status(500).json({ error: e.message || e.toString() })
     }
   }
 
-  project.file = {
+  project.file.s3 = {
     name: req.file.originalname,
     mimetype: req.file.mimetype,
     size: req.file.size,
@@ -142,9 +142,9 @@ app.post('/projects/:projectId/dataset', getProject, getUser, isOwner, upload.si
 app.delete('/projects/:projectId', getProject, getUser, isOwner, async (_, res, next) => {
   const project = res.locals.project
 
-  if (project.file) {
+  if (project.file && project.file.s3) {
     try {
-      await deleteS3Object(project.file.key)
+      await deleteS3Object(project.file.s3.key)
     } catch (e) {
       return res.status(500).json({ error: e.message || e.toString() })
     }
