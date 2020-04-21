@@ -50,7 +50,7 @@ function getUser (req, res, next) {
     res.locals.userId = 'test-user'
     return next()
   }
-  if (!req.apiGateway.event.requestContext.authorizer.claims.sub) {
+  if (!req.apiGateway.event.requestContext.authorizer || !req.apiGateway.event.requestContext.authorizer.claims.sub) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
   res.locals.userId = req.apiGateway.event.requestContext.authorizer.claims.sub
@@ -82,7 +82,17 @@ function isOwner (req, res, next) {
 app.get('/projects', (req, res, next) => {
   db.getProjects()
     .then(projects => {
-      return res.json(projects)
+      const publishedProjects = projects.filter(project => project.publish)
+      return res.json(publishedProjects)
+    })
+    .catch(next)
+})
+
+app.get('/user-projects', getUser, (req, res, next) => {
+  db.getProjects()
+    .then(projects => {
+      const userProjects = projects.filter(project => project.userId === res.locals.userId)
+      return res.json(userProjects)
     })
     .catch(next)
 })

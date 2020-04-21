@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-toolbar color="primary" dark>
-      <span class="title">Publish Project</span>
+      <span class="title">Save Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
@@ -10,7 +10,7 @@
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">Not Logged In</div>
         <div class="my-2">
-          You must be logged in to publish a project.
+          You must be logged in to save a project.
         </div>
         <div class="mt-2">
           Please <router-link :to="{ name: 'login'}">Log in</router-link> or <router-link :to="{ name: 'signup'}">Sign up</router-link> for a new account.
@@ -21,7 +21,7 @@
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">Project Not Found</div>
         <div class="mb-2">An existing project could not be found.</div>
-        <div class="mt-2">Please <router-link :to="{ name: 'listProjects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</div>
+        <div class="mt-2">Please <router-link :to="{ name: 'projects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</div>
       </v-alert>
     </v-card-text>
     <v-card-text v-else-if="project.file.size > 5e6" class="pt-4 pb-0">
@@ -31,22 +31,33 @@
           The dataset file for this project exceeds the maximum size of 5 MB (file is {{ (project.file.size / 1e6).toFixed(1) }} MB).
         </div>
         <div class="my-2">
-          To publish this dataset, reduce the file size by removing rows and/or columns and then reload the CSV file using the <strong>Edit Project</strong> form.
+          To save this dataset, reduce the file size by removing rows and/or columns and then reload the CSV file using the <strong>Edit Project</strong> form.
         </div>
       </v-alert>
     </v-card-text>
     <v-card-text v-else class="pt-4">
-      <v-alert type="info" dense text border="left" class="mb-8 body-2">
-        <div class="body-1 font-weight-bold">What is a Published Project?</div>
+      <v-alert type="info" dense text border="left" class="mb-4 body-2">
+        <div class="body-1 font-weight-bold">Instructions</div>
         <div class="mb-2">
-          Publishing a project will save the dataset to the TAME web server and make it publicly accessible to <em>any user</em>
-          from the <strong>Load Project</strong> screen.
+          Saving a project will save the dataset and project settings to the TAME web server so that you can return to this dataset later or share it with other users.
         </div>
         <div class="my-2">
-          Once it is published, you can continue to make changes to the project by uploading new versions of the dataset or changing the variable settings.
+          Each saved project will be assigned a unique URL, which will be publicly accessible to anyone who has the link.
         </div>
-        <div class="mt-2">
-          You will also be able to <strong>Unpublish</strong> the project at any time to remove it from the server.
+        <div class="my-2">
+          If you select the <span class="font-weight-bold">Publish</span> option below, then this project will also be listed on the <span class="font-weight-bold">Load Project</span> screen.
+        </div>
+      </v-alert>
+
+      <v-alert type="warning" dense text border="left" class="mb-8 body-2">
+        <div class="body-1 font-weight-bold">All Saved Projects Are Publicly Accessible</div>
+        <div class="mb-2">
+          TAME does not restrict access to any saved project. Any project can be loaded directly by any user using the project URL.
+          If you opt out of publishing your project, then only users with the URL can find the project. However, that will not prevent
+          other users who acquire the URL from accessing it.
+        </div>
+        <div>
+          DO NOT save any project containing highly sensitive data.
         </div>
       </v-alert>
 
@@ -73,6 +84,13 @@
         persistent-hint>
       </v-text-field>
 
+      <v-checkbox
+        label="Publish Project"
+        v-model="form.publish"
+        hint="If checked, this project will be shown on the Load Project screen."
+        persistent-hint>
+      </v-checkbox>
+
       <v-textarea
         label="Description"
         v-model="form.description"
@@ -81,7 +99,7 @@
         outlined
         :error-messages="descriptionErrors"
         class="mt-4"
-        hint="Describe your dataset (who, what, where, why, when and how)."
+        hint="Describe your dataset (target species, location, purpose)."
         persistent-hint>
       </v-textarea>
 
@@ -103,24 +121,24 @@
       </v-alert>
 
       <v-alert type="success" v-if="status === 'SUCCESS'" dense text border="left" class="mt-4 body-2">
-        <div class="body-1 font-weight-bold">Success! Your project has been published.</div>
+        <div class="body-1 font-weight-bold">Success! Your project has been saved.</div>
         <div>
-          You can find it on the <router-link :to="{ name: 'listProjects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
+          You can find it on the <router-link :to="{ name: 'projects' }">Projects List</router-link>, or you can access it directly using the following URL: <br><br>
           <pre class="grey--text text--darken-2">
             <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
           </pre>
         </div>
       </v-alert>
 
-      <v-alert type="warning" dense text border="left" :value="status !== 'PENDING' && (!isNew || status === 'SUCCESS')" class="mt-4 body-2">
-        <div class="body-1 font-weight-bold">Unpublish This Project?</div>
-        <div class="mb-4">Click the button below to unpublish your project and remove it from the TAME server.</div>
+      <v-alert type="error" dense text border="left" :value="status !== 'PENDING' && (!isNew || status === 'SUCCESS')" class="mt-4 body-2">
+        <div class="body-1 font-weight-bold">Delete This Project?</div>
+        <div class="mb-4">Click the button below to delete your project and remove it from the TAME server.</div>
         <div class="pb-2">
           <v-btn
-            :to="{ name: 'unpublishProject' }"
-            color="warning"
+            :to="{ name: 'deleteProject' }"
+            color="error"
             outlined>
-            <v-icon small left>mdi-delete</v-icon> unpublish
+            <v-icon small left>mdi-delete</v-icon> delete
           </v-btn>
         </div>
       </v-alert>
@@ -153,7 +171,7 @@ import slugify from 'slugify'
 const alphaNum = helpers.regex('alphaNum', /^[a-z0-9\\-]*$/)
 
 export default {
-  name: 'PublishProject',
+  name: 'SaveProject',
   mixins: [validationMixin],
   validations: {
     form: {
@@ -169,7 +187,8 @@ export default {
         id: null,
         name: null,
         description: null,
-        citation: null
+        citation: null,
+        publish: false
       },
       isNew: true,
       status: 'READY',
@@ -229,6 +248,7 @@ export default {
       this.form.name = this.project.name
       this.form.description = this.project.description
       this.form.citation = this.project.citation
+      this.form.publish = this.project.publish
     }
   },
   methods: {
@@ -282,6 +302,7 @@ export default {
           columns: this.project.columns,
           variables: this.project.variables,
           aggregation: this.project.aggregation,
+          publish: this.form.publish,
           version: this.version
         }
         newProject = JSON.parse(JSON.stringify(newProject))

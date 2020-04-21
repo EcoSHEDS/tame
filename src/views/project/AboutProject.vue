@@ -24,6 +24,10 @@
         <v-col class="font-weight-bold">{{ project.updatedAt | moment('from') }}</v-col>
       </v-row>
       <v-row no-gutters class="my-2">
+        <v-col cols="2" class="text-right pr-4">Published:</v-col>
+        <v-col class="font-weight-bold">{{ project.publish ? 'Yes' : 'No' }}</v-col>
+      </v-row>
+      <v-row no-gutters class="my-2">
         <v-col cols="2" class="text-right pr-4">Description:</v-col>
         <v-col class="font-weight-bold">{{ project.description }}</v-col>
       </v-row>

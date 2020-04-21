@@ -8,14 +8,17 @@ import store from './store'
 import Home from './views/Home.vue'
 import Welcome from './views/Welcome.vue'
 import Guide from './views/Guide.vue'
-import ListProjects from './views/ListProjects.vue'
-import ProjectForm from './views/ProjectForm.vue'
-import LoadProject from './views/LoadProject.vue'
-import AboutProject from './views/AboutProject.vue'
-import UnpublishProject from './views/UnpublishProject.vue'
-import PublishProject from './views/PublishProject.vue'
 
-import AuthView from './views/auth/Auth.vue'
+import Projects from './views/Projects.vue'
+
+import RootProject from './views/project/RootProject.vue'
+import EditProject from './views/project/EditProject.vue'
+import LoadProject from './views/project/LoadProject.vue'
+import AboutProject from './views/project/AboutProject.vue'
+import DeleteProject from './views/project/DeleteProject.vue'
+import SaveProject from './views/project/SaveProject.vue'
+
+import RootAuth from './views/auth/RootAuth.vue'
 import Account from './views/auth/Account.vue'
 import Login from './views/auth/Login.vue'
 import Signup from './views/auth/Signup.vue'
@@ -85,57 +88,21 @@ const router = new Router({
       name: 'guide',
       component: Guide,
       meta: {
-        width: 800,
+        width: 1200,
         persistent: true
       }
     },
     {
       path: '/projects',
-      name: 'listProjects',
-      component: ListProjects,
+      name: 'projects',
+      component: Projects,
       meta: {
         width: 1200,
         persistent: true
       }
     },
     {
-      path: '/new',
-      name: 'newProject',
-      component: ProjectForm,
-      meta: {
-        isNew: true,
-        persistent: true
-      }
-    },
-    {
-      path: '/edit',
-      name: 'editProject',
-      component: ProjectForm,
-      meta: {
-        isNew: false,
-        persistent: true
-      }
-    },
-    {
-      path: '/publish',
-      name: 'publishProject',
-      component: PublishProject,
-      meta: {
-        width: 800,
-        persistent: true
-      }
-    },
-    {
-      path: '/unpublish',
-      name: 'unpublishProject',
-      component: UnpublishProject,
-      meta: {
-        width: 800,
-        persistent: true
-      }
-    },
-    {
-      path: '/project/:id',
+      path: '/projects/:id',
       name: 'loadProject',
       component: LoadProject,
       meta: {
@@ -143,17 +110,61 @@ const router = new Router({
       }
     },
     {
-      path: '/about',
-      name: 'aboutProject',
-      component: AboutProject,
-      meta: {
-        width: 800
-      }
+      path: '/project',
+      name: 'project',
+      component: RootProject,
+      redirect: { name: 'new' },
+      children: [
+        {
+          path: 'new',
+          name: 'newProject',
+          component: EditProject,
+          meta: {
+            isNew: true,
+            persistent: true
+          }
+        },
+        {
+          path: 'edit',
+          name: 'editProject',
+          component: EditProject,
+          meta: {
+            isNew: false,
+            persistent: true
+          }
+        },
+        {
+          path: 'save',
+          name: 'saveProject',
+          component: SaveProject,
+          meta: {
+            width: 800,
+            persistent: true
+          }
+        },
+        {
+          path: 'delete',
+          name: 'deleteProject',
+          component: DeleteProject,
+          meta: {
+            width: 800,
+            persistent: true
+          }
+        },
+        {
+          path: 'about',
+          name: 'aboutProject',
+          component: AboutProject,
+          meta: {
+            width: 800
+          }
+        }
+      ]
     },
     {
       path: '/auth',
       name: 'auth',
-      component: AuthView,
+      component: RootAuth,
       redirect: { name: 'login' },
       children: [
         {

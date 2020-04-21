@@ -88,8 +88,6 @@ Create auth user pool. Only one used for both blue and green.
 aws cloudformation create-stack --stack-name tame-$ENV-auth --template-body file://aws/auth.yml --parameters file://aws/params/$ENV/auth.json
 ```
 
-
-
 Create storage bucket (CHS-approval required).
 
 ```

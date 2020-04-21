@@ -80,15 +80,26 @@
           <div class="mb-2">You do not have any current projects.</div>
           <div class="mt-2">Ready to <router-link :to="{ name: 'newProject' }">create a new project</router-link>?</div>
         </v-alert>
-        <v-row v-for="project in projects" :key="project.id" class="mt-4 elevation-1 mx-0">
-          <v-col cols="8" class="black--text">
-            <div class="subtitle-1 font-weight-medium">{{project.name}}</div>
-            <div>{{project.description}}</div>
-          </v-col>
-          <v-col cols="4" class="text-right">
-            <v-btn color="success" :to="`/project/${ project.id }`">Load <v-icon small>mdi-chevron-right</v-icon></v-btn>
-          </v-col>
-        </v-row>
+        <v-alert color="primary" dense text border="left" v-for="project in projects" :key="project.id" class="py-0">
+          <v-row class="mx-0">
+            <v-col cols="8" class="grey--text text--darken-3">
+              <div class="subtitle-1 font-weight-medium">{{project.name}}</div>
+              <div class="caption mb-2 mt-n1">
+                Updated: {{ project.updatedAt | moment('from') }} |
+                <span v-if="project.publish">
+                  Published
+                </span>
+                <span class="red--text" v-else>
+                  Not Published
+                </span>
+              </div>
+              <div class="body-2">{{project.description | truncate(50)}}</div>
+            </v-col>
+            <v-col cols="4" class="text-right align-self-center">
+              <v-btn outlined color="primary" :to="`/projects/${ project.id }`">Load <v-icon small>mdi-chevron-right</v-icon></v-btn>
+            </v-col>
+          </v-row>
+        </v-alert>
       </div>
     </v-card-text>
 
@@ -106,6 +117,7 @@ import { mapGetters } from 'vuex'
 import { validationMixin } from 'vuelidate'
 import { required, maxLength } from 'vuelidate/lib/validators'
 import { AmplifyEventBus } from 'aws-amplify-vue'
+import * as d3 from 'd3'
 
 export default {
   name: 'Account',
@@ -148,17 +160,29 @@ export default {
     this.email = this.user.attributes.email
     this.affiliation = this.user.attributes['custom:affiliation']
 
-    this.$http.get('/projects')
-      .then(response => {
-        this.projects = response.data.filter(project => project.userId === this.user.username)
-        this.projectsStatus = 'SUCCESS'
-      })
-      .catch((err) => {
-        console.log(err)
-        this.projectsStatus = 'ERROR'
-      })
+    this.fetchUserProjects()
   },
   methods: {
+    fetchUserProjects () {
+      if (!this.user) return
+
+      return this.$Amplify.Auth.currentSession()
+        .then(session => session.getIdToken().getJwtToken())
+        .then(token => {
+          return this.$http.get('/user-projects', {
+            headers: { Authorization: token }
+          })
+        })
+        .then(response => {
+          this.projects = response.data
+            .sort((a, b) => d3.ascending(a.name.toLowerCase(), b.name.toLowerCase()))
+          this.projectsStatus = 'SUCCESS'
+        })
+        .catch((err) => {
+          console.log(err)
+          this.projectsStatus = 'ERROR'
+        })
+    },
     submit () {
       // console.log('submit', this.$v)
       this.$v.$touch()

@@ -43,16 +43,18 @@
       <v-container fill-height fluid class="align-stretch pa-2">
         <v-row no-gutters>
           <v-col>
+            <!-- New/Load Project Buttons -->
             <v-card width="475" class="mb-3" style="background:transparent" elevation="0">
               <v-card-actions class="pa-0 pr-2">
                 <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'newProject' }">
                   <v-icon left small>mdi-pencil</v-icon>New Project
                 </v-btn>
-                <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'listProjects' }">
+                <v-btn color="blue-grey" style="width:50%" dark :to="{ name: 'projects' }">
                   <v-icon left small>mdi-folder-open-outline</v-icon>Load Project
                 </v-btn>
               </v-card-actions>
             </v-card>
+            <!-- Project -->
             <v-card width="475" class="mb-3" v-if="project">
               <v-toolbar dark dense color="primary">
                 <h4>
@@ -75,18 +77,24 @@
                   </span>
                   <span v-else>
                     <router-link style="color:white" :to="{name: 'newProject'}">Create a new project</router-link> or
-                    <router-link style="color:white" :to="{name: 'listProjects'}">load an existing one</router-link>.
+                    <router-link style="color:white" :to="{name: 'projects'}">load an existing one</router-link>.
                   </span>
                 </h4>
               </v-toolbar>
               <v-card-actions>
-                <v-btn small text v-if="!!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
+                <!-- <v-btn small text v-if="!!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
                 <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit</v-btn>
-                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'publishProject' }"><v-icon left small>mdi-cloud-upload-outline</v-icon>Publish</v-btn>
+                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'saveProject' }"><v-icon left small>mdi-content-save-outline</v-icon>Save</v-btn>
+                <v-btn small text v-if="isOwner && !!project.id" :to="{ name: 'deleteProject' }"><v-icon left small>mdi-delete</v-icon>Delete</v-btn> -->
+                <v-btn small text :disabled="!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
+                <v-btn small text :disabled="!(isOwner || !project.id)" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit</v-btn>
+                <v-btn small text :disabled="!(isOwner || !project.id)" :to="{ name: 'saveProject' }"><v-icon left small>mdi-content-save-outline</v-icon>Save</v-btn>
+                <v-btn small text :disabled="!(isOwner && !!project.id)" :to="{ name: 'deleteProject' }"><v-icon left small>mdi-delete</v-icon>Delete</v-btn>
                 <v-spacer></v-spacer>
                 <v-btn small text @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn>
               </v-card-actions>
             </v-card>
+            <!-- Tabs -->
             <v-card width="475" class="mb-0" v-if="project">
               <v-tabs
                 v-model="tabs.active"

@@ -104,12 +104,12 @@
                 </div>
               </v-alert>
               <v-alert type="warning" dense text border="left" :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
-                <div class="body-1 font-weight-bold">Project Will Not Be Publishable</div>
+                <div class="body-1 font-weight-bold">Project Cannot Be Saved</div>
                 <div class="mb-4">
-                  A project can only be published to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
+                  A project can only be saved to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
                 </div>
                 <div class="mt-4">
-                  You can continue to load this file into TAME, but you will not be able to publish it for other users to access unless the file size is reduced by removing rows and/or columns.
+                  You can continue to load this file into TAME, but you will not be able to save or publish it for other users to access unless the file size is reduced by removing rows and/or columns.
                 </div>
               </v-alert>
             </div>
@@ -412,7 +412,7 @@
                 You can change any of these options or load a new version of the dataset by clicking the <span class="font-weight-bold">Edit Project</span> button.
               </div>
               <div class="mt-2" v-if="file.value && (file.value.size / 1024 / 1024) < 5">
-                You can also <span class="font-weight-bold">Publish</span> your project to the TAME server and make it available to other users.
+                You can also <span class="font-weight-bold">Save</span> your project to the TAME server and make it available to other users.
               </div>
             </v-alert>
           </v-card-text>
@@ -423,7 +423,7 @@
             </v-alert>
             <v-alert type="warning" text border="left" dense class="body-2">
               <div class="body-1 font-weight-bold">Changes will NOT be automatically saved to server</div>
-              <div>After clicking the Finish button and reviewing your changes in TAME, you must re-publish this project
+              <div>After clicking the Finish button and reviewing your changes in TAME, you must re-save this project
               in order to save these changes to the server.</div>
             </v-alert>
           </v-card-text>

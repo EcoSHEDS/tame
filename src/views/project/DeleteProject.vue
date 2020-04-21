@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-toolbar color="primary" dark class="mb-8">
-      <span class="title">Unpublish Project</span>
+      <span class="title">Delete Project</span>
       <v-spacer></v-spacer>
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
@@ -10,11 +10,10 @@
       <v-alert type="error" dense text border="left" class="body-2" :value="status !== 'SUCCESS'">
         <div class="body-1 font-weight-bold">Warning! This operation cannot be undone.</div>
         <div class="mb-2">
-          When a project is unpublished, it will no longer be available to other users (including yourself)
-          and the dataset will be deleted from the server.
+          When a project is deleted, it cannot be recovered.
         </div>
         <div class="mt-2">
-          If you wish to continue, please click the <span class="font-weight-bold">Confirm</span> button below to unpublish your project.
+          If you wish to continue, please click the <span class="font-weight-bold">Confirm</span> button below to delete your project.
         </div>
       </v-alert>
 
@@ -23,7 +22,7 @@
         <div><span v-html="error"></span></div>
       </v-alert>
       <v-alert type="success" dense text border="left" :value="status === 'SUCCESS'" class="body-2">
-        <div class="body-1 font-weight-bold">Project Has Been Unpublished</div>
+        <div class="body-1 font-weight-bold">Project Has Been Deleted</div>
         <div>You will be redirected to the <router-link :to="{ name: 'welcome' }">welcome</router-link> screen in 3 seconds...</div>
       </v-alert>
     </v-card-text>
@@ -31,7 +30,7 @@
     <v-divider></v-divider>
 
     <v-card-actions class="mx-4 py-4">
-      <v-btn color="error" @click="confirm" :loading="status === 'PENDING'" :disabled="status === 'SUCCESS'">confirm</v-btn>
+      <v-btn color="error" @click="confirm" :loading="status === 'PENDING'" :disabled="status === 'SUCCESS'"><v-icon left>mdi-delete</v-icon> confirm</v-btn>
       <v-spacer></v-spacer>
       <v-btn to="/" text>close</v-btn>
     </v-card-actions>
@@ -42,7 +41,7 @@
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
-  name: 'UnpublishProject',
+  name: 'DeleteProject',
   data () {
     return {
       status: 'READY',
@@ -76,7 +75,7 @@ export default {
         return this.setError('Unable to find project')
       }
       if (!this.isOwner) {
-        return this.setError('You are unauthorized to perform this operation.<br><br>Only the user who created the project may unpublish it.')
+        return this.setError('You are unauthorized to perform this operation.<br><br>Only the user who created the project may delete it.')
       }
 
       this.status = 'PENDING'
