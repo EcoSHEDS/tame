@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-// import * as d3 from 'd3'
+import * as d3 from 'd3'
 
 import parse from '@/lib/parse'
 import { processDataset } from '@/lib/dataset'
@@ -103,7 +103,7 @@ export default new Vuex.Store({
       return payload
     },
     setProject ({ commit }, project) {
-      // console.log('store:setProject()', project)
+      // console.log('store: setProject()', project)
       xf.remove(d => true)
 
       if (!project) {
@@ -131,11 +131,9 @@ export default new Vuex.Store({
               if (variable.skip) return
 
               if (variable.type === 'discrete') {
-                // variable.domain = [...new Set(dataset.map(d => d[variable.id]))]
-                variable.domain = ['a', 'b']
+                variable.domain = [...(new Set(dataset.map(d => d[variable.id])))]
               } else if (variable.type === 'continuous') {
-                // variable.domain = d3.extent(dataset, d => d[variable.id])
-                variable.domain = [0, 1]
+                variable.domain = d3.extent(dataset, d => d[variable.id])
               }
             })
 

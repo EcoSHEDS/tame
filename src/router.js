@@ -7,6 +7,7 @@ import store from './store'
 
 import Home from './views/Home.vue'
 import Welcome from './views/Welcome.vue'
+import Guide from './views/Guide.vue'
 import ListProjects from './views/ListProjects.vue'
 import ProjectForm from './views/ProjectForm.vue'
 import LoadProject from './views/LoadProject.vue'
@@ -74,6 +75,15 @@ const router = new Router({
       path: '/welcome',
       name: 'welcome',
       component: Welcome,
+      meta: {
+        width: 800,
+        persistent: true
+      }
+    },
+    {
+      path: '/guide',
+      name: 'guide',
+      component: Guide,
       meta: {
         width: 800,
         persistent: true

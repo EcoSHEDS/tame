@@ -8,6 +8,9 @@
     <v-btn text :to="{ name: 'welcome' }" class="mx-4">
       <v-icon small left>mdi-home</v-icon> Welcome
     </v-btn>
+    <v-btn text :to="{ name: 'guide' }" class="mx-4">
+      <v-icon small left>mdi-map</v-icon> User Guide
+    </v-btn>
     <v-btn text class="mx-4" v-if="user" :to="{ name: 'account' }">
       <v-icon small left>mdi-account</v-icon> My Account
     </v-btn>

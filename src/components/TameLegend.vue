@@ -27,7 +27,7 @@
         <div class="pl-2">
           Tags:
           {{ selectedIds.length.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
-          <span v-if="counts.tags.total > 0">({{ (selectedIds.length / counts.tags.total * 100) | percent(0) }})</span>
+          <span v-if="counts.tags.total > 0">({{ (selectedIds.length / counts.tags.total * 100) | pct }})</span>
         </div>
       </div>
       <div class="grey--text text--darken-2 mt-2">
@@ -46,12 +46,12 @@
         <div class="pl-2">
           Obs:
           {{ counts.records.filtered.toLocaleString() }} of {{ counts.records.total.toLocaleString() }}
-          <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100) | percent(0) }})</span>
+          <span v-if="counts.records.total > 0">({{ (counts.records.filtered / counts.records.total * 100) | pct }})</span>
         </div>
         <div class="pl-2">
           Tags:
           {{ counts.tags.filtered.toLocaleString() }} of {{ counts.tags.total.toLocaleString() }}
-          <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100) | percent(0) }})</span>
+          <span v-if="counts.tags.total > 0">({{ (counts.tags.filtered / counts.tags.total * 100) | pct }})</span>
         </div>
       </div>
       <v-divider class="my-2"></v-divider>
@@ -80,6 +80,13 @@ export default {
   data () {
     return {
       collapse: false
+    }
+  },
+  filters: {
+    pct (value) {
+      return value > 10 ? value.toFixed(0) + '%'
+        : value > 1 ? value.toFixed(1) + '%'
+          : value === 0 ? '0%' : value.toFixed(2) + '%'
     }
   },
   computed: {

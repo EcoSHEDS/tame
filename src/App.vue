@@ -87,7 +87,7 @@
                 <v-btn small text @click="closeProject"><v-icon left small>mdi-close</v-icon>Close</v-btn>
               </v-card-actions>
             </v-card>
-            <v-card width="475" class="mb-3" v-if="project">
+            <v-card width="475" class="mb-0" v-if="project">
               <v-tabs
                 v-model="tabs.active"
                 background-color="primary"
@@ -344,10 +344,10 @@
                           </v-col>
                         </v-row>
                         <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="map.showCircles === 0 && map.showVectors === 0">
-                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c circles and vectors are never shown</div>
+                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty because circles and vectors are never shown</div>
                         </v-alert>
                         <v-alert color="orange" text dense dismissible border="left" class="mb-2 body-2" :value="(map.showCircles + map.showVectors > 0) && map.showCircles <= 1 && map.showVectors <= 1 && selection.selected.length === 0">
-                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty b/c no individuals are selected</div>
+                          <div class="font-weight-medium"><v-icon color="orange" left small>mdi-alert</v-icon> Map is empty because no individuals are selected</div>
                         </v-alert>
 
                         <v-divider></v-divider>
@@ -431,7 +431,7 @@
                           <span
                             v-if="index === 10"
                             class="grey--text caption"
-                          >(+{{ selection.selected.length - 1 }} more)</span>
+                          >(+{{ selection.selected.length - 10 }} more)</span>
                         </template>
                       </v-autocomplete>
 
@@ -706,7 +706,7 @@ export default {
   computed: {
     ...mapGetters(['user', 'project', 'isOwner', 'usgs', 'colorScale']),
     maxHeight () {
-      return (this.$vuetify.breakpoint.height - 280 - (this.usgs ? 68 + 59 : 0)) + 'px'
+      return (this.$vuetify.breakpoint.height - 270 - (this.usgs ? 68 + 59 : 0)) + 'px'
     },
     colorValueScale () {
       // maps raw value to [0, 1] for input to colorScale
@@ -716,22 +716,6 @@ export default {
         .range([0, 1])
         .clamp(true)
     },
-    // colorScale () {
-    //   if (!this.project) return null
-    //   let valueScale, colorScale, scale
-    //   if (this.color.selected && this.color.selected.type === 'continuous') {
-    //     valueScale = d3.scaleLinear()
-    //       .domain(this.color.selected.domain)
-    //       .range([0, 1])
-    //       .clamp(true)
-    //     colorScale = d3.scaleSequential(d3.interpolateViridis)
-    //     scale = (x) => colorScale(valueScale(x))
-    //   } else {
-    //     scale = d3.scaleOrdinal(d3.schemeCategory10)
-    //       .domain(this.color.selected.domain)
-    //   }
-    //   return scale
-    // },
     outlineScale () {
       if (!this.project) return null
       return d3.scaleOrdinal(['orangered', 'white'])
@@ -758,7 +742,7 @@ export default {
       }
     },
     project () {
-      console.log('app:watch project', xf.size())
+      console.log('app: watch project', xf.size())
       this.clearProject()
       this.$nextTick(this.initProject)
     },
@@ -767,7 +751,7 @@ export default {
     }
   },
   mounted () {
-    // console.log('app: mounted()')
+    console.log('app: mounted()')
     if (this.$route.name === 'home') {
       if (!this.project) {
         this.$router.push('/welcome')
@@ -845,10 +829,8 @@ export default {
       if (!this.project) return
 
       // console.log('app: initProject()', xf.size(), this.project, this.ready)
-      console.log('app: initProject()')
 
       const { columns, variables } = this.project
-
       const dataset = xf.all()
 
       this.tags.dim = xf.dimension(d => d[columns.id])
@@ -1151,8 +1133,9 @@ export default {
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     clearFilters () {
-      // console.log('clearFilters')
+      console.log('clearFilters')
       dc.filterAll()
+      dc.redrawAll()
       evt.$emit('filterAll')
     },
 

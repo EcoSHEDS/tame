@@ -67,7 +67,7 @@
             <span
               v-if="index === 10"
               class="grey--text caption"
-            >(+{{ idFilter.selected.length - 1 }} more)</span>
+            >(+{{ idFilter.selected.length - 10 }} more)</span>
           </template>
         </v-autocomplete>
         <div class="text-right mt-2">
@@ -206,7 +206,7 @@ export default {
           return d.key
         })
         .on('filtered', () => {
-          // console.log('discrete:filtered')
+          console.log('discrete:filtered')
           this.filterRange = this.chart.filters()
           evt.$emit('map:render:filter')
           evt.$emit('filter')

@@ -86,14 +86,14 @@
       </v-textarea>
 
       <v-textarea
-        label="Citation (optional)"
+        label="Data Citation (optional)"
         v-model="form.citation"
         rows="2"
         counter
         outlined
         :error-messages="citationErrors"
         class="mt-4"
-        hint="Provide a citation or URL to this data source."
+        hint="Provide a citation or URL to the data source."
         persistent-hint>
       </v-textarea>
 

@@ -1,15 +1,101 @@
 <script>
 import { mapGetters } from 'vuex'
 import * as d3 from 'd3'
-import d3Tip from 'd3-tip'
 import * as L from 'leaflet'
 import pad from 'pad'
 
+import d3Tip from '@/lib/d3-tip'
 import evt from '@/events'
 import { xf } from '@/crossfilter'
 
 const pickerMap = new Map()
 const jitterIdMap = new Map()
+
+function getScreenPosition (el) {
+  const screenWidth = document.body.offsetWidth
+  const screenHeight = document.body.offsetHeight
+
+  const svg = el.parentNode.parentNode
+  const viewBox = svg.viewBox.baseVal
+
+  const cx = +el.getAttribute('cx')
+  const svgWidth = viewBox.width
+  const xPad = (svgWidth - screenWidth) / 2
+  const translateX = viewBox.x
+
+  const cy = +el.getAttribute('cy')
+  const svgHeight = viewBox.height
+  const yPad = (svgHeight - screenHeight) / 2
+  const translateY = viewBox.y
+
+  return [cx - xPad - translateX, cy - yPad - translateY]
+}
+
+const tipPadding = [500, 300] // width, height
+
+function tipPlacement (el) {
+  const screenWidth = document.body.offsetWidth
+  const screenHeight = document.body.offsetHeight
+
+  const [screenX, screenY] = getScreenPosition(el)
+
+  if (screenX < tipPadding[0]) {
+    // east
+    if (screenY < tipPadding[1]) {
+      return {
+        direction: 'se',
+        offset: [20, 20]
+      }
+    } else if (screenY > (screenHeight - tipPadding[1])) {
+      return {
+        direction: 'ne',
+        offset: [-20, 20]
+      }
+    } else {
+      return {
+        direction: 'e',
+        offset: [0, 20]
+      }
+    }
+  } else if (screenX > (screenWidth - tipPadding[0])) {
+    // west
+    if (screenY < tipPadding[1]) {
+      return {
+        direction: 'sw',
+        offset: [20, -20]
+      }
+    } else if (screenY > (screenHeight - tipPadding[1])) {
+      return {
+        direction: 'nw',
+        offset: [-20, -20]
+      }
+    } else {
+      return {
+        direction: 'w',
+        offset: [0, -20]
+      }
+    }
+  } else {
+    if (screenY < tipPadding[1]) {
+      return {
+        direction: 's',
+        offset: [20, 0]
+      }
+    } else if (screenY > (screenHeight - tipPadding[1])) {
+      return {
+        direction: 'n',
+        offset: [-20, 0]
+      }
+    } else {
+      return {
+        direction: 'e',
+        offset: [0, 20]
+      }
+    }
+  }
+}
+
+let tip
 
 export default {
   name: 'TameMapLayerCanvas',
@@ -74,10 +160,8 @@ export default {
       picker: {
       },
       hover: null,
-      tip: d3Tip()
-        .attr('class', 'd3-tip')
-        .direction('e'),
       arrowSize: 12,
+      boundingBox: null,
       jitterDistance: 0,
       jitterValues: []
     }
@@ -95,6 +179,17 @@ export default {
     }
   },
   mounted () {
+    tip = d3Tip()
+      .attr('class', 'd3-tip')
+      .direction(function tipDirection (d) {
+        const { direction } = tipPlacement(d3.select(this).node())
+        return direction
+      })
+      .offset(function tipOffset (d) {
+        const { offset } = tipPlacement(d3.select(this).node())
+        return offset
+      })
+
     const formatDuration = (x) => {
       const formatter = d3.format(',.2r')
       if (isNaN(x) || !isFinite(x)) return 'None (Last Point)'
@@ -147,17 +242,11 @@ export default {
       return `${x.toFixed(0)} degrees (${direction})`
     }
 
-    this.tip.html(d => {
+    tip.html(d => {
       const primary = `
         <strong>${pad(10, 'Tag ID', '&nbsp;')}: ${d[this.project.columns.id]}</strong><br>
         ${pad(10, 'Location', '&nbsp;')}: ${d[this.project.columns.latitude].toFixed(4)}, ${d[this.project.columns.longitude].toFixed(4)}<br>
         ${pad(10, 'Timestamp', '&nbsp;')}: ${this.$moment.utc(d[this.project.columns.datetime]).format('MMM DD, YYYY hh:mm a')}<br>
-      `
-      const total = `
-        <strong>Total Observed Movement</strong><br>
-        ${pad(10, '# Obs', '&nbsp;')}: ${d.$total_n.toFixed(0)}<br>
-        ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$total_duration)}<br>
-        ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$total_distance)}<br>
       `
       let next = '<strong>Movement To Next Location</strong><br>'
       if (d.$next) {
@@ -170,10 +259,16 @@ export default {
       } else {
         next += '&nbsp;&nbsp;&nbsp;N/A (Last Observation)'
       }
+      const total = `
+        <strong>Total Movement of Individual</strong><br>
+        ${pad(10, '# Obs', '&nbsp;')}: ${d.$total_n.toFixed(0)}<br>
+        ${pad(10, 'Time', '&nbsp;')}: ${formatDuration(d.$total_duration)}<br>
+        ${pad(10, 'Distance', '&nbsp;')}: ${formatDistance(d.$total_distance)}<br>
+      `
       return `
         ${primary}<br>
-        ${total}<br>
-        ${next}`
+        ${next}<br>
+        ${total}`
     })
 
     const size = this.map.getSize()
@@ -246,7 +341,8 @@ export default {
       .classed('map', true)
       .style('pointer-events', 'none')
       .style('z-index', 201)
-    this.svg.select('g').call(this.tip)
+    this.svg.select('g').call(tip)
+    window.svg = this.svg.node()
 
     if (xf.size() > 0) {
       this.initProject()
@@ -256,17 +352,17 @@ export default {
 
     evt.$on('map:render:filter', this.render)
     evt.$on('map:render', this.render)
-    evt.$on('map:move', this.render)
+    evt.$on('map:move', this.onMove)
   },
   beforeDestroy () {
     evt.$off('map:render:filter', this.render)
     evt.$off('map:render', this.render)
-    evt.$off('map:move', this.render)
+    evt.$off('map:move', this.onMove)
     this.svg.remove()
     this.base.canvas.remove()
     this.picker.canvas.remove()
     this.overlay.canvas.remove()
-    this.tip.destroy()
+    tip.destroy()
   },
   watch: {
     transparency () {
@@ -292,6 +388,10 @@ export default {
     }
   },
   methods: {
+    onMove () {
+      this.updateJitterDistance()
+      this.render()
+    },
     initProject () {
       console.log('canvas: initProject()')
 
@@ -306,7 +406,7 @@ export default {
 
       const lonExtent = d3.extent(dataset.map(d => d[this.project.columns.longitude]))
       const latExtent = d3.extent(dataset.map(d => d[this.project.columns.latitude]))
-      const boundingBox = [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
+      this.boundingBox = [lonExtent, latExtent] // [[xmin, xmax], [ymin, ymax]]
 
       // picker color lookup
       dataset.forEach(d => {
@@ -319,12 +419,6 @@ export default {
         jitterIdMap.set(id, { x: Math.random() - 0.5, y: Math.random() - 0.5 })
       })
 
-      const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(boundingBox[1][0], boundingBox[0][1]))
-      const topRight = this.map.latLngToContainerPoint(new L.LatLng(boundingBox[1][1], boundingBox[0][0]))
-      const dX = bottomLeft.x - topRight.x
-      const dY = bottomLeft.y - topRight.y
-      this.jitterDistance = dX > dY ? dX : dY
-
       this.jitterValues = []
       dataset.forEach(d => {
         this.jitterValues[d.$index] = {
@@ -335,13 +429,22 @@ export default {
 
       // zoom/pan to bounds
       const bounds = [
-        [boundingBox[1][0], boundingBox[0][0] - 0.03], // bottomleft
-        [boundingBox[1][1], boundingBox[0][1] + 0.03] // topright
+        [this.boundingBox[1][0], this.boundingBox[0][0] - 0.03], // bottomleft
+        [this.boundingBox[1][1], this.boundingBox[0][1] + 0.03] // topright
       ]
       this.map.fitBounds(bounds)
 
+      this.updateJitterDistance()
+
       this.ready = true
       this.render()
+    },
+    updateJitterDistance () {
+      const bottomLeft = this.map.latLngToContainerPoint(new L.LatLng(this.boundingBox[1][0], this.boundingBox[0][1]))
+      const topRight = this.map.latLngToContainerPoint(new L.LatLng(this.boundingBox[1][1], this.boundingBox[0][0]))
+      const dX = bottomLeft.x - topRight.x
+      const dY = bottomLeft.y - topRight.y
+      this.jitterDistance = dX > dY ? dX : dY
     },
     resetCanvas () {
       var topLeft = this.map.containerPointToLayerPoint([0, 0])
@@ -394,7 +497,7 @@ export default {
         const latLng = new L.LatLng(d[c.latitude], d[c.longitude])
         const point = this.map.latLngToLayerPoint(latLng)
 
-        const tip = this.tip
+        // const tip = tip
 
         this.svg.select('g')
           .selectAll('circle')
@@ -411,7 +514,7 @@ export default {
           .style('pointer-events', 'none')
           .each(tip.show)
       } else {
-        this.tip.hide()
+        tip.hide()
       }
     },
     drawVector (context, from, to, color, buffer) {
@@ -639,6 +742,5 @@ canvas {
   pointer-events: none;
   font-family: 'Roboto Mono', monospace;
   z-index: 1000;
-  margin-left: 20px;
 }
 </style>
