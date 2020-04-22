@@ -111,7 +111,7 @@
         outlined
         :error-messages="citationErrors"
         class="mt-4"
-        hint="Provide a citation or URL to the data source."
+        hint="Provide a citation, URL, or contact information for the data source, if available."
         persistent-hint>
       </v-textarea>
 

@@ -15,34 +15,30 @@
             <div class="subtitle-1 font-weight-medium">Instructions</div>
 
             <p>
-              TAME is designed to visualize the movement of tagged individuals over space and time.
-            </p>
-            <p>
-              The dataset can be provided as a simple table where each row corresponds to the observed location of one individual
-              at a specific point in time, and each column corresponds to a variable specifying some attribute
-              about that observation or individual.
+              TAME is powered by a tabular dataset containing observations of tagged individuals. Each row of the dataset corresponds to an observation of one individual
+              at a specific point in space and time; each column specifies an attribute about that observation or individual.
             </p>
             <p>
               The dataset must be provided in comma-separated values (CSV) format
-              (see <a href="https://support.office.com/en-us/article/import-or-export-text-txt-or-csv-files-5250ac4c-663c-47ce-937b-339e391393ba" target="_blank">How to Export to a CSV File from Excel</a>).
-              and contain these four columns (note that columns names can vary):
+              (see <a href="https://support.office.com/en-us/article/import-or-export-text-txt-or-csv-files-5250ac4c-663c-47ce-937b-339e391393ba" target="_blank">How to Export to a CSV File from Excel</a>)
+              and contain at least these four columns (note that columns names may vary):
             </p>
             <ul class="mb-4">
               <li>
-                <span class="font-weight-medium">Individual Tag ID</span>: unique IDs assigned to each individual.
+                <span class="font-weight-medium">Individual or Tag ID</span>: unique ID assigned to each individual.
               </li>
               <li>
-                <span class="font-weight-medium">Timestamp</span>: date and time when the individual was observed. Both the date and
+                <span class="font-weight-medium">Timestamp</span>: date and time when each observation occurred. Both the date and
                 time must be combined in a single column and use ISO format (YYYY-MM-DD HH:mm) (see
                 <a href="https://www.myonlinetraininghub.com/excel-date-and-time-formatting" target="_blank">Excel Date and Time Formatting</a>,
                 use a custom format type of "yyyy-mm-dd hh:mm" before exporting to a CSV). Time portion may be omitted if the timeseries uses
                 daily time steps.
               </li>
               <li>
-                <span class="font-weight-medium">Latitude</span>: latitude in decimal degrees (e.g., 42.43294).
+                <span class="font-weight-medium">Latitude</span>: latitude of the observed location in decimal degrees (e.g., 42.43294).
               </li>
               <li>
-                <span class="font-weight-medium">Longitude</span>: longitude in decimal degrees (e.g., -72.59322). Values must be negative when west of the central Meridian (e.g. U.S.A.).
+                <span class="font-weight-medium">Longitude</span>: longitude of the observed location in decimal degrees (e.g., -72.59322). Values must be negative when west of the central Meridian (e.g. U.S.A.).
               </li>
             </ul>
             <p>
@@ -94,7 +90,7 @@
               <v-alert type="warning" dense text border="left" :value="file.value.rows >= aggregation.suggestedRows" class="body-2">
                 <div class="body-1 font-weight-bold">Large File Detected</div>
                 <div class="mb-4">
-                  Datasets with more than {{aggregation.suggestedRows.toLocaleString()}} rows can cause TAME to become sluggish.
+                  Datasets with more than {{aggregation.suggestedRows.toLocaleString()}} rows can cause TAME to become sluggish (current file has {{ file.value.rows.toLocaleString() }} rows).
                 </div>
                 <div class="my-4 body-1 font-weight-medium">
                   For optimal performance, enable dataset aggregation in Step 4 of this form.
@@ -104,12 +100,12 @@
                 </div>
               </v-alert>
               <v-alert type="warning" dense text border="left" :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
-                <div class="body-1 font-weight-bold">Project Cannot Be Saved</div>
+                <div class="body-1 font-weight-bold">Project Cannot Be Saved to Server</div>
                 <div class="mb-4">
                   A project can only be saved to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
                 </div>
                 <div class="mt-4">
-                  You can continue to load this file into TAME, but you will not be able to save or publish it for other users to access unless the file size is reduced by removing rows and/or columns.
+                  You can continue to load this file into TAME, but you will not be able to save it to the server unless the file size is reduced by removing rows and/or columns.
                 </div>
               </v-alert>
             </div>
@@ -217,10 +213,10 @@
             </p>
             <p>
               By default, the form will include all additional variables. To exclude a specific variable,
-              selecting it from the list and check the "Exclude Variable" option.
+              select it from the list and check the "Exclude Variable" option.
             </p>
             <p>
-              The form will use the column name as the default label, and make an educated guess about the type of each variable.
+              The form will use the column name as the default label, and makes an educated guess about the type of each variable.
               Only continuous variables can be used for the Size option, and only discrete variables with two unique values
               can be used for the Outline option.
             </p>
@@ -355,7 +351,14 @@
             <v-alert type="warning" dense text border="left" :value="file.value && file.value.rows > aggregation.suggestedRows" class="body-2">
               <div class="body-1 font-weight-bold">Aggregation Recommended</div>
               <div>
-                Current dataset has more than {{aggregation.suggestedRows.toLocaleString()}} rows.
+                Current dataset has {{ file.value ? file.value.rows.toLocaleString() : 0 }} rows, which exceeds the recommended maximum of {{aggregation.suggestedRows.toLocaleString()}} rows.
+              </div>
+            </v-alert>
+            <v-alert type="success" dense text border="left" :value="file.value && file.value.rows <= aggregation.suggestedRows" class="body-2">
+              <div class="body-1 font-weight-bold">Aggregation Optional</div>
+              <div class="mb-2">
+                Current dataset has {{ file.value ? file.value.rows.toLocaleString() : 0 }} rows, which is less than the recommended maximum of {{aggregation.suggestedRows.toLocaleString()}} rows.
+                Therefore, aggregation is not necessary to ensure high performance.
               </div>
             </v-alert>
 
@@ -367,19 +370,19 @@
                     value="none"
                     label="">
                     <template v-slot:label>
-                      <div><span class="font-weight-bold">None</span>: All rows will be loaded into TAME</div>
+                      <div><span class="font-weight-bold">None</span>: All observations will be loaded into TAME</div>
                     </template>
                   </v-radio>
                   <v-radio
                     value="maxDistance">
                     <template v-slot:label>
-                      <div><span class="font-weight-bold d-inline">Daily Max Distance</span>: Only the row with the longest distance to the next row will be loaded for each day and individual</div>
+                      <div><span class="font-weight-bold d-inline">Daily Max Distance</span>: Only the observation that has the farthest distance to the next observation on each day will be loaded for each individual</div>
                     </template>
                   </v-radio>
                   <v-radio
                     value="firstDay">
                     <template v-slot:label>
-                      <div><span class="font-weight-bold">First of the Day</span>: Only the first row will be loaded for each day and individual</div>
+                      <div><span class="font-weight-bold">First of the Day</span>: Only the first observation of each day will be loaded for each individual</div>
                     </template>
                   </v-radio>
                 </v-radio-group>
@@ -389,10 +392,11 @@
             <v-alert type="error" text border="left" dense :value="aggregation.status === 'ERROR' && !!aggregation.error" class="mt-2 body-2">
               <span v-html="aggregation.error"></span>
             </v-alert>
-            <v-alert type="warning" text border="left" dense :value="aggregation.status === 'SUCCESS' && aggregation.warning" class="mt-2 body-2">
-              <div class="body-1 font-weight-bold">Warning! Proceed with Caution</div>
-              <div>Even with aggregation, this dataset still has {{aggregation.rows.toLocaleString()}}, which may case TAME to run slowly.</div>
-              <div class="mt-2">Please click Continue to proceed.</div>
+            <v-alert type="warning" text border="left" dense :value="aggregation.warning" class="mt-2 body-2">
+              <div class="body-1 font-weight-bold">WARNING: Proceed with Caution</div>
+              <div v-if="aggregation.value === 'none'">Without aggregation, this dataset has {{aggregation.rows.toLocaleString()}} rows, which may case TAME to run slowly or even crash.</div>
+              <div v-else>Even with aggregation, this dataset will still yield {{aggregation.rows.toLocaleString()}} rows, which may case TAME to run slowly or even crash.</div>
+              <div class="mt-2">Please click <span class="font-weight-bold">Continue</span> again to proceed at your own risk.</div>
             </v-alert>
           </v-card-text>
           <v-card-actions class="mt-4">
@@ -412,7 +416,7 @@
                 You can change any of these options or load a new version of the dataset by clicking the <span class="font-weight-bold">Edit Project</span> button.
               </div>
               <div class="mt-2" v-if="file.value && (file.value.size / 1024 / 1024) < 5">
-                You can also <span class="font-weight-bold">Save</span> your project to the TAME server and make it available to other users.
+                And don't forget to <span class="font-weight-bold">Save</span> your project to the TAME server.
               </div>
             </v-alert>
           </v-card-text>
@@ -1015,16 +1019,15 @@ export default {
 
         const aggregated = aggregateDataset(this.parsed.data, this.columns.value, this.aggregation.value)
         this.aggregation.rows = aggregated.length
+        this.aggregation.warning = false
         if (this.aggregation.rows > this.aggregation.maxRows) {
           if (this.aggregation.value === 'none') {
-            this.aggregation.warning = false
             return resolve(this.setError('aggregation', `
               <div class="body-1 font-weight-bold">Dataset Too Large</div>
               <div class="mb-2">This dataset currently has ${this.aggregation.rows.toLocaleString()} rows, which is too large for TAME (maximum is ${this.aggregation.maxRows.toLocaleString()} rows).</div>
               <div>Please try selecting an aggregation option.</div>
             `))
           } else {
-            this.aggregation.warning = false
             return resolve(this.setError('aggregation', `
               <div class="body-1 font-weight-bold">Aggregated Dataset Too Large</div>
               <div class="mb-2">Even after aggregation, this dataset still has ${this.aggregation.rows.toLocaleString()} rows, which is too large for TAME (maximum is ${this.aggregation.maxRows.toLocaleString()} rows).</div>
@@ -1032,10 +1035,8 @@ export default {
             `))
           }
         }
-        if (this.aggregation.value !== 'none' && this.aggregation.rows > this.aggregation.suggestedRows) {
+        if (this.aggregation.rows > this.aggregation.suggestedRows) {
           this.aggregation.warning = true
-        } else {
-          this.aggregation.warning = false
         }
         return resolve(true)
       })
@@ -1043,6 +1044,7 @@ export default {
     changeAggregation () {
       this.aggregation.status = 'READY'
       this.aggregation.error = null
+      this.aggregation.warning = false
     },
     prevAggregation () {
       this.step -= 1
