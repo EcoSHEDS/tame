@@ -36,89 +36,90 @@
       </v-alert>
     </v-card-text>
     <v-card-text v-else class="pt-4">
-      <v-alert type="info" dense text border="left" class="mb-4 body-2">
-        <div class="body-1 font-weight-bold">Instructions</div>
-        <div class="mb-2">
-          Saving a project will save the dataset and project settings to the TAME web server so that you can return to this dataset later or share it with other users.
-        </div>
-        <div class="my-2">
-          Each saved project will be assigned a unique URL, which will be publicly accessible to anyone who has the link.
-        </div>
-        <div class="my-2">
-          If you select the <span class="font-weight-bold">Publish</span> option below, then this project will also be listed on the <span class="font-weight-bold">Load Project</span> screen.
-        </div>
-      </v-alert>
+      <div v-if="status !== 'SUCCESS'">
+        <v-alert type="info" dense text border="left" class="mb-4 body-2">
+          <div class="body-1 font-weight-bold">Instructions</div>
+          <div class="mb-2">
+            Saving a project will save the dataset and project settings to the TAME web server so that you can return to this dataset later or share it with other users.
+          </div>
+          <div class="my-2">
+            Each saved project will be assigned a unique URL, which will be publicly accessible to anyone who has the link.
+          </div>
+          <div class="my-2">
+            If you select the <span class="font-weight-bold">Publish</span> option below, then this project will also be listed on the <span class="font-weight-bold">Load Project</span> screen.
+          </div>
+        </v-alert>
 
-      <v-alert type="warning" dense text border="left" class="mb-8 body-2">
-        <div class="body-1 font-weight-bold">All Saved Projects Are Publicly Accessible</div>
-        <div class="mb-2">
-          TAME does not restrict access to any saved project. Any project can be loaded directly by any user using the project URL.
-          If you opt out of publishing your project, then only users with the URL can find the project. However, that will not prevent
-          other users who acquire the URL from accessing it.
-        </div>
-        <div>
-          DO NOT save any project containing highly sensitive data.
-        </div>
-      </v-alert>
+        <v-alert type="warning" dense text border="left" class="mb-8 body-2">
+          <div class="body-1 font-weight-bold">All Saved Projects Are Publicly Accessible</div>
+          <div class="mb-2">
+            TAME does not restrict access to any saved project. Any project can be loaded directly by any user using the project URL.
+            If you opt out of publishing your project, then only users with the URL can find the project. However, that will not prevent
+            other users who acquire the URL from accessing it.
+          </div>
+          <div>
+            DO NOT save any project containing highly sensitive data.
+          </div>
+        </v-alert>
+        <v-text-field
+          label="Project Name"
+          v-model="form.name"
+          counter
+          outlined
+          class="my-4"
+          hint="Provide a brief name for the project (e.g., location and species)"
+          persistent-hint
+          :error-messages="nameErrors">
+        </v-text-field>
 
-      <v-text-field
-        label="Project Name"
-        v-model="form.name"
-        counter
-        outlined
-        class="my-4"
-        hint="Provide a brief name for the project (e.g., location and species)"
-        persistent-hint
-        :error-messages="nameErrors">
-      </v-text-field>
+        <v-text-field
+          label="Project ID"
+          v-model="form.id"
+          counter
+          outlined
+          :disabled="!isNew"
+          :error-messages="idErrors"
+          class="my-4"
+          hint="Defines the URL for this project and cannot be changed. Must contain only lowercase letters, numbers, and dashes."
+          persistent-hint>
+        </v-text-field>
 
-      <v-text-field
-        label="Project ID"
-        v-model="form.id"
-        counter
-        outlined
-        :disabled="!isNew"
-        :error-messages="idErrors"
-        class="my-4"
-        hint="Defines the URL for this project and cannot be changed. Must contain only lowercase letters, numbers, and dashes."
-        persistent-hint>
-      </v-text-field>
+        <v-checkbox
+          label="Publish Project"
+          v-model="form.publish"
+          hint="If checked, this project will be shown on the Load Project screen."
+          persistent-hint>
+        </v-checkbox>
 
-      <v-checkbox
-        label="Publish Project"
-        v-model="form.publish"
-        hint="If checked, this project will be shown on the Load Project screen."
-        persistent-hint>
-      </v-checkbox>
+        <v-textarea
+          label="Description"
+          v-model="form.description"
+          rows="3"
+          counter
+          outlined
+          :error-messages="descriptionErrors"
+          class="mt-4"
+          hint="Describe your dataset (target species, location, purpose)."
+          persistent-hint>
+        </v-textarea>
 
-      <v-textarea
-        label="Description"
-        v-model="form.description"
-        rows="3"
-        counter
-        outlined
-        :error-messages="descriptionErrors"
-        class="mt-4"
-        hint="Describe your dataset (target species, location, purpose)."
-        persistent-hint>
-      </v-textarea>
+        <v-textarea
+          label="Data Citation (optional)"
+          v-model="form.citation"
+          rows="2"
+          counter
+          outlined
+          :error-messages="citationErrors"
+          class="mt-4"
+          hint="Provide a citation, URL, or contact information for the data source, if available."
+          persistent-hint>
+        </v-textarea>
 
-      <v-textarea
-        label="Data Citation (optional)"
-        v-model="form.citation"
-        rows="2"
-        counter
-        outlined
-        :error-messages="citationErrors"
-        class="mt-4"
-        hint="Provide a citation, URL, or contact information for the data source, if available."
-        persistent-hint>
-      </v-textarea>
-
-      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
-        <div class="body-1 font-weight-bold">Server Error</div>
-        <div>{{serverError}}</div>
-      </v-alert>
+        <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
+          <div class="body-1 font-weight-bold">Server Error</div>
+          <div>{{serverError}}</div>
+        </v-alert>
+      </div>
 
       <v-alert type="success" v-if="status === 'SUCCESS'" dense text border="left" class="mt-4 body-2">
         <div class="body-1 font-weight-bold">Success! Your project has been saved.</div>
@@ -127,19 +128,6 @@
           <pre class="grey--text text--darken-2">
             <router-link :to="{ name: 'loadProject', params: { id: form.id }}">{{ projectUrl }}</router-link>
           </pre>
-        </div>
-      </v-alert>
-
-      <v-alert type="error" dense text border="left" :value="status !== 'PENDING' && (!isNew || status === 'SUCCESS')" class="mt-4 body-2">
-        <div class="body-1 font-weight-bold">Delete This Project?</div>
-        <div class="mb-4">Click the button below to delete your project and remove it from the TAME server.</div>
-        <div class="pb-2">
-          <v-btn
-            :to="{ name: 'deleteProject' }"
-            color="error"
-            outlined>
-            <v-icon small left>mdi-delete</v-icon> delete
-          </v-btn>
         </div>
       </v-alert>
     </v-card-text>

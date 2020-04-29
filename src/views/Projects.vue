@@ -17,7 +17,7 @@
     <v-card-text v-else-if="status === 'ready'" class="py-4 px-6">
       <div v-if="user">
         <div class="title">My Projects</div>
-        <div class="caption">Only you can see this list. However, your published projects will also appear in the list below, which is available to all users.</div>
+        <div class="caption">Only you can see this list. Your published projects will also appear in the list below, which is shown to all users.</div>
         <v-row v-if="userProjects.length > 0">
           <v-col cols="12" md="6" lg="4" xl="4" v-for="project in userProjects" :key="project.id">
             <v-card class="fill-height d-flex flex-column">
