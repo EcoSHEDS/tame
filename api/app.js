@@ -46,15 +46,17 @@ function deleteS3Object (key) {
 }
 
 function getUser (req, res, next) {
+  // console.log('getUser()')
   if (!req.apiGateway) {
     res.locals.userId = 'test-user'
     return next()
   }
+  // console.log(req.apiGateway.event.requestContext)
   if (!req.apiGateway.event.requestContext.authorizer || !req.apiGateway.event.requestContext.authorizer.claims.sub) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
   res.locals.userId = req.apiGateway.event.requestContext.authorizer.claims.sub
-  console.log('userId = ' + res.locals.userId)
+  // console.log('userId = ' + res.locals.userId)
   next()
 }
 

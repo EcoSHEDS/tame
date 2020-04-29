@@ -124,7 +124,7 @@ export default {
   mixins: [validationMixin],
   validations: {
     name: { required },
-    affiliation: { maxLength: maxLength(25) }
+    affiliation: { maxLength: maxLength(100) }
   },
   data () {
     return {
@@ -148,7 +148,7 @@ export default {
     affiliationErrors () {
       const errors = []
       if (this.submitStatus === 'READY') return errors
-      !this.$v.affiliation.maxLength && errors.push('Cannot be more than 50 characters')
+      !this.$v.affiliation.maxLength && errors.push('Cannot be more than 100 characters')
       return errors
     }
   },

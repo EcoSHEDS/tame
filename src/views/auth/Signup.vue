@@ -76,7 +76,7 @@ export default {
   validations: {
     name: { required },
     email: { required, email },
-    affiliation: { maxLength: maxLength(25) },
+    affiliation: { maxLength: maxLength(100) },
     password: { required, minLength: minLength(8), maxLength: maxLength(32), passwordStrength },
     repeatPassword: { sameAsPassword: sameAs('password') }
   },
@@ -108,7 +108,7 @@ export default {
     affiliationErrors () {
       const errors = []
       if (this.submitStatus === 'READY') return errors
-      !this.$v.affiliation.maxLength && errors.push('Cannot be more than 50 characters')
+      !this.$v.affiliation.maxLength && errors.push('Cannot be more than 100 characters')
       return errors
     },
     passwordErrors () {
