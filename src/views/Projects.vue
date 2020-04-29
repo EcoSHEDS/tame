@@ -17,7 +17,7 @@
     <v-card-text v-else-if="status === 'ready'" class="py-4 px-6">
       <div v-if="user">
         <div class="title">My Projects</div>
-        <div class="caption">Only you can see this list. Your published projects will also appear in the list below, which is shown to all users.</div>
+        <div class="caption">Only you can see this list. If any of your projects are published, they will also appear in the Published Projects list below.</div>
         <v-row v-if="userProjects.length > 0">
           <v-col cols="12" md="6" lg="4" xl="4" v-for="project in userProjects" :key="project.id">
             <v-card class="fill-height d-flex flex-column">
@@ -50,6 +50,7 @@
       </div>
       <div>
         <div class="title">Published Projects</div>
+        <div class="caption">Projects that have been published by any TAME user.</div>
         <v-row v-if="publishedProjects.length > 0">
           <v-col cols="12" md="6" lg="4" xl="4" v-for="project in publishedProjects" :key="project.id">
             <v-card class="fill-height d-flex flex-column">

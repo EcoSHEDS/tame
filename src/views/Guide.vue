@@ -12,12 +12,12 @@
       <v-row>
         <v-col cols="3">
           <v-list shaped dense>
-            <v-subheader class="subtitle-2 mt-n4">TAME Tutorials</v-subheader>
+            <v-subheader class="subtitle-2 mt-n4">Video Tutorials</v-subheader>
             <v-list-item-group v-model="videoIndex" color="primary">
               <v-list-item
                 v-for="(video, i) in videos"
                 :key="i">
-                <v-list-item-icon>
+                <v-list-item-icon class="mr-4">
                   <v-icon>mdi-video</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
@@ -67,10 +67,11 @@ export default {
         {
           text: 'Save and Publish a Project',
           youtubeId: 'OIJlv7HoGoE'
+        },
+        {
+          text: 'Edit a Project',
+          youtubeId: 'oDCHwnYQREw'
         }
-        // {
-        //   text: 'Edit a Project'
-        // }
       ]
     }
   },

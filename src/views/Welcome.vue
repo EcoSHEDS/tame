@@ -23,8 +23,8 @@
         <v-btn color="success" class="px-4" x-large :to="{ name: 'projects' }">Load Existing Project</v-btn>
       </v-card-actions>
 
-      <div class="title">First Time Here?</div>
-      <p>Check out the <router-link :to="{ name: 'guide' }">User Guide</router-link> for an introduction to TAME.</p>
+      <div class="title">Want to Learn More?</div>
+      <p>Check out the <router-link :to="{ name: 'guide' }">User Guide</router-link> for an introduction to TAME as well as a series of tutorials.</p>
 
       <v-divider class="my-8"></v-divider>
 
