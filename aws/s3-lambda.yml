@@ -15,7 +15,7 @@ Resources:
           Value: tame
         - Key: env
           Value: dev
-Outputs:
-  BucketName:
-    Value: !Ref S3Bucket
-    Description: Name of the S3 bucket
+# Outputs:
+#   BucketName:
+#     Value: !Ref S3Bucket
+#     Description: Name of the S3 bucket

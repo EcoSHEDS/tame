@@ -22,10 +22,10 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-Outputs:
-  TableName:
-    Value: !Ref DynamoDBTable
-    Description: Table name
-  Arn:
-    Value: !GetAtt DynamoDBTable.Arn
-    Description: Table ARN
+# Outputs:
+#   TableName:
+#     Value: !Ref DynamoDBTable
+#     Description: Table name
+#   Arn:
+#     Value: !GetAtt DynamoDBTable.Arn
+#     Description: Table ARN

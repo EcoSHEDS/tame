@@ -7,11 +7,6 @@
     </v-toolbar>
 
     <v-card-text class="body-1 py-8">
-      <v-alert type="error" dense text border="left" class="mt-0 mb-8 py-2">
-        <div class="font-weight-bold body-1">TAME is Under Active Development</div>
-        <div class="body-2">All user accounts and projects are temporary and may need to be recreated when the final version of TAME is released.</div>
-      </v-alert>
-
       <p>
         The Tagged Animal Movement Explorer (TAME) is an interactive data visualization tool for exploring
         spatial and temporal patterns of animal movements.

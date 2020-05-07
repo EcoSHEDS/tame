@@ -83,41 +83,53 @@ Set environmental variables
 export ENV=dev COLOR=blue
 ```
 
+For production, include IAM role `csr-CloudFormation` for all `create-stack` commands.
+
+```
+export IAM_ROLE="--role-arn arn:aws:iam::694155575325:role/csr-CloudFormation"
+```
+
+Otherwise
+
+```
+export IAM_ROLE=""
+```
+
 Create auth user pool. Only one used for both blue and green.
 
 ```
-aws cloudformation create-stack --stack-name tame-$ENV-auth --template-body file://aws/auth.yml --parameters file://aws/params/$ENV/auth.json
-aws cloudformation deploy --stack-name tame-$ENV-auth --template-file ./aws/auth.yml
+aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/auth.yml --parameters file://aws/params/$ENV/auth.json $IAM_ROLE
+aws cloudformation deploy --stack-name tame-auth --template-file ./aws/auth.yml
 ```
 
 Create storage bucket (CHS-approval required).
 
 ```
-aws cloudformation create-stack --stack-name tame-$ENV-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/$ENV/s3-storage.json
+aws cloudformation create-stack --stack-name tame-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/$ENV/s3-storage.json
 ```
 
 Create website bucket (CHS-approval required).
 
 ```
-aws cloudformation create-stack --stack-name tame-$ENV-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/$ENV/s3-website.json
+aws cloudformation create-stack --stack-name tame-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/$ENV/s3-website.json
 ```
 
 Create S3 bucket for deploying lambda code (`./api`).
 
 ```
-aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/$ENV/$COLOR/s3-lambda.json
+aws cloudformation create-stack --stack-name tame-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/$ENV/s3-lambda.json $IAM_ROLE
 ```
 
 Create database.
 
 ```
-aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-db --template-body file://aws/db.yml --parameters file://aws/params/$ENV/$COLOR/db.json
+aws cloudformation create-stack --stack-name tame-db --template-body file://aws/db.yml --parameters file://aws/params/$ENV/db.json $IAM_ROLE
 ```
 
 Run `package` command to upload lambda source code to S3 deployment bucket and create `aws/lambda.yml` template.
 
 ```
-aws cloudformation package --template aws/lambda-local.yml --s3-bucket conte-tame-$ENV-$COLOR-lambda --s3-prefix lambda --output-template aws/lambda.yml
+aws cloudformation package --template aws/lambda-local.yml --s3-bucket usgs-chs-conte-$ENV-tame-lambda --s3-prefix lambda --output-template aws/lambda.yml
 ```
 
 For CHS, uncomment `PermissionsBoundary` for the `LambdaExecutionRole` in `aws/lambda.yml`.
@@ -125,22 +137,22 @@ For CHS, uncomment `PermissionsBoundary` for the `LambdaExecutionRole` in `aws/l
 Create lambda.
 
 ```sh
-aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/$ENV/$COLOR/lambda.json --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/$ENV/lambda.json --capabilities CAPABILITY_NAMED_IAM $IAM_ROLE
 
-aws cloudformation deploy --stack-name tame-$ENV-$COLOR-lambda --template-file aws/lambda.yml --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation deploy --stack-name tame-lambda --template-file aws/lambda.yml --capabilities CAPABILITY_NAMED_IAM
 ```
 
-Copy User Pool ID to `aws/params/$ENV/$COLOR/api.json`.
+Copy User Pool ID to `aws/params/$ENV/api.json`.
 
 Create API
 
 ```sh
-aws cloudformation create-stack --stack-name tame-$ENV-$COLOR-api --template-body file://aws/api.yml --parameters file://aws/params/$ENV/$COLOR/api.json
-aws cloudformation deploy --stack-name tame-$ENV-$COLOR-api --template-file ./aws/api.yml
+aws cloudformation create-stack --stack-name tame-api --template-body file://aws/api.yml --parameters file://aws/params/$ENV/api.json $IAM_ROLE
+aws cloudformation deploy --stack-name tame-api --template-file ./aws/api.yml
 ```
 
 Update a stack
 
 ```sh
-aws cloudformation deploy --stack-name tame-$ENV-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
+aws cloudformation deploy --stack-name tame-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
 ```

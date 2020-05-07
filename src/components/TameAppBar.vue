@@ -2,7 +2,6 @@
   <v-app-bar app dense clipped-left dark absolute :style="{ 'margin-top': usgs ? '68px' : '0'}">
     <v-toolbar-title class="headline">
       <span>Tagged Animal Movement Explorer (TAME)</span>
-      <span class="text-uppercase overline ml-3">Beta</span>
     </v-toolbar-title>
     <v-spacer></v-spacer>
     <v-btn text :to="{ name: 'welcome' }" class="mx-4">
