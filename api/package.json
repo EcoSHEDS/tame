@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "TABLE_NAME=tame-dev-projects S3_BUCKET=walkerenvres-tame-dev-storage REGION=us-east-1 nodemon index.js",
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

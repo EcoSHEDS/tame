@@ -1,158 +1,135 @@
-# SHEDS: Tagged Animal Movement Explorer (TAME)
+# Tagged Animal Movement Explorer (TAME)
 
-Jeffrey D Walker, PhD (@walkerjeffd)
+Jeffrey D Walker, PhD  
 [Walker Environmental Research, LLC](https://walkerenvres.com)
 
-Benjamin Letcher, PhD (@bletcher)
-USGS Conte Anadromous Fish Lab and UMass Amherst
+Benjamin Letcher, PhD  
+[USGS Conte Anadromous Fish Lab and UMass Amherst](https://www.usgs.gov/staff-profiles/benjamin-h-letcher)
 
-## Project setup
+## About
+
+The Tagged Animal Movement Explorer (TAME) is an interactive data visualization tool for exploring spatial and temporal patterns of animal movements. It is part of the Spatial Hydro-Ecological Decision System ([EcoSHEDS](https://ecosheds.org)).
+
+TAME was funded by the [USGS Community for Data Integration (CDI)](https://www.usgs.gov/centers/cdi).
+
+## Client Application
+
+### Project setup
 
 Install dependencies
 
 ``` sh
-yarn install
-# or
 npm install
 ```
 
-## Configuration
+### Configuration
 
-### Data API
+The application is configured using environmental variables defined in one or more `.env` files.
 
-Data files are stored in the directory `public/data/` .
+Each variable can be defined differently for separate modes (development vs production) using mode-specific `.env` files (e.g. `.env.development` and `.env.production` ). See [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html) of Vue CLI guide.
 
-Set environmental variable `VUE_APP_API_BASEURL` to this path in the `.env` file:
+The following variables must be defined:
 
-``` sh
-VUE_APP_API_BASEURL="data/"
+```env
+BASE_URL="/"                     # base URL when deployed
+VUE_APP_USGS=false               # true/false to show USGS banners (false for ecosheds.org, true for usgs.gov)
+VUE_APP_BASE_URL=""              # base URL to application for generating project URLs
+VUE_APP_API_BASE_URL=""          # API URL (AWS API Gateway endpoint)
+VUE_APP_COGNITO_REGION=""        # AWS Cognito Region
+VUE_APP_COGNITO_USER_POOL_ID=""  # AWS Cognito User Pool ID
+VUE_APP_COGNITO_CLIENT_ID=""     # AWS Cognito Client App Key
 ```
 
-The data URL can be defined for separate modes (development vs production) using mode-specific `.env` files (e.g. `.env.development` and `.env.production` ).
+### Run Development Server
 
-### Public Path
-
-For the production version, set the root public path in `vue.config.js` . For development mode, leave as `/` .
-
-``` js
-{
-    publicPath: process.env.NODE_ENV === 'production' ? '/dev/tame/' : '/'
-}
-```
-
-## Run Development Server
-
-To run the development server with HOT-reloading. The client will fetch the data whichever URL is set to `VUE_APP_API_BASEURL` in `.env` .
+To run the development server with HOT-reloading.
 
 ``` sh
-yarn serve
-# or
 npm run serve
 ```
 
-## Build and Deploy to Production
+### Build and Deploy to Production
 
-To build the production version, run the `build` command.
+To build the production version of the application, run the `build` command.
 
 ``` sh
-yarn build
-# or
 npm run build
 ```
 
-To deploy to the server run (note: this will also run `build` command first). Requires ssh access to `jeff@ecosheds.org` .
+### Deploy to S3 Bucket
 
-``` sh
-yarn deploy
-# or
-npm run deploy
-```
-
-### Deploy to S3
+Use the AWS CLI to deploy the built front-end assets (HTML, CSS, JS) to the S3 bucket used for hosting.
 
 ```sh
 aws s3 sync dist/ s3://<BUCKET_NAME>/<BASE_URL> --delete
-aws s3 sync dist/ s3://conte-tame-website-dev/apps/ecosheds/tame --delete
 ```
 
-## Cloud Formation Template
+## API
 
-Set environmental variables
+The TAME API server code is located in the `api/` directory. This code is designed to run as an AWS Lambda Function (see Cloud Infrastructure below).
 
-```
-export ENV=dev COLOR=blue
-```
+### Set Up
 
-For production, include IAM role `csr-CloudFormation` for all `create-stack` commands.
+Install packages
 
 ```
-export IAM_ROLE="--role-arn arn:aws:iam::694155575325:role/csr-CloudFormation"
+cd api
+npm install
 ```
 
-Otherwise
+### Configuration
+
+The API is configured by the following environmental variables
 
 ```
-export IAM_ROLE=""
+TABLE_NAME=""  # name of DynamoDB table
+S3_BUCKET=""   # name of S3 bucket for dataset file storage
+REGION=""      # S3 bucket region
 ```
 
-Create auth user pool. Only one used for both blue and green.
+### Run Development Server
+
+To run a development server, set the environmental variables in the termal and call `npm start` (requires `nodemon`).
 
 ```
-aws cloudformation create-stack --stack-name tame-auth --template-body file://aws/auth.yml --parameters file://aws/params/$ENV/auth.json $IAM_ROLE
-aws cloudformation deploy --stack-name tame-auth --template-file ./aws/auth.yml
+npm install -g nodemon # if not already installed
+TABLE_NAME=my-table S3_BUCKET=my-bucket REGION=us-east-1 npm start
 ```
 
-Create storage bucket (CHS-approval required).
+## Cloud Infrastructure
 
-```
-aws cloudformation create-stack --stack-name tame-s3-storage --template-body file://aws/s3-storage.yml --parameters file://aws/params/$ENV/s3-storage.json
-```
+TAME uses a serverless application architecture built upon Amazon Web Services (via USGS Cloud Hosting Solutions).
 
-Create website bucket (CHS-approval required).
+This infrastructure includes the following resources:
 
-```
-aws cloudformation create-stack --stack-name tame-s3-website --template-body file://aws/s3-website.yml --parameters file://aws/params/$ENV/s3-website.json
-```
+1. Cognito User Pool - user account management
+2. DynamoDB Table - stores metadata of each project
+3. Lambda Function - a Node.js Express API server, proxied by the API Gateway
+4. API Gateway - REST API with Cognito authorization proxying the Lambda function
+5. S3 Bucket for Lambda - stores lambda function source code
+6. S3 Bucket for Storage - stores dataset files for projects
+7. S3 Bucket for Website - hosts front-end assets of the web application
 
-Create S3 bucket for deploying lambda code (`./api`).
+TAME adheres to the "Infrastructure as Code" approach by using CloudFormation templates to define and manage each resource. For security purposes, these templates are not publicly available.
 
-```
-aws cloudformation create-stack --stack-name tame-s3-lambda --template-body file://aws/s3-lambda.yml --parameters file://aws/params/$ENV/s3-lambda.json $IAM_ROLE
-```
+# License
 
-Create database.
+See `LICENSE` file.
 
-```
-aws cloudformation create-stack --stack-name tame-db --template-body file://aws/db.yml --parameters file://aws/params/$ENV/db.json $IAM_ROLE
-```
+# Disclaimer
 
-Run `package` command to upload lambda source code to S3 deployment bucket and create `aws/lambda.yml` template.
+This software is in the public domain because it contains materials that
+originally came from the U.S. Geological Survey, an agency of the United
+States Department of Interior. For more information, see the [official
+USGS copyright
+policy](https://www2.usgs.gov/visual-id/credit_usgs.html#copyright)
 
-```
-aws cloudformation package --template aws/lambda-local.yml --s3-bucket usgs-chs-conte-$ENV-tame-lambda --s3-prefix lambda --output-template aws/lambda.yml
-```
+Although this software program has been used by the U.S. Geological
+Survey (USGS), no warranty, expressed or implied, is made by the USGS or
+the U.S. Government as to the accuracy and functioning of the program
+and related program material nor shall the fact of distribution
+constitute any such warranty, and no responsibility is assumed by the
+USGS in connection therewith.
 
-For CHS, uncomment `PermissionsBoundary` for the `LambdaExecutionRole` in `aws/lambda.yml`.
+This software is provided "AS IS."
 
-Create lambda.
-
-```sh
-aws cloudformation create-stack --stack-name tame-lambda --template-body file://aws/lambda.yml --parameters file://aws/params/$ENV/lambda.json --capabilities CAPABILITY_NAMED_IAM $IAM_ROLE
-
-aws cloudformation deploy --stack-name tame-lambda --template-file aws/lambda.yml --capabilities CAPABILITY_NAMED_IAM
-```
-
-Copy User Pool ID to `aws/params/$ENV/api.json`.
-
-Create API
-
-```sh
-aws cloudformation create-stack --stack-name tame-api --template-body file://aws/api.yml --parameters file://aws/params/$ENV/api.json $IAM_ROLE
-aws cloudformation deploy --stack-name tame-api --template-file ./aws/api.yml
-```
-
-Update a stack
-
-```sh
-aws cloudformation deploy --stack-name tame-XXX --template-file aws/tame-XXX.yml --parameter-overrides XXX=XXX --capabilities XXX
-```
