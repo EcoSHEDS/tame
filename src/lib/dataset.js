@@ -72,7 +72,7 @@ export function processDataset (data, columns, variables, aggregation) {
 
   // parse each row, assign index
   data.forEach((row) => {
-    row[columns.datetime] = moment(row[columns.datetime]).toDate()
+    row[columns.datetime] = moment.utc(row[columns.datetime]).toDate()
     row[columns.latitude] = parseFloat(row[columns.latitude])
     row[columns.longitude] = parseFloat(row[columns.longitude])
     numericVariables.forEach(v => {
