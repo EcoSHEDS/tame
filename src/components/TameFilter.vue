@@ -129,7 +129,7 @@ export default {
     }
   },
   mounted () {
-    console.log('TameFilter:mounted', this.variable.id)
+    // console.log('TameFilter:mounted', this.variable.id)
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
@@ -206,7 +206,7 @@ export default {
           return d.key
         })
         .on('filtered', () => {
-          console.log('discrete:filtered')
+          // console.log('discrete:filtered')
           this.filterRange = this.chart.filters()
           evt.$emit('map:render:filter')
           evt.$emit('filter')
@@ -294,12 +294,12 @@ export default {
     this.chart.render()
   },
   beforeDestroy () {
-    console.log('filter:beforeDestroy', this.variable.id)
+    // console.log('filter:beforeDestroy', this.variable.id)
     if (this.chart) {
       this.chart.dimension().dispose()
       dc.chartRegistry.deregister(this.chart)
     } else if (this.variable.type === 'id') {
-      console.log('dispose of idFilter')
+      // console.log('dispose of idFilter')
       this.idFilter.dim.dispose()
       evt.$off('filterAll', this.resetFilter)
     }

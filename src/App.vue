@@ -750,7 +750,7 @@ export default {
       }
     },
     project () {
-      console.log('app: watch project', xf.size())
+      // console.log('app: watch project', xf.size())
       this.clearProject()
       this.$nextTick(this.initProject)
     },
@@ -759,7 +759,7 @@ export default {
     }
   },
   mounted () {
-    console.log('app: mounted()')
+    // console.log('app: mounted()')
     if (this.$route.name === 'home') {
       if (!this.project) {
         this.$router.push('/welcome')
@@ -778,7 +778,7 @@ export default {
 
     // Project
     clearProject () {
-      console.log('app: clearProject()')
+      // console.log('app: clearProject()')
       // console.log('app:clearProject()', this.project)
 
       this.ready = false
@@ -823,7 +823,7 @@ export default {
       // evt.$emit('map:render')
     },
     closeProject () {
-      console.log('app: closeProject()')
+      // console.log('app: closeProject()')
       // console.log('app:closeProject()', this.project)
 
       this.setProject()
@@ -1141,7 +1141,7 @@ export default {
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     clearFilters () {
-      console.log('clearFilters')
+      // console.log('clearFilters')
       dc.filterAll()
       dc.redrawAll()
       evt.$emit('filterAll')
