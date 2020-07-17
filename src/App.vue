@@ -571,7 +571,7 @@
 
           <v-alert type="error" class="my-8" outlined prominent>
             <div class="title">TAME is not designed for mobile devices.</div>
-            Please use a laptop or desktop with a larger screen size (>960px wide) to use TAME.
+            TAME can only be used on a laptop or desktop with a larger screen size (>960px wide).
           </v-alert>
 
           <div class="title">Want to Learn More?</div>
