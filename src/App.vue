@@ -7,7 +7,6 @@
     <v-app-bar app dense clipped-left dark absolute :style="{'margin-top': usgs ? '68px' : '0'}" v-else>
       <v-toolbar-title class="subheading">
         <span>Tagged Animal Movement Explorer (TAME)</span>
-        <span class="text-uppercase overline ml-3">Beta</span>
       </v-toolbar-title>
     </v-app-bar>
 
@@ -562,10 +561,39 @@
       </v-dialog>
     </v-content>
     <v-content v-else>
-      <v-alert type="error" class="ma-8" outlined prominent color="grey darken-1">
-        <div class="title">TAME is not designed for mobile devices.</div>
-        Please use a laptop or desktop with a larger screen size (>960px wide).
-      </v-alert>
+      <v-card>
+        <v-card-text class="body-1 py-8">
+          <span class="title">Welcome to the Tagged Animal Movement Explorer</span>
+          <p>
+            The Tagged Animal Movement Explorer (TAME) is an interactive data visualization tool for exploring
+            spatial and temporal patterns of animal movements.
+          </p>
+
+          <v-alert type="error" class="my-8" outlined prominent>
+            <div class="title">TAME is not designed for mobile devices.</div>
+            Please use a laptop or desktop with a larger screen size (>960px wide) to use TAME.
+          </v-alert>
+
+          <div class="title">Want to Learn More?</div>
+          <p>Check out the <a href="https://www.youtube.com/playlist?list=PLu4ITwMWwGmfV28wnLnxPSlG2BjNSTYkf">User Guide</a> on Youtube for a series of videos on how to use TAME. Here is the first video of that series, which provides an introduction on what TAME is and how to use it.</p>
+
+          <div class="video-wrapper">
+            <iframe width="608" height="342" src="https://www.youtube.com/embed/xFTgoVptBfk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+
+          <v-divider class="my-8"></v-divider>
+
+          <div class="title">About TAME</div>
+          <p>
+            TAME was built by <a href="https://walkerenvres.com" target="_blank">Jeffrey D Walker, PhD (Walker Environmental Research)</a> and
+            <a href="https://www.usgs.gov/staff-profiles/benjamin-h-letcher?qt-staff_profile_science_products=0#qt-staff_profile_science_products" target="_blank">Benjamin Letcher, PhD (USGS)</a>
+            with funding from the <a href="https://www.usgs.gov/centers/cdi" target="_blank">USGS Community for Data Integration (CDI)</a>.
+          </p>
+          <p class="mb-0">
+            If you have any questions or problems, please contact Jeff Walker at <a href="mailto:jeff@walkerenvres.com">jeff@walkerenvres.com</a>.
+          </p>
+        </v-card-text>
+      </v-card>
     </v-content>
 
     <!-- USGS footer -->
@@ -1183,5 +1211,17 @@ export default {
 }
 .v-dialog--scrollable > .v-card > .v-stepper {
   overflow-y: auto;
+}
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+}
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
