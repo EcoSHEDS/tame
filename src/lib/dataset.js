@@ -28,7 +28,7 @@ export function validateDatasetColumns (rows, columns) {
     [columns.id]: Joi.string(),
     [columns.datetime]: [Joi.string().valid(''), Joi.date().iso()],
     [columns.latitude]: [Joi.string().valid(''), Joi.number().min(-90).max(90).unsafe()],
-    [columns.longitude]: [Joi.string().valid(''), Joi.number().min(-180).max(180).unsafe()]
+    [columns.longitude]: [Joi.string().valid(''), Joi.number().min(-360).max(360).unsafe()]
   })
   const schema = Joi.array().items(rowSchema).min(1).required()
 
@@ -88,8 +88,8 @@ export function processDataset (data, columns, variables, aggregation) {
       row[columns.latitude] >= -90 &&
       row[columns.latitude] <= 90 &&
       !isNaN(row[columns.longitude]) &&
-      row[columns.longitude] >= -180 &&
-      row[columns.longitude] <= 180
+      row[columns.longitude] >= -360 &&
+      row[columns.longitude] <= 360
   })
 
   // assign derived variables
