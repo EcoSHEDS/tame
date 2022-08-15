@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lambda function for TAME
+Parameters:
+  functionName:
+    Type: String
+    Default: tame-dev-lambda
+  databaseTable:
+    Type: String
+    Default: tame-dev-projects
+  storageBucket:
+    Type: String
+    Default: tame-dev-storage
+  roleName:
+    Type: String
+    Default: tame-dev-lambda-role
+  policyName:
+    Type: String
+    Default: tame-dev-lambda-policy
+Resources:
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    DependsOn: LambdaExecutionRole
+    Properties:
+      FunctionName: !Ref functionName
+      Tags:
+        - Key: project
+          Value: tame
+        - Key: env
+          Value: dev
+      Handler: lambda.handler
+      Environment:
+        Variables:
+          REGION: !Ref "AWS::Region"
+          TABLE_NAME: !Ref databaseTable
+          S3_BUCKET: !Ref storageBucket
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs12.x
+      Timeout: "25"
+      Code: ../api
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Ref roleName
+      Tags:
+        - Key: project
+          Value: tame
+        - Key: env
+          Value: dev
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      # PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/csr-Developer-Permissions-Boundary
+  LambdaExecutionPolicy:
+    Type: "AWS::IAM::Policy"
+    DependsOn: LambdaExecutionRole
+    Properties:
+      PolicyName: !Ref policyName
+      Roles: [!Ref LambdaExecutionRole]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: !Sub
+              - >-
+                arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*
+              - region: !Ref "AWS::Region"
+                account: !Ref "AWS::AccountId"
+                lambda: !Ref LambdaFunction
+          - Effect: Allow
+            Action:
+              - "dynamodb:GetItem"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:PutItem"
+              - "dynamodb:UpdateItem"
+              - "dynamodb:DeleteItem"
+            Resource: !Sub
+              - >-
+                arn:aws:dynamodb:${region}:${account}:table/${table}
+              - region: !Ref "AWS::Region"
+                account: !Ref "AWS::AccountId"
+                table: !Ref databaseTable
+          - Effect: Allow
+            Action:
+              - "s3:putObject"
+              - "s3:deleteObject"
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref storageBucket, "/*"]]
+Outputs:
+  Region:
+    Value: !Ref "AWS::Region"
+  FunctionName:
+    Value: !Ref LambdaFunction
+  FunctionArn:
+    Value: !GetAtt LambdaFunction.Arn

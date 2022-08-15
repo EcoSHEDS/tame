@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DynamoDB Table for TAME
+Parameters:
+  tableName:
+    Type: String
+    Default: tame-dev-projects
+Resources:
+  DynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    DeletionPolicy: Retain
+    Properties:
+      Tags:
+        - Key: project
+          Value: tame
+        - Key: env
+          Value: dev
+      TableName: !Ref tableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+Outputs:
+  TableName:
+    Value: !Ref DynamoDBTable
+    Description: Table name
+  Arn:
+    Value: !GetAtt DynamoDBTable.Arn
+    Description: Table ARN

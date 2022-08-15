@@ -1,0 +1,7 @@
+parameters/*.local.json
+
+templates/*.local.json
+templates/*.local.yml
+
+.env.local.sh
+.env.*.local.sh
