@@ -19,7 +19,7 @@ TAME was funded by the [USGS Community for Data Integration (CDI)](https://www.u
 Install dependencies
 
 ```sh
-yarn install
+npm install
 ```
 
 ### Configuration
@@ -45,7 +45,7 @@ VUE_APP_COGNITO_CLIENT_ID=""     # AWS Cognito Client App Key
 To run the development server with HOT-reloading.
 
 ``` sh
-yarn serve
+npm run serve
 ```
 
 ### Build and Deploy to Production
@@ -53,7 +53,7 @@ yarn serve
 To build the production version of the application, run the `build` command.
 
 ``` sh
-yarn build
+npm run build
 ```
 
 ### Deploy to S3 Bucket
@@ -74,7 +74,7 @@ Install packages
 
 ```
 cd api
-yarn install
+npm install
 ```
 
 ### Configuration
@@ -92,7 +92,7 @@ REGION=""      # S3 bucket region
 To run a development server, set the environmental variables in the termal and call `npm start` (requires `nodemon`).
 
 ```
-yarn global add nodemon # if not already installed
+npm install -g nodemon # if not already installed
 TABLE_NAME=my-table S3_BUCKET=my-bucket REGION=us-east-1 npm start
 ```
 
