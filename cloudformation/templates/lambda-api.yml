@@ -34,9 +34,9 @@ Resources:
           TABLE_NAME: !Ref databaseTable
           S3_BUCKET: !Ref storageBucket
       Role: !GetAtt LambdaExecutionRole.Arn
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
       Timeout: "25"
-      Code: ../api
+      Code: ../../api
   LambdaExecutionRole:
     Type: "AWS::IAM::Role"
     Properties:

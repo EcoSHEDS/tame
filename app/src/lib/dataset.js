@@ -1,4 +1,4 @@
-import Joi from '@hapi/joi'
+import Joi from 'joi'
 import * as d3 from 'd3'
 import L from 'leaflet'
 import moment from 'moment'

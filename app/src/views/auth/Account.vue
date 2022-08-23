@@ -74,7 +74,7 @@
           <div>Failed to load projects.</div>
         </v-alert>
       </div>
-      <div v-else="">
+      <div v-else>
         <v-alert type="info" dense text border="left" :value="projects.length === 0" class="mb-0 body-2">
           <div class="body-1 font-weight-bold">No Projects Found</div>
           <div class="mb-2">You do not have any current projects.</div>

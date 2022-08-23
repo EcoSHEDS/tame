@@ -84,8 +84,10 @@ export default {
   },
   filters: {
     pct (value) {
-      return value > 10 ? value.toFixed(0) + '%'
-        : value > 1 ? value.toFixed(1) + '%'
+      return value > 10
+        ? value.toFixed(0) + '%'
+        : value > 1
+          ? value.toFixed(1) + '%'
           : value === 0 ? '0%' : value.toFixed(2) + '%'
     }
   },

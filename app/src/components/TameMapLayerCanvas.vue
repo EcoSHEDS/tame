@@ -447,12 +447,12 @@ export default {
       this.jitterDistance = dX > dY ? dX : dY
     },
     resetCanvas () {
-      var topLeft = this.map.containerPointToLayerPoint([0, 0])
+      const topLeft = this.map.containerPointToLayerPoint([0, 0])
       L.DomUtil.setPosition(this.base.canvas, topLeft)
       L.DomUtil.setPosition(this.overlay.canvas, topLeft)
       L.DomUtil.setPosition(this.picker.canvas, topLeft)
 
-      var size = this.map.getSize()
+      const size = this.map.getSize()
 
       this.base.canvas.width = size.x
       this.base.canvas.height = size.y

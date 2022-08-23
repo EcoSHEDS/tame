@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * d3.tip
  * Copyright (c) 2013-2017 Justin Palmer

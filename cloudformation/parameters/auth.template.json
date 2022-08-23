@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "userPoolName",
+    "ParameterValue": "tame"
+  },
+  {
+    "ParameterKey": "userPoolClientName",
+    "ParameterValue": "tame-client"
+  }
+]

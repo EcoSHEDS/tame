@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "apiName",
+    "ParameterValue": "tame-api"
+  },
+  {
+    "ParameterKey": "apiStage",
+    "ParameterValue": "api"
+  },
+  {
+    "ParameterKey": "functionName",
+    "ParameterValue": "tame-lambda-api"
+  },
+  {
+    "ParameterKey": "userPoolId",
+    "ParameterValue": ""
+  }
+]

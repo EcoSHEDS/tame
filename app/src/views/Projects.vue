@@ -126,6 +126,7 @@ export default {
       return this.$Amplify.Auth.currentSession()
         .then(session => session.getIdToken().getJwtToken())
         .then(token => {
+          console.log('token', token)
           return this.$http.get('/user-projects', {
             headers: { Authorization: token }
           })

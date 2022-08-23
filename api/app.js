@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const { v4: uuidv4 } = require('uuid')
-const AWS = require('aws-sdk')
+const { S3Client } = require('@aws-sdk/client-s3')
 const multer = require('multer')
 const multerS3 = require('multer-s3')
 const morgan = require('morgan')
@@ -16,10 +16,10 @@ const app = express()
 const S3_BUCKET = process.env.S3_BUCKET
 console.log(`s3 bucket: ${S3_BUCKET}`)
 
-const s3 = new AWS.S3()
+const s3 = new S3Client()
 const upload = multer({
   storage: multerS3({
-    s3: s3,
+    s3,
     bucket: S3_BUCKET,
     key: function (req, file, cb) {
       cb(null, uuidv4())
@@ -51,12 +51,12 @@ function getUser (req, res, next) {
     res.locals.userId = 'test-user'
     return next()
   }
-  // console.log(req.apiGateway.event.requestContext)
+  console.log(req.apiGateway.event.requestContext)
   if (!req.apiGateway.event.requestContext.authorizer || !req.apiGateway.event.requestContext.authorizer.claims.sub) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
   res.locals.userId = req.apiGateway.event.requestContext.authorizer.claims.sub
-  // console.log('userId = ' + res.locals.userId)
+  console.log('userId = ' + res.locals.userId)
   next()
 }
 
