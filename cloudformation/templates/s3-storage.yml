@@ -18,10 +18,21 @@ Resources:
           Value: dev
       CorsConfiguration:
         CorsRules:
-          - AllowedMethods:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
               - GET
+              - HEAD
+              - PUT
+              - POST
+              - DELETE
             AllowedOrigins:
               - "*"
+            ExposedHeaders:
+              - x-amz-server-side-encryption
+              - x-amz-request-id
+              - x-amz-id-2
+              - ETag
             MaxAge: "3000"
   BucketPolicy:
     Type: 'AWS::S3::BucketPolicy'

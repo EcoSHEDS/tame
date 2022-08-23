@@ -37,7 +37,7 @@ export default new Vuex.Store({
     project: state => state.project,
     isOwner: (state) => {
       if (!state.user || !state.project) return false
-      return !state.project.id || state.project.userId === state.user.username
+      return !state.project.id || state.project.userId === 'test-user' || state.project.userId === state.user.username
     },
     usgs: state => state.usgs,
     colorOptions: state => state.colorOptions,

@@ -2,9 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const { v4: uuidv4 } = require('uuid')
-const { S3Client } = require('@aws-sdk/client-s3')
-const multer = require('multer')
-const multerS3 = require('multer-s3')
+// const { S3Client } = require('@aws-sdk/client-s3')
+const AWS = require('aws-sdk')
 const morgan = require('morgan')
 
 const db = require('./db')
@@ -15,17 +14,19 @@ const app = express()
 
 const S3_BUCKET = process.env.S3_BUCKET
 console.log(`s3 bucket: ${S3_BUCKET}`)
-
-const s3 = new S3Client()
-const upload = multer({
-  storage: multerS3({
-    s3,
-    bucket: S3_BUCKET,
-    key: function (req, file, cb) {
-      cb(null, uuidv4())
-    }
-  })
+const s3 = new AWS.S3({
+  apiVersion: '2006-03-01',
+  region: process.env.REGION
 })
+
+function createPresignedPostPromise (params) {
+  return new Promise((resolve, reject) => {
+    s3.createPresignedPost(params, (err, data) => {
+      if (err) return reject(err)
+      return resolve(data)
+    })
+  })
+}
 
 app.use(morgan('tiny'))
 app.use(cors())
@@ -102,8 +103,29 @@ app.get('/user-projects', getUser, (req, res, next) => {
 app.post('/projects', getUser, (req, res, next) => {
   const project = req.body
   project.userId = res.locals.userId
-  db.createProject(project)
-    .then(project => res.json(project))
+
+  const key = uuidv4()
+  createPresignedPostPromise({
+    Bucket: S3_BUCKET,
+    Fields: {
+      key
+    },
+    Expires: 60 * 60 * 1 // one hour
+  }).then((result) => {
+    project.file.s3 = {
+      name: project.file.name,
+      mimetype: 'text/csv',
+      size: project.file.size,
+      key,
+      bucket: S3_BUCKET,
+      location: `https://${S3_BUCKET}.s3.amazonaws.com/${key}`
+    }
+    return db.createProject(project)
+      .then(p => {
+        p.presignedUrl = result
+        return p
+      })
+  }).then(project => res.json(project))
     .catch(next)
 })
 
@@ -115,40 +137,38 @@ app.put('/projects/:projectId', getProject, getUser, isOwner, (req, res, next) =
   if (req.body.id !== req.params.projectId) {
     return res.status(400).json({ error: 'Project ID cannot be changed' })
   }
+  console.log(req.body)
 
-  return db.updateProject(req.body)
-    .then((project) => res.json(project))
-    .catch(next)
-})
-
-app.post('/projects/:projectId/dataset', getProject, getUser, isOwner, upload.single('dataset'), async (req, res, next) => {
-  const project = res.locals.project
-
-  if (!req.file) return res.status(400).json({ error: 'Missing file' })
-
-  console.log('uploaded file')
-  console.log(req.file)
-
-  if (project.file && project.file.s3) {
-    try {
-      await deleteS3Object(project.file.s3.key)
-    } catch (e) {
-      return res.status(500).json({ error: e.message || e.toString() })
-    }
+  if (req.query.presigned === 'true') {
+    const key = uuidv4()
+    const project = req.body
+    return createPresignedPostPromise({
+      Bucket: S3_BUCKET,
+      Fields: {
+        key
+      },
+      Expires: 60 * 60 * 1 // one hour
+    }).then((result) => {
+      project.file.s3 = {
+        name: project.file.name,
+        mimetype: 'text/csv',
+        size: project.file.size,
+        key,
+        bucket: S3_BUCKET,
+        location: `https://${S3_BUCKET}.s3.amazonaws.com/${key}`
+      }
+      return db.updateProject(project)
+        .then(p => {
+          p.presignedUrl = result
+          return p
+        })
+    }).then(project => res.json(project))
+      .catch(next)
+  } else {
+    return db.updateProject(req.body)
+      .then((project) => res.json(project))
+      .catch(next)
   }
-
-  project.file.s3 = {
-    name: req.file.originalname,
-    mimetype: req.file.mimetype,
-    size: req.file.size,
-    key: req.file.key,
-    bucket: req.file.bucket,
-    location: req.file.location
-  }
-
-  return db.updateProject(project)
-    .then(() => res.json(project))
-    .catch(next)
 })
 
 app.delete('/projects/:projectId', getProject, getUser, isOwner, async (_, res, next) => {

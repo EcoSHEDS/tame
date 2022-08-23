@@ -24,11 +24,11 @@
         <div class="mt-2">Please <router-link :to="{ name: 'projects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="project.file.size > 5e6" class="pt-4 pb-0">
+    <v-card-text v-else-if="project.file.size > maxFileSize" class="pt-4 pb-0">
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">File Size Too Large</div>
         <div class="mb-2">
-          The dataset file for this project exceeds the maximum size of 5 MB (file is {{ (project.file.size / 1e6).toFixed(1) }} MB).
+          The dataset file for this project exceeds the maximum size of 100 MB (file is {{ (project.file.size / 1e6).toFixed(1) }} MB).
         </div>
         <div class="my-2">
           To save this dataset, reduce the file size by removing rows and/or columns and then reload the CSV file using the <strong>Edit Project</strong> form.
@@ -136,12 +136,12 @@
 
     <v-card-actions class="mx-4 py-4">
       <v-btn
-        v-if="!!user && !!project && project.file.size <= 5e6"
+        v-if="!!user && !!project && project.file.size <= maxFileSize"
         @click="submit"
         color="primary"
         class="mr-4"
         :loading="status === 'PENDING'"
-        :disabled="!user || !project || project.file.size > 5e6 || status === 'SUCCESS'">
+        :disabled="!user || !project || project.file.size > maxFileSize || status === 'SUCCESS'">
         submit
       </v-btn>
       <v-spacer></v-spacer>
@@ -171,6 +171,7 @@ export default {
   },
   data () {
     return {
+      maxFileSize: 100 * 1024 * 1024,
       form: {
         id: null,
         name: null,
@@ -308,14 +309,17 @@ export default {
               Authorization: token
             }
           }).then(response => response.data)
+          console.log(project)
         } else {
           newProject.userId = this.project.userId
           newProject.createdAt = this.project.createdAt
+          let presigned = true
           if (!this.project.file.local) {
             // no change to dataset
+            presigned = false
             newProject.file = this.project.file
           }
-          project = await this.$http.put(`/projects/${newProject.id}`, newProject, {
+          project = await this.$http.put(`/projects/${newProject.id}?presigned=${presigned}`, newProject, {
             headers: {
               Authorization: token
             }
@@ -326,16 +330,15 @@ export default {
       }
 
       // upload dataset
-      if (this.project.file.local) {
+      if (project.presignedUrl) {
         try {
           const formData = new FormData()
-          formData.append('dataset', this.project.file.local)
-          project = await this.$http.post(`/projects/${project.id}/dataset`, formData, {
-            headers: {
-              'Content-Type': 'mulitpart/form-data',
-              Authorization: token
-            }
-          }).then(response => response.data)
+          Object.keys(project.presignedUrl.fields).forEach((key) => {
+            formData.append(key, project.presignedUrl.fields[key])
+          })
+          formData.append('file', this.project.file.local)
+
+          await this.$http.post(project.presignedUrl.url, formData)
         } catch (e) {
           if (this.isNew) {
             this.$http.delete(`/projects/${project.id}`, {

@@ -99,10 +99,10 @@
                   Alternatively, reduce the size of the dataset by removing some individuals or by selecting a shorter time period, and then reload the CSV file.
                 </div>
               </v-alert>
-              <v-alert type="warning" dense text border="left" :value="file.value && (file.value.size / 1024 / 1024) >= 5" class="body-2">
+              <v-alert type="warning" dense text border="left" :value="file.value && (file.value.size / 1024 / 1024) >= 100" class="body-2">
                 <div class="body-1 font-weight-bold">Project Cannot Be Saved to Server</div>
                 <div class="mb-4">
-                  A project can only be saved to the server if the file size is less than 5 MB (current file is {{ file.value.size | prettyBytes(1) }}).
+                  A project can only be saved to the server if the file size is less than 100 MB (current file is {{ file.value.size | prettyBytes(1) }}).
                 </div>
                 <div class="mt-4">
                   You can continue to load this file into TAME, but you will not be able to save it to the server unless the file size is reduced by removing rows and/or columns.
