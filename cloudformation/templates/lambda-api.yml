@@ -16,6 +16,12 @@ Parameters:
   policyName:
     Type: String
     Default: tame-dev-lambda-policy
+  permissionsBoundaryName:
+    Type: String
+    Default: NONE
+Conditions: 
+  PermissionsBoundaryExists:
+    Fn::Not: [Fn::Equals: [!Ref permissionsBoundaryName, NONE]]
 Resources:
   LambdaFunction:
     Type: "AWS::Lambda::Function"
@@ -55,7 +61,8 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - "sts:AssumeRole"
-      # PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/csr-Developer-Permissions-Boundary
+      PermissionsBoundary:
+        !If [ PermissionsBoundaryExists, !Sub "arn:aws:iam::${AWS::AccountId}:policy/${permissionsBoundaryName}", !Ref AWS::NoValue ]
   LambdaExecutionPolicy:
     Type: "AWS::IAM::Policy"
     DependsOn: LambdaExecutionRole

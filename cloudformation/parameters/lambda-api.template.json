@@ -18,5 +18,9 @@
   {
     "ParameterKey": "policyName",
     "ParameterValue": "tame-lambda-api-policy"
+  },
+  {
+    "ParameterKey": "permissionsBoundaryName",
+    "ParameterValue": "NONE"
   }
 ]
