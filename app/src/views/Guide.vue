@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card class="black--text">
     <v-toolbar color="primary" dark>
       <span class="title">User Guide</span>
       <v-spacer></v-spacer>

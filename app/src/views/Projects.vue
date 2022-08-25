@@ -14,7 +14,7 @@
         <div class="title">Failed to load projects from server.</div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="status === 'ready'" class="py-4 px-6">
+    <v-card-text v-else-if="status === 'ready'" class="py-4 px-6 black--text">
       <div v-if="user">
         <div class="title">My Projects</div>
         <div class="caption">Only you can see this list. If any of your projects are published, they will also appear in the Published Projects list below.</div>

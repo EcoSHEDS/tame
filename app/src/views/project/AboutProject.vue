@@ -6,7 +6,7 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text class="body-1 py-6" v-if="project">
+    <v-card-text class="body-1 py-6 black--text" v-if="project">
       <v-row no-gutters class="my-2">
         <v-col cols="2" class="text-right pr-4">Name:</v-col>
         <v-col class="font-weight-bold">{{ project.name }}</v-col>
@@ -36,7 +36,7 @@
         <v-col class="font-weight-bold">{{ project.citation }}<span v-if="!project.citation">None</span></v-col>
       </v-row>
     </v-card-text>
-    <v-card-text v-else class="py-8">
+    <v-card-text v-else class="py-8 black--text">
       <v-alert type="error" dense text border="left">
         <div class="body-1 font-weight-bold">Project Not Found</div>
         <div>Return to the <router-link :to="{ name: 'welcome' }">Welcome</router-link> screen</div>

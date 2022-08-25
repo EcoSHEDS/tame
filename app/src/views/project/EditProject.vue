@@ -7,11 +7,11 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-stepper v-model="step" vertical class="elevation-0 pb-4">
+    <v-stepper v-model="step" vertical class="elevation-0 pb-4 black--text">
       <v-stepper-step :rules="[() => file.status !== 'ERROR']" :complete="file.status === 'SUCCESS'" step="1">Load dataset file</v-stepper-step>
       <v-stepper-content step="1">
         <v-card>
-          <v-card-text class="py-0 body-2">
+          <v-card-text class="py-0 body-2 black--text">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
 
             <p>
@@ -122,7 +122,7 @@
       <v-stepper-step :rules="[() => columns.status !== 'ERROR']" :complete="columns.status === 'SUCCESS'" step="2">Select primary variables</v-stepper-step>
       <v-stepper-content step="2">
         <v-card>
-          <v-card-text class="py-0" v-if="file.value">
+          <v-card-text class="py-0 black--text" v-if="file.value">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
               Select the column name for each of the four primary variables.
@@ -204,7 +204,7 @@
       <v-stepper-step :rules="[() => variables.status !== 'ERROR']" :complete="variables.status === 'SUCCESS'" :loading="variables.status === 'PENDING'" step="3">Configure additional variables</v-stepper-step>
       <v-stepper-content step="3">
         <v-card>
-          <v-card-text class="py-0" v-if="variables.value.length > 0">
+          <v-card-text class="py-0 black--text" v-if="variables.value.length > 0">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
               For each additional variable, provide a brief label, select the type (continuous or discrete),
@@ -335,7 +335,7 @@
       <v-stepper-step :rules="[() => aggregation.status !== 'ERROR']" :complete="aggregation.status === 'SUCCESS'" :loading="aggregation.status === 'PENDING'" step="4">Dataset aggregation</v-stepper-step>
       <v-stepper-content step="4">
         <v-card>
-          <v-card-text class="py-0">
+          <v-card-text class="py-0 black--text">
             <div class="subtitle-1 font-weight-medium">Instructions</div>
             <p>
               Large datasets (&gt; {{aggregation.suggestedRows.toLocaleString()}} rows) can cause TAME to crash or become slugish depending on the speed of your computer.
@@ -409,7 +409,7 @@
       <v-stepper-step :complete="finish.status === 'SUCCESS'" step="5">Finish</v-stepper-step>
       <v-stepper-content step="5">
         <v-card>
-          <v-card-text v-if="!(project && project.id)">
+          <v-card-text class="black--text" v-if="!(project && project.id)">
             <v-alert type="success" dense text border="left" class="body-2">
               <div class="body-1 font-weight-bold">All done!</div>
               <div class="my-2">

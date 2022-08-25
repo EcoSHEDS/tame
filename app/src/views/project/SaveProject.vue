@@ -6,7 +6,7 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text v-if="!user" class="pt-4 pb-0">
+    <v-card-text v-if="!user" class="pt-4 pb-0 black--text">
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">Not Logged In</div>
         <div class="my-2">
@@ -17,14 +17,14 @@
         </div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="!project" class="pt-4 pb-0">
+    <v-card-text v-else-if="!project" class="pt-4 pb-0 black--text">
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">Project Not Found</div>
         <div class="mb-2">An existing project could not be found.</div>
         <div class="mt-2">Please <router-link :to="{ name: 'projects'}">Load a Project</router-link> or <router-link :to="{ name: 'newProject'}">Create A New Project</router-link>.</div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else-if="project.file.size > maxFileSize" class="pt-4 pb-0">
+    <v-card-text v-else-if="project.file.size > maxFileSize" class="pt-4 pb-0 black--text">
       <v-alert type="error" dense text border="left" class="body-2">
         <div class="body-1 font-weight-bold">File Size Too Large</div>
         <div class="mb-2">
@@ -35,7 +35,7 @@
         </div>
       </v-alert>
     </v-card-text>
-    <v-card-text v-else class="pt-4">
+    <v-card-text v-else class="pt-4 black--text">
       <div v-if="status !== 'SUCCESS'">
         <v-alert type="info" dense text border="left" class="mb-4 body-2">
           <div class="body-1 font-weight-bold">Instructions</div>
