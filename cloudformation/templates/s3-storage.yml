@@ -22,10 +22,7 @@ Resources:
               - "*"
             AllowedMethods:
               - GET
-              - HEAD
-              - PUT
               - POST
-              - DELETE
             AllowedOrigins:
               - "*"
             ExposedHeaders:
