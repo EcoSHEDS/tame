@@ -778,7 +778,6 @@ export default {
       }
     },
     project () {
-      // console.log('app: watch project', xf.size())
       this.clearProject()
       this.$nextTick(this.initProject)
     },
@@ -787,7 +786,6 @@ export default {
     }
   },
   mounted () {
-    // console.log('app: mounted()')
     if (this.$route.name === 'home') {
       if (!this.project) {
         this.$router.push('/welcome')
@@ -806,9 +804,6 @@ export default {
 
     // Project
     clearProject () {
-      // console.log('app: clearProject()')
-      // console.log('app:clearProject()', this.project)
-
       this.ready = false
 
       this.unselectAll()
@@ -846,25 +841,15 @@ export default {
       this.setColorContinuous({ scheme: 'Viridis', invert: false })
       this.setColorDiscrete({ scheme: 'Category10' })
       this.setColorVariable(null)
-
-      // evt.$emit('filter')
-      // evt.$emit('map:render')
     },
     closeProject () {
-      // console.log('app: closeProject()')
-      // console.log('app:closeProject()', this.project)
-
       this.setProject()
-        // .then(this.clearProject)
         .then(() => {
           this.$router.push({ name: 'welcome' })
         })
     },
     initProject () {
-      // console.log('app:initProject()', this.project)
       if (!this.project) return
-
-      // console.log('app: initProject()', xf.size(), this.project, this.ready)
 
       const { columns, variables } = this.project
       const dataset = xf.all()
@@ -1082,9 +1067,7 @@ export default {
       return this.sizeScale(d[this.size.selected.id])
     },
 
-    // Selection
     selectId (id) {
-      // console.log('app:selectId', id, this.selection.selected.includes(id))
       if (this.selection.selected.includes(id)) {
         const index = this.selection.selected.findIndex(d => d === id)
         if (index > -1) {
@@ -1101,7 +1084,6 @@ export default {
 
     // Selection Areas
     selectByAreas (layer) {
-      // console.log('selectByAreas', layer, layer.features[0])
       if (!layer || layer.features.length === 0) {
         this.selection.selected = []
         return
@@ -1147,21 +1129,17 @@ export default {
       }
       this.draw.count = this.draw.layer.getLayers().length
       this.draw.enabled = false
-      // console.log('onDraw', this.draw.layer, this.draw.layer.toGeoJSON())
       this.selectByAreas(this.draw.layer.toGeoJSON())
     },
     clearDraw () {
-      // console.log('clearDraw()')
       this.draw.layer && this.draw.layer.eachLayer(d => this.draw.layer.removeLayer(d))
       this.onDraw()
     },
 
-    // Crossfilters
     removeFilter (variable) {
       this.filters.selected.splice(this.filters.selected.findIndex(v => v === variable), 1)
     },
     updateFilterCounts () {
-      // console.log('app:updateFilterCounts')
       this.counts.records.filtered = xf.allFiltered().length
       this.counts.records.total = xf.size()
 
@@ -1169,13 +1147,11 @@ export default {
       this.counts.tags.total = this.tags.group ? this.tags.group.size() : 0
     },
     clearFilters () {
-      // console.log('clearFilters')
       dc.filterAll()
       dc.redrawAll()
       evt.$emit('filterAll')
     },
 
-    // Misc
     closeDialog () {
       this.showDialog = false
       setTimeout(() => {
@@ -1188,7 +1164,6 @@ export default {
       this.snackbar.show = true
     },
     mapIsReady (map) {
-      // console.log('mapIsReady', map)
       this.draw.map = map
       this.draw.layer = new L.FeatureGroup()
       this.draw.map.addLayer(this.draw.layer)

@@ -100,7 +100,6 @@ export default {
     ...mapGetters(['user'])
   },
   mounted () {
-    // console.log('Projects:mounted')
     Promise.all([this.fetchPublishedProjects(), this.fetchUserProjects()])
       .then(([publishedProjects, userProjects]) => {
         this.publishedProjects = publishedProjects
@@ -108,7 +107,7 @@ export default {
         this.status = 'ready'
       })
       .catch((err) => {
-        console.log(err)
+        console.error(err)
         this.status = 'error'
       })
   },
@@ -126,7 +125,6 @@ export default {
       return this.$Amplify.Auth.currentSession()
         .then(session => session.getIdToken().getJwtToken())
         .then(token => {
-          console.log('token', token)
           return this.$http.get('/user-projects', {
             headers: { Authorization: token }
           })

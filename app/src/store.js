@@ -103,7 +103,6 @@ export default new Vuex.Store({
       return payload
     },
     setProject ({ commit }, project) {
-      // console.log('store: setProject()', project)
       xf.remove(d => true)
 
       if (!project) {

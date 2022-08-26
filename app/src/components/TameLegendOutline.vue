@@ -59,13 +59,11 @@ export default {
   },
   methods: {
     render () {
-      // console.log('tame-legend-outline:render()', this.variable)
       this.clear()
       this.renderSvg()
     },
     renderSvg () {
       if (!(this.variable && this.variable.type === 'discrete')) return
-      // console.log('tame-legend-outline:renderSvg()', this.variable)
 
       this.svg = d3.select(this.$el)
         .append('svg')
@@ -97,7 +95,6 @@ export default {
         .text(d => d)
     },
     clear () {
-      // console.log('tame-legend-outline:clear()', this.svg)
       this.svg && this.svg.remove()
     }
   }

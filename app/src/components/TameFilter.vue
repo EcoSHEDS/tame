@@ -129,7 +129,6 @@ export default {
     }
   },
   mounted () {
-    // console.log('TameFilter:mounted', this.variable.id)
     const el = this.$el.getElementsByClassName('tame-filter-chart').item(0)
     const variable = this.variable
 
@@ -160,8 +159,6 @@ export default {
         .x(d3.scaleLinear().domain([l, u + interval]))
         .yAxisLabel('# Obs')
         .on('filtered', () => {
-          // console.log('continuous:filtered')
-          // console.log(`tame-filter:on(filtered):${variable.id}`)
           const filter = this.chart.dimension().currentFilter()
           if (filter) {
             this.filterRange = [filter[0], filter[1]]
@@ -206,7 +203,6 @@ export default {
           return d.key
         })
         .on('filtered', () => {
-          // console.log('discrete:filtered')
           this.filterRange = this.chart.filters()
           evt.$emit('map:render:filter')
           evt.$emit('filter')
@@ -294,12 +290,10 @@ export default {
     this.chart.render()
   },
   beforeDestroy () {
-    // console.log('filter:beforeDestroy', this.variable.id)
     if (this.chart) {
       this.chart.dimension().dispose()
       dc.chartRegistry.deregister(this.chart)
     } else if (this.variable.type === 'id') {
-      // console.log('dispose of idFilter')
       this.idFilter.dim.dispose()
       evt.$off('filterAll', this.resetFilter)
     }
@@ -316,7 +310,6 @@ export default {
       this.chart && this.chart.render()
     },
     resetFilter () {
-      // console.log('tame-filter:resetFilter')
       if (this.variable.type === 'id') {
         this.idFilter.selected = []
         this.onIdFilter()
@@ -329,12 +322,10 @@ export default {
       this.$emit('close')
     },
     removeIdFilter (id) {
-      // console.log('removeIdFilter', id)
       this.idFilter.selected = this.idFilter.selected.filter(d => d !== id)
       this.onIdFilter()
     },
     onIdFilter () {
-      // console.log('onIdFilter')
       if (this.idFilter.selected.length === 0) {
         this.idFilter.dim.filterAll()
       } else {

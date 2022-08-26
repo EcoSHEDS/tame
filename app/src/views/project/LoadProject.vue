@@ -42,7 +42,6 @@ export default {
     }
   },
   mounted () {
-    // console.log('LoadProject: mounted')
     return this.$http.get(`/projects/${this.$route.params.id}`)
       .then(response => response.data)
       .then(project => this.setProject(project))
@@ -51,7 +50,7 @@ export default {
         return this.$router.push('/')
       })
       .catch(e => {
-        console.log(e)
+        console.error(e)
         this.setError(e)
       })
   },

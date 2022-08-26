@@ -63,7 +63,6 @@ export default {
       return this.$parent.zoomLevel
     },
     boundingBox () {
-      // console.log('tame-map-layer:boundingBox')
       if (this.data.length === 0) return null
 
       const lonExtent = d3.extent(this.data.map(d => d[this.project.columns.longitude]))
@@ -72,7 +71,6 @@ export default {
     }
   },
   mounted () {
-    // console.log('tame-map-layer:mounted')
     evt.$on('map:render', this.render)
     evt.$on('map:render:filter', this.renderFiltered)
 
@@ -96,7 +94,6 @@ export default {
     }
   },
   beforeDestroy () {
-    // console.log('tame-map-layer:beforeDestroy')
     evt.$off('map:render', this.render)
     evt.$off('map:render:filter', this.renderFiltered)
     this.tip.destroy()
@@ -106,8 +103,6 @@ export default {
       this.fitBounds()
     },
     selectedIds () {
-      // console.log('tame-map-layer:watch(selectedIds)', this.selectedIds)
-      // this.renderSelected()
       this.renderFiltered()
     },
     opacityUnselected () {
@@ -131,9 +126,6 @@ export default {
       return [point.x, point.y]
     },
     render () {
-      // if (!this.data || !this.project) return
-      // console.log('TameMapLayer:render')
-
       let data = this.data
       if (!this.project) {
         data = []
@@ -203,7 +195,6 @@ export default {
       this.renderFiltered()
     },
     renderPaths () {
-      // console.log('TameMapLayer:renderPaths')
       const line = d3.line()
         .x(d => this.projectPoint(d)[0])
         .y(d => this.projectPoint(d)[1])
@@ -221,7 +212,6 @@ export default {
         .classed('hidden', true)
     },
     renderFiltered () {
-      // console.log('TameMapLayer:renderFiltered')
       this.container
         .selectAll('circle')
         .style('display', d => xf.isElementFiltered(d.$index) ? 'inline' : 'none')
@@ -230,7 +220,6 @@ export default {
       this.renderSelected()
     },
     renderSelected () {
-      // console.log('TameMapLayer:renderSelected', this.selectedIds)
       if (this.selectedIds.length > 0) {
         const selectedIds = this.selectedIds
         this.container
@@ -255,7 +244,6 @@ export default {
       }
     },
     renderOpacity () {
-      // console.log('renderOpacity', this.opacityUnselected)
       this.container
         .selectAll('g.group')
         .style('opacity', null)

@@ -42,7 +42,7 @@ export default {
           return AmplifyEventBus.$emit('authState', { state: 'signedOut' })
         })
         .catch((e) => {
-          console.log(e)
+          console.error(e)
           alert('Error occurred trying to log out')
         })
     }

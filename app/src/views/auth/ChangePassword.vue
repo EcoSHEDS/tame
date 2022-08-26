@@ -106,7 +106,6 @@ export default {
   },
   methods: {
     submit () {
-      // console.log('submit', this.$v)
       this.$v.$touch()
       this.serverError = null
       if (this.$v.$invalid) {

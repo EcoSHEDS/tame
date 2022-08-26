@@ -21,13 +21,13 @@ aws cloudformation create-stack --stack-name ${STACK_NAME}-auth --template-body 
 aws cloudformation create-stack --stack-name ${STACK_NAME}-db --template-body file://templates/db.yml --parameters file://parameters/db.${ENV}.local.json ${OPT_ROLE_ARN}
 
 # package lambda-api function
-aws cloudformation package --template-file templates/lambda-api.yml --output-template-file templates/lambda-api.local.yml --s3-bucket ${DEPLOYMENT_BUCKET} --s3-prefix lambda-api
+aws cloudformation package --template-file templates/lambda-api.yml --output-template-file templates/lambda-api.${ENV}.local.yml --s3-bucket ${DEPLOYMENT_BUCKET} --s3-prefix lambda-api
 
 # create lambda-api function
-aws cloudformation create-stack --stack-name ${STACK_NAME}-lambda-api --template-body file://templates/lambda-api.local.yml --parameters file://parameters/lambda-api.${ENV}.local.json ${OPT_ROLE_ARN} --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name ${STACK_NAME}-lambda --template-body file://templates/lambda-api.${ENV}.local.yml --parameters file://parameters/lambda-api.${ENV}.local.json ${OPT_ROLE_ARN} --capabilities CAPABILITY_NAMED_IAM
 
 # update lambda-api function
-aws cloudformation deploy --stack-name ${STACK_NAME}-lambda-api --template-file templates/lambda-api.local.yml --capabilities CAPABILITY_NAMED_IAM ${OPT_ROLE_ARN}
+aws cloudformation deploy --stack-name ${STACK_NAME}-lambda-api --template-file templates/lambda-api.${ENV}.local.yml --capabilities CAPABILITY_NAMED_IAM ${OPT_ROLE_ARN}
 
 # create api
 aws cloudformation create-stack --stack-name ${STACK_NAME}-api --template-body file://templates/api.yml --parameters file://parameters/api.${ENV}.local.json ${OPT_ROLE_ARN}

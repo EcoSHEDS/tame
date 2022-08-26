@@ -73,13 +73,11 @@ export default {
       this.render()
     },
     render () {
-      // console.log('tame-legend-size:render()', this.variable)
       this.clear()
       this.renderSvg()
     },
     renderSvg () {
       if (!(this.variable && this.variable.type === 'continuous')) return
-      // console.log('tame-legend-size:renderSvg()', this.variable)
 
       this.svg = d3.select(this.$el)
         .append('svg')
@@ -111,7 +109,6 @@ export default {
         .text(d => d)
     },
     clear () {
-      // console.log('tame-legend-size:clear()', this.svg)
       this.svg && this.svg.remove()
     }
   }

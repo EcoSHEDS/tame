@@ -179,12 +179,11 @@ export default {
           this.projectsStatus = 'SUCCESS'
         })
         .catch((err) => {
-          console.log(err)
+          console.error(err)
           this.projectsStatus = 'ERROR'
         })
     },
     submit () {
-      // console.log('submit', this.$v)
       this.$v.$touch()
       this.serverError = null
       if (this.$v.$invalid) {
@@ -207,7 +206,6 @@ export default {
       }
     },
     setError (e) {
-      // console.log('SignupConfirm:submit:error', e)
       this.submitStatus = 'ERROR'
       this.serverError = this.$Amplify.I18n.get(e.message || e)
     },

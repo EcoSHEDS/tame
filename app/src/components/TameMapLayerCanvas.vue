@@ -393,8 +393,6 @@ export default {
       this.render()
     },
     initProject () {
-      console.log('canvas: initProject()')
-
       this.ready = false
 
       pickerMap.clear()
@@ -518,7 +516,6 @@ export default {
       }
     },
     drawVector (context, from, to, color, buffer) {
-      // console.log('drawVector')
       if (!context || !from || !to) return
 
       context.strokeStyle = color
@@ -532,8 +529,6 @@ export default {
       const angle = Math.atan2(dy, dx)
 
       // buffer for point radius
-      // const fromr = 0.5
-      // const tor = 0.5
       const fromr = 0.5
       let tor = 0.5
       if (buffer) {
@@ -563,13 +558,11 @@ export default {
     },
     render () {
       if (!this.ready) return
-      console.log('canvas: render()')
       this.resetCanvas()
       this.renderBase()
       this.renderOverlay()
     },
     renderBase () {
-      // console.log('renderBase')
       if (!this.base.context) return
 
       this.base.context.clearRect(0, 0, this.base.canvas.width, this.base.canvas.height)
@@ -581,7 +574,6 @@ export default {
       this.renderAllCircles()
     },
     renderAllCircles () {
-      // console.log('renderAllCircles')
       this.base.context.lineWidth = 0.5
       xf.allFiltered().forEach((d, i) => {
         const point = this.projectCanvasPoint(d)
@@ -615,14 +607,12 @@ export default {
       })
     },
     renderAllVectors () {
-      // console.log('renderAllVectors')
       if (this.showVectors < 2) return
 
       this.base.context.lineWidth = 1.5
       xf.allFiltered().forEach(d => this.drawVector(this.base.context, d, d.$next, this.getFillColor(d).formatRgb(), (this.selectedIds.includes(d[this.project.columns.id]) && this.showCircles >= 1) || this.showCircles >= 2))
     },
     renderOverlay () {
-      // console.log('renderOverlay')
       if (!this.overlay.context) return
 
       this.overlay.context.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height)

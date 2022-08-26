@@ -303,13 +303,11 @@ export default {
         }
 
         if (this.isNew) {
-          // console.log('post', newProject)
           project = await this.$http.post('/projects', newProject, {
             headers: {
               Authorization: token
             }
           }).then(response => response.data)
-          console.log(project)
         } else {
           newProject.userId = this.project.userId
           newProject.createdAt = this.project.createdAt

@@ -52,16 +52,13 @@ export default {
   },
   methods: {
     clear () {
-      // console.log('l-control-draw:clear')
       this.layer.eachLayer(this.layer.removeLayer)
     },
     onCreated ({ layer }) {
-      // console.log('l-control-draw:onCreated', layer)
       this.layer.addLayer(layer)
       this.onChange()
     },
     onDeleted () {
-      // console.log('l-control-draw:onDeleted')
       this.onChange()
     },
     onChange () {

@@ -8,7 +8,6 @@ export default function (x, y) {
   // x: [lat, lon]
   // y: [lat, lon]
   // https://www.igismap.com/formula-to-find-bearing-or-heading-angle-between-two-points-latitude-longitude/
-  // console.log('bearing', x, y)
   const [x1, x2] = x.map(deg2rad)
   const [y1, y2] = y.map(deg2rad)
   const dL = y2 - x2

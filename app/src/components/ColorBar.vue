@@ -44,7 +44,6 @@ export default {
   },
   computed: {
     colorScale () {
-      // console.log('TameColorBar:colorScale', this.type, this.scheme, this.invert)
       return generateColorScale(this.type, this.scheme, this.invert)
     }
   },

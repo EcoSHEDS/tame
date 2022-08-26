@@ -761,8 +761,6 @@ export default {
       this.resetVariables()
     },
     validateColumns () {
-      // console.log('validateColumns')
-
       // skip validation if project is new and form has never been submitted
       if (this.columns.status === 'READY') return true
 
@@ -821,7 +819,7 @@ export default {
             if (isValid) this.step += 1
           })
           .catch((e) => {
-            console.log(e)
+            console.error(e)
             return this.setError('columns', `
               <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
               <div class="mt-2"> class="mt-2"${e.message || e}</div>
@@ -887,7 +885,6 @@ export default {
       this.resetAggregation()
     },
     validateVariables () {
-      // console.log('validateVariables()')
       if (this.variables.status === 'READY') return true
 
       if (!this.parsed) {
@@ -896,7 +893,6 @@ export default {
           <div>Please return to the first step and load a file.</div>
         `)
       }
-      // console.log('validateVariables(go)')
       return new Promise((resolve, reject) => {
         for (let i = 0; i < this.variables.value.length; i++) {
           const variable = this.variables.value[i]
@@ -924,7 +920,7 @@ export default {
             if (isValid) this.step += 1
           })
           .catch((e) => {
-            console.log(e)
+            console.error(e)
             return this.setError('variables', `
               <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
               <div class="mt-2"> class="mt-2"${e.message || e}</div>
@@ -1058,7 +1054,7 @@ export default {
             if (isValid && (!this.aggregation.warning || warned)) this.step += 1
           })
           .catch((e) => {
-            console.log(e)
+            console.error(e)
             return this.setError('aggregation', `
               <div class="body-1 font-weight-bold">Unknown Error Occurred</div>
               <div class="mt-2">${e.message || e}</div>
