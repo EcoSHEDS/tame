@@ -6,8 +6,8 @@
       <v-btn icon small to="/" class="mr-0"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
 
-    <v-card-text class="pt-8">
-      <v-form @submit.prevent="submit">
+    <v-form @submit.prevent="submit" :disabled="submitStatus === 'PENDING'">
+      <v-card-text class="pt-8">
         <v-text-field
           v-model="email"
           :error-messages="emailErrors"
@@ -22,30 +22,29 @@
           hint="Check your email for the verification code"
           persistent-hint
         ></v-text-field>
-        <v-btn hidden type="submit">submit</v-btn>
-      </v-form>
 
-      <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
-        <div class="body-1 font-weight-bold">Server Error</div>
-        <div>{{serverError}}</div>
-      </v-alert>
-
-      <div class="mt-4">
-        <a @click="resend">Can't find your code? Request a new one.</a>
-        <v-alert type="info" dense text border="left" class="mt-4 body-1" v-if="resendCode">
-          <div class="font-weight-bold">Request submitted, check your email for a new code.</div>
+        <v-alert type="error" :value="!!serverError" dense text border="left" class="mt-4 body-2">
+          <div class="body-1 font-weight-bold">Server Error</div>
+          <div>{{serverError}}</div>
         </v-alert>
-      </div>
-    </v-card-text>
 
-    <v-divider></v-divider>
+        <div class="mt-4">
+          <a @click="resend">Can't find your code? Request a new one.</a>
+          <v-alert type="info" dense text border="left" class="mt-4 body-1" v-if="resendCode">
+            <div class="font-weight-bold">Request submitted, check your email for a new code.</div>
+          </v-alert>
+        </div>
+      </v-card-text>
 
-    <v-card-actions class="mx-4 py-4">
-      <v-btn @click="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
-      <v-btn text @click="clear">clear</v-btn>
-      <v-spacer></v-spacer>
-      <v-btn text :to="{ name: 'login' }">cancel</v-btn>
-    </v-card-actions>
+      <v-divider></v-divider>
+
+      <v-card-actions class="mx-4 py-4">
+        <v-btn type="submit" color="primary" class="mr-4" :loading="submitStatus === 'PENDING'">submit</v-btn>
+        <v-btn text @click="clear">clear</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn text :to="{ name: 'login' }">cancel</v-btn>
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
 

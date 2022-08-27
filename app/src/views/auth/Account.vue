@@ -7,8 +7,8 @@
     </v-toolbar>
 
     <v-card-text class="pt-4 body-1">
-      <div class="title mb-4">My Information</div>
-      <v-form @submit.prevent="submit">
+      <v-form @submit.prevent="submit" :disabled="submitStatus === 'PENDING'">
+        <div class="title mb-4">My Information</div>
         <v-text-field
           v-model="email"
           label="Email Address"
@@ -33,31 +33,29 @@
           @blur="$v.affiliation.$touch()"
         ></v-text-field>
 
-        <v-btn hidden type="submit">submit</v-btn>
+        <v-alert type="error" :value="!!serverError" dense text border="left" class="body-2">
+          <div class="body-1 font-weight-bold">Server Error</div>
+          <div>{{serverError}}</div>
+        </v-alert>
+
+        <v-alert type="success" :value="submitStatus === 'SUCCESS'" dense text border="left" dismissible class="body-2">
+          <div class="body-1 font-weight-bold">Update complete</div>
+          <div>Changes have been saved to the server</div>
+        </v-alert>
+
+        <v-card-actions class="px-0">
+          <v-btn
+            type="submit"
+            color="primary"
+            class="mr-4"
+            :disabled="!$v.$anyDirty"
+            :loading="submitStatus === 'PENDING'">
+            save changes
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" :to="{ name: 'changePassword' }">Change Password</v-btn>
+        </v-card-actions>
       </v-form>
-
-      <v-alert type="error" :value="!!serverError" dense text border="left" class="body-2">
-        <div class="body-1 font-weight-bold">Server Error</div>
-        <div>{{serverError}}</div>
-      </v-alert>
-
-      <v-alert type="success" :value="submitStatus === 'SUCCESS'" dense text border="left" dismissible class="body-2">
-        <div class="body-1 font-weight-bold">Update complete</div>
-        <div>Changes have been saved to the server</div>
-      </v-alert>
-
-      <v-card-actions class="px-0">
-        <v-btn
-          @click="submit"
-          color="primary"
-          class="mr-4"
-          :disabled="!$v.$anyDirty"
-          :loading="submitStatus === 'PENDING'">
-          save changes
-        </v-btn>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" :to="{ name: 'changePassword' }">Change Password</v-btn>
-      </v-card-actions>
     </v-card-text>
 
     <v-divider class="mb-4"></v-divider>
