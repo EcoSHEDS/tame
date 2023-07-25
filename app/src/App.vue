@@ -1,10 +1,10 @@
 <template>
   <v-app>
     <!-- USGS header -->
-    <UsgsHeader v-if="usgs"></UsgsHeader>
+    <UsgsHeader></UsgsHeader>
 
     <TameAppBar v-if="$vuetify.breakpoint.mdAndUp"></TameAppBar>
-    <v-app-bar app dense clipped-left dark absolute :style="{'margin-top': usgs ? '68px' : '0'}" v-else>
+    <v-app-bar app dense clipped-left dark absolute style="margin-top:68px" v-else>
       <v-toolbar-title class="subheading">
         <span>Tagged Animal Movement Explorer (TAME)</span>
       </v-toolbar-title>
@@ -81,10 +81,6 @@
                 </h4>
               </v-toolbar>
               <v-card-actions>
-                <!-- <v-btn small text v-if="!!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
-                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit</v-btn>
-                <v-btn small text v-if="isOwner || !project.id" :to="{ name: 'saveProject' }"><v-icon left small>mdi-content-save-outline</v-icon>Save</v-btn>
-                <v-btn small text v-if="isOwner && !!project.id" :to="{ name: 'deleteProject' }"><v-icon left small>mdi-delete</v-icon>Delete</v-btn> -->
                 <v-btn small text :disabled="!project.id" :to="{ name: 'aboutProject' }"><v-icon left small>mdi-information-outline</v-icon>About</v-btn>
                 <v-btn small text :disabled="!(isOwner || !project.id)" :to="{ name: 'editProject' }"><v-icon left small>mdi-pencil</v-icon>Edit</v-btn>
                 <v-btn small text :disabled="!(isOwner || !project.id)" :to="{ name: 'saveProject' }"><v-icon left small>mdi-content-save-outline</v-icon>Save</v-btn>
@@ -596,8 +592,7 @@
       </v-card>
     </v-content>
 
-    <!-- USGS footer -->
-    <UsgsFooter v-if="usgs"></UsgsFooter>
+    <UsgsFooter></UsgsFooter>
   </v-app>
 </template>
 
@@ -740,9 +735,9 @@ export default {
     }
   }),
   computed: {
-    ...mapGetters(['user', 'project', 'isOwner', 'usgs', 'colorScale']),
+    ...mapGetters(['user', 'project', 'isOwner', 'colorScale']),
     maxHeight () {
-      return (this.$vuetify.breakpoint.height - 270 - (this.usgs ? 68 + 59 : 0)) + 'px'
+      return (this.$vuetify.breakpoint.height - 270 - (68 + 59)) + 'px'
     },
     colorValueScale () {
       // maps raw value to [0, 1] for input to colorScale

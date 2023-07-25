@@ -14,7 +14,6 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     version: 1,
-    usgs: process.env.VUE_APP_USGS === 'true',
     user: null,
     project: null,
     colorOptions: {

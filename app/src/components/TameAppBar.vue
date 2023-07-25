@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar app dense clipped-left dark absolute :style="{ 'margin-top': usgs ? '68px' : '0'}">
+  <v-app-bar app dense clipped-left dark absolute style="margin-top:68px">
     <v-toolbar-title class="headline">
       <span>Tagged Animal Movement Explorer (TAME)</span>
     </v-toolbar-title>
@@ -33,7 +33,7 @@ export default {
   name: 'TameAppBar',
   props: ['marginTop'],
   computed: {
-    ...mapGetters(['user', 'usgs'])
+    ...mapGetters(['user'])
   },
   methods: {
     logout () {
