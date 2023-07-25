@@ -59,7 +59,8 @@ export default {
   computed: {
     ...mapGetters(['project']),
     projectUrl () {
-      const base = process.env.VUE_APP_BASE_URL || 'http://localhost:8080/'
+      // const base = process.env.VUE_APP_BASE_URL || 'http://localhost:8080/'
+      const base = 'https://usgs.gov/apps/ecosheds/tame/'
       const route = this.$router.resolve({
         name: 'loadProject',
         params: { id: this.project.id }

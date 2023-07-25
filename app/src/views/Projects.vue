@@ -127,43 +127,9 @@
               </v-sheet>
             </v-col>
           </v-row>
-          <!-- <v-row>
-            <v-col
-              v-for="item in props.items"
-              :key="item.name"
-              cols="12"
-              sm="6"
-              md="4"
-              lg="3"
-            >
-              <v-card>
-                <v-card-title class="subheading font-weight-bold">
-                  {{ item.name }}
-                </v-card-title>
-
-                <v-divider></v-divider>
-
-                <v-list dense>
-                  <v-list-item
-                    v-for="(key, index) in filteredKeys"
-                    :key="index"
-                  >
-                    <v-list-item-content :class="{ 'blue--text': sortBy === key }">
-                      {{ key }}:
-                    </v-list-item-content>
-                    <v-list-item-content
-                      class="align-end"
-                      :class="{ 'blue--text': sortBy === key }"
-                    >
-                      {{ item[key.toLowerCase()] }}
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
-              </v-card>
-            </v-col>
-          </v-row> -->
         </template>
-        <template v-slot:footer>
+
+        <!-- <template v-slot:footer>
           <v-container fluid>
             <v-row
               class="mt-8 pl-2 pr-4"
@@ -201,108 +167,29 @@
               <v-spacer></v-spacer>
 
               <span
-                class="mr-4"
+                class="mr-4 mt-1"
               >
                 Page {{ page }} of {{ numberOfPages }}
               </span>
               <v-btn
-                fab
-                color="grey lighten-2"
+                icon
                 class="mr-1"
-                x-small
                 @click="formerPage"
               >
                 <v-icon>mdi-chevron-left</v-icon>
               </v-btn>
               <v-btn
-                fab
-                color="grey lighten-2"
+                icon
                 class="ml-1"
-                x-small
                 @click="nextPage"
               >
                 <v-icon>mdi-chevron-right</v-icon>
               </v-btn>
             </v-row>
           </v-container>
-        </template>
+        </template> -->
       </v-data-iterator>
     </v-card-text>
-    <!-- <v-card-text v-else-if="status === 'ready'" class="py-4 px-6 black--text">
-      <div v-if="user">
-        <div class="title">My Projects</div>
-        <div class="caption">Only you can see this list. If any of your projects are published, they will also appear in the Published Projects list below.</div>
-        <v-row v-if="userProjects.length > 0">
-          <v-col cols="12" md="6" lg="4" xl="4" v-for="project in userProjects" :key="project.id">
-            <v-card class="fill-height d-flex flex-column">
-              <v-card-title primary-title class="pb-0">
-                <span class="text-truncate title">{{ project.name }}</span>
-              </v-card-title>
-              <v-card-text class="caption pb-0">
-                Updated: {{ project.updatedAt | moment('from') }} |
-                <span v-if="project.publish">
-                  Published
-                </span>
-                <span class="red--text" v-else>
-                  Not Published
-                </span>
-              </v-card-text>
-              <v-card-text class="flex pt-4 pb-0">
-                <p class="body-2 grey--text text--darken-3">{{ project.description }}</p>
-              </v-card-text>
-              <v-card-actions class="pa-4">
-                <v-btn color="primary" class="px-2" :to="`/projects/${ project.id }`">Load Project <v-icon >mdi-chevron-right</v-icon></v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-        <v-alert type="error" outlined prominent color="primary" v-else class="mt-4">
-          <div class="title">You do not have any projects!</div>
-          <router-link :to="{ name: 'newProject' }">Create a new one?</router-link>
-        </v-alert>
-        <v-divider class="my-8"></v-divider>
-      </div>
-      <div>
-        <v-row class="my-4">
-          <v-col cols="8">
-            <v-text-field label="Search" outlined hide-details prepend-icon="mdi-magnify"></v-text-field>
-          </v-col>
-          <v-col cols="4" class="">
-            <div >
-              <v-checkbox label="Only My Projects" hide-details></v-checkbox>
-            </div>
-          </v-col>
-        </v-row>
-        <v-row v-if="publishedProjects.length > 0" class="mt-8">
-          <v-col cols="12" v-for="project in publishedProjects" :key="project.id">
-            <v-card>
-              <v-card-text>
-                <v-row class="align-center">
-                  <v-col cols="10">
-                    <div class="text-truncate title black--text">
-                      <router-link :to="`/projects/${ project.id }`">{{ project.name }}</router-link>
-                    </div>
-                    <div class="caption">Updated: {{ project.updatedAt | moment('from') }}</div>
-                    <div class="body-2 black--text">{{ project.description }}</div>
-                  </v-col>
-                  <v-col cols="2">
-                    <div>
-                      <v-btn color="primary" class="px-2" :to="`/projects/${ project.id }`">
-                        Load Project <v-icon >mdi-chevron-right</v-icon>
-                      </v-btn>
-                    </div>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-        <v-alert type="error" outlined prominent color="primary" v-else class="mt-4">
-          <div class="title">No projects have been published yet!</div>
-          <router-link :to="{ name: 'newProject' }">Create a new one?</router-link>
-        </v-alert>
-      </div>
-    </v-card-text> -->
     <v-divider></v-divider>
     <v-card-actions class="mx-4">
       <v-spacer></v-spacer>
@@ -312,7 +199,6 @@
 </template>
 
 <script>
-// import * as d3 from 'd3'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -322,8 +208,8 @@ export default {
       status: 'loading',
       projects: [],
       userProjectsOnly: false,
-      itemsPerPage: 5,
-      itemsPerPageArray: [5, 10, 25, 50],
+      itemsPerPage: Infinity,
+      itemsPerPageArray: [5, 10, 25, 50, Infinity],
       page: 1,
       numberOfPages: 1,
       search: '',
@@ -351,11 +237,6 @@ export default {
         return this.projects
       }
     }
-    // numberOfPages () {
-    //   // return Math.ceil(this.publishedProjects.length / this.itemsPerPage)
-    //   if (!this.$refs.dataIterator) return 0
-    //   return Math.ceil(this.$refs.dataIterator.internalCurrentItems.length / this.itemsPerPage)
-    // }
   },
   mounted () {
     Promise.all([this.fetchPublishedProjects(), this.fetchUserProjects()])
