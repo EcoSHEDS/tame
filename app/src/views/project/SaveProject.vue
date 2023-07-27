@@ -165,7 +165,7 @@ export default {
     form: {
       id: { required, alphaNum, minLength: minLength(4), maxLength: maxLength(50) },
       name: { required, minLength: minLength(4), maxLength: maxLength(100) },
-      description: { required, minLength: minLength(4), maxLength: maxLength(250) },
+      description: { required, minLength: minLength(4), maxLength: maxLength(1000) },
       citation: { maxLength: maxLength(500) }
     }
   },
@@ -205,7 +205,7 @@ export default {
       const errors = []
       if (this.status === 'READY') return errors
       !this.$v.form.description.required && errors.push('Description is required.');
-      (!this.$v.form.description.minLength || !this.$v.form.description.maxLength) && errors.push('Description must be between 4 and 250 characters.')
+      (!this.$v.form.description.minLength || !this.$v.form.description.maxLength) && errors.push('Description must be between 4 and 1,000 characters.')
       return errors
     },
     citationErrors () {
@@ -215,7 +215,8 @@ export default {
       return errors
     },
     projectUrl () {
-      const base = process.env.VUE_APP_BASE_URL || 'http://localhost:8080/'
+      // const base = process.env.VUE_APP_BASE_URL || 'http://localhost:8080/'
+      const base = 'https://www.usgs.gov/apps/ecosheds/tame/'
       const route = this.$router.resolve({
         name: 'loadProject',
         params: { id: this.form.id }
