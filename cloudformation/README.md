@@ -27,7 +27,7 @@ aws cloudformation package --template-file templates/lambda-api.yml --output-tem
 aws cloudformation create-stack --stack-name ${STACK_NAME}-lambda --template-body file://templates/lambda-api.${ENV}.local.yml --parameters file://parameters/lambda-api.${ENV}.local.json ${OPT_ROLE_ARN} --capabilities CAPABILITY_NAMED_IAM
 
 # update lambda-api function
-aws cloudformation deploy --stack-name ${STACK_NAME}-lambda-api --template-file templates/lambda-api.${ENV}.local.yml --capabilities CAPABILITY_NAMED_IAM ${OPT_ROLE_ARN}
+aws cloudformation deploy --stack-name ${STACK_NAME}-lambda-api --template-file templates/lambda-api.${ENV}.local.yml --capabilities CAPABILITY_NAMED_IAM
 
 # create api
 aws cloudformation create-stack --stack-name ${STACK_NAME}-api --template-body file://templates/api.yml --parameters file://parameters/api.${ENV}.local.json ${OPT_ROLE_ARN}
