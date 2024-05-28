@@ -5,7 +5,11 @@ export default (file) => new Promise((resolve, reject) => {
   if (file.local) {
     value = file.local
   } else if (file.s3) {
-    value = file.s3.location
+    if (process.env.VUE_APP_DATA_URL) {
+      value = `${process.env.VUE_APP_DATA_URL}/${file.s3.key}`
+    } else {
+      value = file.s3.location
+    }
   } else {
     return reject(new Error('Project file not found'))
   }

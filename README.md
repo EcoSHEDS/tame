@@ -34,7 +34,8 @@ The following variables must be defined:
 BASE_URL="/"                     # base URL when deployed
 VUE_APP_USGS=false               # true/false to show USGS banners (false for ecosheds.org, true for usgs.gov)
 VUE_APP_BASE_URL=""              # base URL to application for generating project URLs
-VUE_APP_API_BASE_URL=""          # API URL (AWS API Gateway endpoint)
+VUE_APP_API_URL=""               # API URL (AWS API Gateway endpoint)
+VUE_APP_DATA_URL=""              # Data URL
 VUE_APP_COGNITO_REGION=""        # AWS Cognito Region
 VUE_APP_COGNITO_USER_POOL_ID=""  # AWS Cognito User Pool ID
 VUE_APP_COGNITO_CLIENT_ID=""     # AWS Cognito Client App Key
