@@ -7,7 +7,9 @@
     "build:staging": "vue-cli-service build --mode staging",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit"
+    "test:unit": "vue-cli-service test:unit",
+    "deploy:stage": "npm run stage && aws s3 sync dist/ s3://usgs-chs-conte-dev-tame-website/tame/ --delete",
+    "deploy": "npm run build && aws s3 sync dist/ s3://usgs-chs-conte-prod-tame-website/apps/ecosheds/tame/ --delete"
   },
   "dependencies": {
     "@mdi/font": "^7.0.96",
