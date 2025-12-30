@@ -5,10 +5,9 @@ const { v4: uuidv4 } = require('uuid')
 // const { S3Client } = require('@aws-sdk/client-s3')
 const AWS = require('aws-sdk')
 const morgan = require('morgan')
+const { getCurrentInvoke } = require('@codegenie/serverless-express')
 
 const db = require('./db')
-
-const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
 
 const app = express()
 
@@ -31,7 +30,6 @@ function createPresignedPostPromise (params) {
 app.use(morgan('tiny'))
 app.use(cors())
 app.use(bodyParser.json({ limit: '100mb' }))
-app.use(awsServerlessExpressMiddleware.eventContext())
 
 function deleteS3Object (key) {
   console.log(`deleteS3Object(${key})`)
@@ -47,16 +45,13 @@ function deleteS3Object (key) {
 }
 
 function getUser (req, res, next) {
-  // console.log('getUser()')
-  if (!req.apiGateway) {
-    res.locals.userId = 'test-user'
-    return next()
-  }
-  console.log(req.apiGateway.event.requestContext)
-  if (!req.apiGateway.event.requestContext.authorizer || !req.apiGateway.event.requestContext.authorizer.claims.sub) {
+  const currentInvoke = getCurrentInvoke()
+  const sub = currentInvoke?.event?.requestContext?.authorizer?.claims?.sub
+
+  if (!sub) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
-  res.locals.userId = req.apiGateway.event.requestContext.authorizer.claims.sub
+  res.locals.userId = sub
   console.log('userId = ' + res.locals.userId)
   next()
 }
